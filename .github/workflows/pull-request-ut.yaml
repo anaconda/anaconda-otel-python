@@ -10,8 +10,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      python: ${{ steps.filter.outputs.python }}
-      typescript: ${{ steps.filter.outputs.typescript }}
+      package: ${{ steps.filter.outputs.package }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -26,7 +25,7 @@ jobs:
 
   unit-tests:
     needs: detect-changes
-    if: needs.detect-changes.outputs.python == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
