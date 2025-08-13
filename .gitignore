@@ -26,9 +26,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Specifically named/located test file used locally with docker
-python/telemetry_test.py
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
