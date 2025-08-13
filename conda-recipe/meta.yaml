@@ -32,7 +32,7 @@ requirements:
     - grpcio >=1.71.0
 
 about:
-  home: https://github.com/anaconda/anaconda_opentelemetry
+  home: https://github.com/anaconda/anaconda-otel-python
   summary: "An OpenTelemetry wrapper for Anaconda application telemetry"
   license: Apache-2.0
   license_file: LICENSE

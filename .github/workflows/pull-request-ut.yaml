@@ -45,7 +45,7 @@ jobs:
   test-status:
     name: Unit Tests Status
     if: always()
-    needs: [detect-changes, python-unit-tests]
+    needs: [detect-changes, unit-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate test results
@@ -62,7 +62,7 @@ jobs:
           
           # Check Python tests
           if [[ "${{ needs.detect-changes.outputs.python }}" == "true" ]]; then
-            if [[ "${{ needs.python-unit-tests.result }}" == "success" ]]; then
+            if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then
               echo "Python tests passed (required due to changes)"
             else
               echo "Python tests failed or were cancelled"
@@ -75,7 +75,7 @@ jobs:
           # Handle workflow_dispatch case
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "::notice::Manual workflow run - checking all executed tests"
-            if [[ "${{ needs.python-unit-tests.result }}" != "success" && "${{ needs.python-unit-tests.result }}" != "skipped" ]]; then
+            if [[ "${{ needs.unit-tests.result }}" != "success" && "${{ needs.unit-tests.result }}" != "skipped" ]]; then
               echo "Python tests failed in manual run"
               exit 1
             fi
