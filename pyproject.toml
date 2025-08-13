@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2025 Anaconda, Inc
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anaconda_opentelemetry"
+dynamic = ["version"]
+description = "Anaconda opentelemetry package wrapper."
+authors = [
+    { name = "Anaconda, Inc.", email = "support@anaconda.com" }
+]
+license = { text = "Apache 2.0" }  # SPDX identifier
+dependencies = [
+    "PyYAML>=6.0.2",
+    "opentelemetry-api==1.30.0",
+    "opentelemetry-exporter-otlp-proto-common==1.30.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.30.0",
+    "opentelemetry-exporter-otlp-proto-http ==1.30.0",
+    "opentelemetry-proto==1.30.0",
+    "opentelemetry-sdk==1.30.0",
+    "opentelemetry-semantic-conventions==0.51b0",
+    "grpcio>=1.71.0",
+]
+
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+include = ["anaconda_opentelemetry"]
+
+[tool.setuptools.package-data]
+anaconda_opentelemetry = ["py.typed"]
+
+[project.optional-dependencies]
+dev = ["mypy"]
+
+[tool.mypy]
+# optional: ensures mypy treats the package as typed
+strict = true
