@@ -1,0 +1,83 @@
+name: Run Unit Tests on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.filter.outputs.package }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      - name: Check for file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            package:
+              - 'anaconda_opentelemetry/**'
+
+  unit-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Unit Tests
+        uses: ./.github/actions/unit-tests/
+        with:
+          python-version: ${{ matrix.python-version }}
+
+  test-status:
+    name: Unit Tests Status
+    if: always()
+    needs: [detect-changes, unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate test results
+        run: |
+          echo "::group::Change Detection Results"
+          echo "Python changes detected: ${{ needs.detect-changes.outputs.python }}"
+          echo "TypeScript changes detected: ${{ needs.detect-changes.outputs.typescript }}"
+          echo "::endgroup::"
+          
+          echo "::group::Test Execution Results"
+          echo "Python tests result: ${{ needs.python-tests.result }}"
+          echo "TypeScript tests result: ${{ needs.typescript-tests.result }}"
+          echo "::endgroup::"
+          
+          # Check Python tests
+          if [[ "${{ needs.detect-changes.outputs.python }}" == "true" ]]; then
+            if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then
+              echo "Python tests passed (required due to changes)"
+            else
+              echo "Python tests failed or were cancelled"
+              exit 1
+            fi
+          else
+            echo "Python tests skipped (no changes detected)"
+          fi
+          
+          # Handle workflow_dispatch case
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "::notice::Manual workflow run - checking all executed tests"
+            if [[ "${{ needs.unit-tests.result }}" != "success" && "${{ needs.unit-tests.result }}" != "skipped" ]]; then
+              echo "Python tests failed in manual run"
+              exit 1
+            fi
+          fi
+          
+          echo "::notice:: All required tests have passed!"

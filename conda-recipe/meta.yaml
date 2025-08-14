@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2025 Anaconda, Inc
+# SPDX-License-Identifier: Apache-2.0
+{% set version = load_file_regex(load_file=RECIPE_DIR + "/../version.txt", regex_pattern="^(.*)$") %}
+
+package:
+  name: anaconda-opentelemetry
+  version: {{ version[0] }}
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  script: python -m pip install . --no-deps --ignore-installed -vv
+
+requirements:
+  host:
+    - python
+    - pip
+    - setuptools
+    - wheel
+  run:
+    - python >=3.9
+    - pyyaml >=6.0.2
+    - opentelemetry-api ==1.30.0
+    - opentelemetry-exporter-otlp-proto-common ==1.30.0
+    - opentelemetry-exporter-otlp-proto-grpc ==1.30.0
+    - opentelemetry-exporter-otlp-proto-http ==1.30.0
+    - opentelemetry-proto ==1.30.0
+    - opentelemetry-sdk ==1.30.0
+    - opentelemetry-semantic-conventions ==0.51b0
+    - grpcio >=1.71.0
+
+about:
+  home: https://github.com/anaconda/anaconda-otel-python
+  summary: "An OpenTelemetry wrapper for Anaconda application telemetry"
+  license: Apache-2.0
+  license_file: LICENSE
