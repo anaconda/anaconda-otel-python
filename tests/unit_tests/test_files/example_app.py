@@ -11,10 +11,12 @@ from anaconda_opentelemetry.attributes import ResourceAttributes
 from anaconda_opentelemetry.config import Configuration
 from anaconda_opentelemetry.signals import (
     initialize_telemetry,
+    re_initialize_telemetry,
     get_telemetry_logger_handler,
     record_histogram,
     increment_counter,
-    get_trace
+    get_trace,
+    _is_first_time
 )
 
 # Configure logging
@@ -40,7 +42,6 @@ class ExampleApp:
             otel_endpoint: Optional OTLP endpoint (defaults to localhost:4317)
             use_console_exporter: Whether to use console exporter or not
         """
-
         self.service_name = service_name
         # initialize required classes
         attrs = ResourceAttributes(service_name, service_version)
@@ -50,11 +51,16 @@ class ExampleApp:
         attrs.set_attributes(**{"cheese": "american", "test": "hello"})
 
         # initialize package
-        initialize_telemetry(config, attrs, signal_types=["logging", "tracing", "metrics"])
+        first_time = _is_first_time()
+        if first_time:
+            initialize_telemetry(config, attrs, signal_types=["logging", "tracing", "metrics"])
+        else:
+            re_initialize_telemetry(attrs)
 
-        # inject logger
-        log = logging.getLogger()
-        log.addHandler(get_telemetry_logger_handler())
+        if first_time:
+            # inject logger
+            log = logging.getLogger()
+            log.addHandler(get_telemetry_logger_handler())
 
     def export_log(self) -> None:
         """Simulate a user request with various telemetry signals."""
@@ -85,6 +91,7 @@ class ExampleApp:
             value=processing_time,
             attributes={"endpoint": "/api/data"}
         )
+
 
 def simulate_metric() -> str:
     from opentelemetry import metrics

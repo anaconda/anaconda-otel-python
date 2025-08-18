@@ -11,7 +11,7 @@ signals) using OpenTelemetry. It includes classes for handling logging, metrics,
 tracing, as well as functions for initializing the telemetry system and recording metrics.
 """
 
-import logging, time, hashlib, re, socket
+import logging, hashlib, re, socket
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
 from dataclasses import fields
@@ -39,6 +39,25 @@ AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
 class _AnacondaCommon:
     # Base class for common attributes and methods (internal only)
     def __init__(self, config: Config, attributes: Attributes):
+        self._config = config
+        # Init resource_attributes
+        self._resource_attributes = {}
+        self.resource = None
+        # session id
+        self._session_id = None
+
+        # Make self._resource_attributes and self.resource
+        self.make_otel_resource(attributes)
+
+        self.logger = logging.getLogger(__package__)
+
+        # assemble config and attribute values
+        # default endpoint
+        self.default_endpoint = config._get_default_endpoint()
+        # export options
+        self.use_console_exporters = config._get_console_exporter()
+
+    def make_otel_resource(self, attributes: Attributes):
         # Read resource attributes
         resource_attrs = attributes._get_attributes()
         # Required parameters
@@ -53,24 +72,15 @@ class _AnacondaCommon:
                 SERVICE_VERSION: self.service_version
         }
         self._resource_attributes.update(resource_attrs)
-
-        self.logger = logging.getLogger(__package__)
-
-        # assemble config and attribute values
-        # default endpoint
-        self.default_endpoint = config._get_default_endpoint()
-        # export options
-        self.use_console_exporters = config._get_console_exporter()
-        # session id
-        self._hash_session_id(config._get_tracing_session_entropy())
-
         # convert to otel names
         for attr in fields(attributes):
             otel_name = attr.metadata.get('otel_name', None)
             if otel_name:
                 self._resource_attributes[attr.metadata['otel_name']] = self._resource_attributes.pop(attr.name)
-
+        self._session_id = self._hash_session_id(self._config._get_tracing_session_entropy())
+        self._resource_attributes['session.id'] = self._session_id
         self.resource = Resource.create(self._resource_attributes)
+
 
     def _hash_session_id(self, entropy):
         # Hashes a session id for common attributes based on timestamp and user_id
@@ -78,16 +88,11 @@ class _AnacondaCommon:
         if entropy is None:
             raise KeyError("The entropy key has been removed.")
 
-        user_id = self._resource_attributes.get('user.id', None)
+        user_id = self._resource_attributes.get('user.id', '')
         combined = f"{entropy}|{user_id}|{self.service_name}"
         hashed = hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
-        self._resource_attributes['session.id'] = hashed
-
-    @staticmethod
-    def timestamp() -> int:
-        # Get the current timestamp in nanoseconds.
-        return int(time.time() * 1e9)
+        return hashed
 
 
 class _AnacondaLogger(_AnacondaCommon):
@@ -130,6 +135,10 @@ class _AnacondaLogger(_AnacondaCommon):
         )
         self._handler = LoggingHandler(level=self.log_level, logger_provider=provider)
 
+    def tear_down(self):
+        # TODO: flush and shutdown
+        _AnacondaLogger._instance = None
+
     def _get_log_level(self, str_level: str)-> int:
         # Convert string from config file to logging level.
         levels = {
@@ -168,6 +177,10 @@ class _AnacondaMetrics(_AnacondaCommon):
             'simple_up_down_counter': self.up_down_counter_objects,
             'histogram': self.histogram_objects
         }
+
+    def tear_down(self):
+        # TODO: flush and shutdown
+        _AnacondaMetrics._instance = None
 
     def _setup_metrics(self, config: Config) -> metrics.Meter:
         if self.use_console_exporters:
@@ -358,6 +371,10 @@ class _AnacondaTrace(_AnacondaCommon):
 
         self.tracer = self._setup_tracing(config)
 
+    def tear_down(self):
+        # TODO: flush and shutdown
+        _AnacondaTrace._instance = None
+
     def _setup_tracing(self, config: Config) -> trace.Tracer:
         # Create tracer provider
         tracer_provider = TracerProvider(resource=self.resource)
@@ -427,10 +444,18 @@ def __check_internet_status(config: Config, timeout: float = 5.0) -> tuple[bool,
         logging.getLogger(__package__).info(f"Anaconda OpenTelemetry: Successful access to the endpoint '{endpoint}'!")
     return internet, access
 
+__ANACONDA_TELEMETRY_INITIALIZED = False
+__SIGNALS = None
+__CONFIG = None
+
+def _is_first_time():  # For testing only.
+    global __ANACONDA_TELEMETRY_INITIALIZED
+    global __SIGNALS
+    global __CONFIG
+    return __ANACONDA_TELEMETRY_INITIALIZED == False and (__CONFIG is None or __SIGNALS is None)
 
 ################################################################################
 # Exposed APIs
-__ANACONDA_TELEMETRY_INITIALIZED = False
 def initialize_telemetry(config: Config,
                          attributes: Attributes = None,
                          signal_types: List[str] = ['metrics']):  # Follows what the backend has implemented.
@@ -448,13 +473,55 @@ def initialize_telemetry(config: Config,
             Supported values are 'logging', 'metrics', and 'tracing'. If an empty list is provided, no metrics will be initialized.
 
     Raises:
-        ValueError: If the config passed is None.
+        ValueError: If the config passed is None or the attributes passed are None.
     """
     global __ANACONDA_TELEMETRY_INITIALIZED
+    global __SIGNALS
+    global __CONFIG
+
     if __ANACONDA_TELEMETRY_INITIALIZED is True:
         return  # Already initialized
     if config is None:
         raise ValueError(f"The config argument is required but was None")
+    if attributes is None:
+        raise ValueError(f"The attributes argument is required but was None")
+
+    __CONFIG = config
+    __SIGNALS = signal_types
+
+    re_initialize_telemetry(attributes)
+
+def re_initialize_telemetry(attributes: Attributes):
+    """
+    Re-intialize th telemetry with new attributes, configuration and signal types are identical to the original initialize_telemetry() call.
+
+    Args:
+        attributes (ResourceAttributes, optional): A class containing common attributes. If provided,
+            it will override any values shared with configuration file.
+
+    Raises:
+        ValueError: If the attributes passed are None. Will throw exceptions
+        if initialize_telemetry has not been previously run.
+    """
+    global __ANACONDA_TELEMETRY_INITIALIZED
+    global __SIGNALS
+    global __CONFIG
+
+    if _is_first_time():
+        raise RuntimeError("re_initialize_telemetry called without first calling initialize_telemetry first!")
+
+    if __ANACONDA_TELEMETRY_INITIALIZED:
+        if 'metrics' in __SIGNALS and _AnacondaMetrics._instance is not None:
+            _AnacondaMetrics._instance.tear_down()
+        if 'tracing' in __SIGNALS and _AnacondaTrace._instance is not None:
+            _AnacondaTrace._instance.tear_down()
+        if 'logging' in __SIGNALS and _AnacondaLogger._instance is not None:
+            _AnacondaLogger._instance.tear_down()
+
+        __ANACONDA_TELEMETRY_INITIALIZED = False
+
+    config = __CONFIG
+    signal_types = __SIGNALS
 
     # Check ResourceAttributes object
     if attributes is None:
@@ -490,8 +557,8 @@ def initialize_telemetry(config: Config,
               "'metrics' section in the configuration file and/or the list of " +
               "metric types in the parameter 'signal_types'."
         )
-
     __ANACONDA_TELEMETRY_INITIALIZED = True
+
 
 def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
     """
