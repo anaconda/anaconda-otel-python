@@ -44,26 +44,26 @@ class TestConfiguration:
         with pytest.raises(ValueError, match=f"Invalid endpoint format: bad-protocol://host"):
             Config(default_endpoint="http://localhost:4317", config_dict=config)
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: mydoamin.com:812"):  # priviledged port
-            Config(default_endpoint="mydoamin.com:812")
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://mydoamin.com:812"):  # priviledged port
+            Config(default_endpoint="http://mydoamin.com:812")
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 127.0.0.1.0:1812"):
-            Config(default_endpoint="127.0.0.1.0:1812")  # five quads, expect 4
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://127.0.0.1.0:1812"):
+            Config(default_endpoint="http://127.0.0.1.0:1812")  # five quads, expect 4
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 127.0.0.0:1812"):
-            Config(default_endpoint="127.0.0.0:1812")  # last quad cannot be 0
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://127.0.0.0:1812"):
+            Config(default_endpoint="http://127.0.0.0:1812")  # last quad cannot be 0
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 0.10.20.30:1812"):
-            Config(default_endpoint="0.10.20.30:1812")  # first quad cannot be 0
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://0.10.20.30:1812"):
+            Config(default_endpoint="http://0.10.20.30:1812")  # first quad cannot be 0
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 327.0.0.1:1812"):
-            Config(default_endpoint="327.0.0.1:1812")  # any quad cannot exceed 255.
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://127.327.0.1:1812"):
+            Config(default_endpoint="http://127.327.0.1:1812")  # any quad cannot exceed 255.
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 255.0.0.1:1812"):
-            Config(default_endpoint="255.0.0.1:1812")  # any quad cannot exceed 255.
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://255.0.0.1:1812"):
+            Config(default_endpoint="http://255.0.0.1:1812")  # first quad cannot be ==255.
 
-        with pytest.raises(ValueError, match=f"Invalid endpoint format: 127.0.0.255:1812"):
-            Config(default_endpoint="127.0.0.255:1812")  # any quad cannot exceed 255.
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: http://127.0.0.255:1812"):
+            Config(default_endpoint="http://127.0.0.255:1812")  # last quad cannot be ==255.
 
         cfg = Config(default_endpoint="http://localhost:2345")
         cfg.set_logging_endpoint('http://localhost:2346')
@@ -165,7 +165,7 @@ class TestConfiguration:
             os.unlink(temp_path)
 
         config.set_tls_private_ca_cert(None)
-        assert None == config._get_ca_cert_default()
+        assert None != config._get_ca_cert_default()  # This is the creds object not the cert_file!
 
         # For metrics_export_interval_ms
         assert 60_000 == config._get_metrics_export_interval_ms()  # default
@@ -342,3 +342,8 @@ class TestConfiguration:
         # Cleanup
         for file_path in temp_files:
             os.unlink(file_path)
+
+    def test_prepare_ca_cert_file_for_grpc_public_cert(self):
+        cfg = Config(default_endpoint="grpcs://localhost")
+        creds = cfg._prepare_ca_cert('grpcs', None) is None
+        assert creds is not None

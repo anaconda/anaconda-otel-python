@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Anaconda, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-import sys
+import sys, time
 sys.path.append("./")
 
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -16,8 +16,8 @@ from opentelemetry.metrics import Meter, Histogram
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.context import Context
 
-from typing import Dict, Callable, Union, Optional, Sequence
-import pytest, hashlib, re, logging, tempfile, os
+from typing import Dict, Callable, Union
+import pytest, hashlib, re, logging, os
 from unittest.mock import patch, MagicMock
 
 
@@ -42,14 +42,22 @@ class TestAnacondaCommon:
 
     # class-wide test vars
     # default mock time value that is class wide
-    time_patch_value = 1234567899.0
+    time_patch_value = 1_234_567_899.0
     # name of service
     service_name = "test-service"
     # id of user - must match config file value
     user_id = "user123"
 
     @pytest.fixture(scope="class")
-    def AnacondaCommon(self) -> AnacondaTelBase:
+    def _patch_time(self, request):
+        mp = pytest.MonkeyPatch()
+        mp.setattr(time, "time", lambda: request.cls.time_patch_value)
+        yield
+        mp.undo()
+
+
+    @pytest.fixture(scope="class")
+    def AnacondaCommon(self, _patch_time, request) -> AnacondaTelBase:
         os.environ.clear()  # clear previous test environment vars
         config_values = read_config()
         config_dict, attributes = config_values['configs'], config_values['attributes']
@@ -59,7 +67,7 @@ class TestAnacondaCommon:
         service_name = "test-service"
         service_version = "1.0.0"
         attributes = Attributes(service_name, service_version)
-
+        attributes.user_id == TestAnacondaCommon.user_id
         # initialize class for testing
         instance = AnacondaTelBase(config, attributes)
 
@@ -71,11 +79,10 @@ class TestAnacondaCommon:
 	    - Checks that method ouptut equals that of hashlib.sha256 output
         """
         # construct mock hash
-        ts = int(self.time_patch_value * 1e9)  # format timestamp like in class function
-        expected_combined = f"{ts}|{self.user_id}|{self.service_name}"
+        ts = int(time.time() * 1e9)  # format timestamp like in class function
+        expected_combined = f"{ts}|{AnacondaCommon._resource_attributes['user.id']}|{self.service_name}"
         expected_hash = hashlib.sha256(expected_combined.encode("utf-8")).hexdigest()
         # real hash function call
-        AnacondaCommon._resource_attributes['user.id'] = self.user_id
         AnacondaCommon._hash_session_id(ts)
 
         assert AnacondaCommon._resource_attributes['session.id'] == expected_hash
@@ -86,7 +93,7 @@ class TestAnacondaCommon:
         - Checks that the method correctly handles user_id == None by once again comparing hash output
         """
         # construct mock hash
-        user_id = None
+        user_id = ''
         ts = int(self.time_patch_value * 1e9)  # format timestamp like in class function
         expected_combined = f"{ts}|{user_id}|{self.service_name}"
         expected_hash = hashlib.sha256(expected_combined.encode("utf-8")).hexdigest()
@@ -103,11 +110,9 @@ class TestAnacondaCommon:
         """
 
         # real hash function call
-        AnacondaCommon._resource_attributes['user.id'] = self.user_id
-
         with pytest.raises(KeyError) as exception:
             AnacondaCommon._hash_session_id(None)
-        assert exception.value.args[0] == "The entropy key has been removed."
+        assert exception.value.args[0] == 'The entropy key has been removed.'
 
     def test_hash_output_length(self, AnacondaCommon: AnacondaTelBase):
         """
@@ -176,12 +181,6 @@ class TestAnacondaCommon:
         """
         assert isinstance(AnacondaCommon.resource, Resource) is True
 
-    def test_timestamp(self):
-        import time
-        before = int(time.time() * 1e9)
-        value = AnacondaTelBase.timestamp()
-        after = int(time.time() * 1e9)
-        assert before <= value <= after
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None

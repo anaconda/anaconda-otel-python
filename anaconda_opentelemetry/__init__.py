@@ -7,6 +7,7 @@
 from .__version__ import __SDK_VERSION__ as __version__
 
 from .signals import initialize_telemetry as initialize_telemetry
+from .signals import re_initialize_telemetry as re_initialize_telemetry
 from .signals import record_histogram as record_histogram
 from .signals import increment_counter as increment_counter
 from .signals import decrement_counter as decrement_counter

@@ -12,7 +12,7 @@ This module provides the configuration setting from a file or a dictionary (or b
 from typing import Dict, Any, List
 import re, os, grpc
 
-    
+
 """
 Configuration class to supply settings for Anaconda Telemetry.
 It allows loading configuration from a JSON or YAML file, or from a dictionary.
@@ -99,7 +99,7 @@ class Configuration:
         DEFAULT_CA_CERT_NAME,
         LOGGING_CA_CERT_NAME,
         TRACING_CA_CERT_NAME,
-        METRICS_CA_CERT_NAME   
+        METRICS_CA_CERT_NAME
     ]
 
     _auth_token_names: List[str] = [
@@ -254,7 +254,7 @@ class Configuration:
         """
         self._config[self.DEFAULT_AUTH_TOKEN_NAME] = auth_token
         return self
-    
+
     def set_auth_token_logging(self, auth_token: str):
         """
         Sets the authentication token for the logging endpoint. If passed in a dict in the constructor, use predefined name
@@ -268,7 +268,7 @@ class Configuration:
         """
         self._config[self.LOGGING_AUTH_TOKEN_NAME] = auth_token
         return self
-    
+
     def set_auth_token_tracing(self, auth_token: str):
         """
         Sets the authentication token for the tracing endpoint. If passed in a dict in the constructor, use predefined name
@@ -282,7 +282,7 @@ class Configuration:
         """
         self._config[self.TRACING_AUTH_TOKEN_NAME] = auth_token
         return self
-    
+
     def set_auth_token_metrics(self, auth_token: str):
         """
         Sets the authentication token for the metrics endpoint. If passed in a dict in the constructor, use predefined name
@@ -312,12 +312,9 @@ class Configuration:
         Returns:
             Self
         """
-        if cert_file is not None:
-            self._config[self.DEFAULT_CA_CERT_NAME] = cert_file
-        else:
-            self._config[self.DEFAULT_CA_CERT_NAME] = None
+        self._config[self.DEFAULT_CA_CERT_NAME] = cert_file
         return self
-    
+
     def set_tls_private_ca_cert_logging(self, cert_file: str):
         """
         TLS certificate used for logging endpoint only.
@@ -333,12 +330,9 @@ class Configuration:
         Returns:
             Self
         """
-        if cert_file is not None:
-            self._config[self.LOGGING_CA_CERT_NAME] = cert_file
-        else:
-            self._config[self.LOGGING_CA_CERT_NAME] = None
+        self._config[self.LOGGING_CA_CERT_NAME] = cert_file
         return self
-    
+
     def set_tls_private_ca_cert_tracing(self, cert_file: str):
         """
         TLS certificate used for tracing endpoint only.
@@ -354,12 +348,9 @@ class Configuration:
         Returns:
             Self
         """
-        if cert_file is not None:
-            self._config[self.TRACING_CA_CERT_NAME] = cert_file
-        else:
-            self._config[self.TRACING_CA_CERT_NAME] = None
+        self._config[self.TRACING_CA_CERT_NAME] = cert_file
         return self
-    
+
     def set_tls_private_ca_cert_metrics(self, cert_file: str):
         """
         TLS certificate used for metrics endpoint only.
@@ -375,10 +366,7 @@ class Configuration:
         Returns:
             Self
         """
-        if cert_file is not None:
-            self._config[self.METRICS_CA_CERT_NAME] = cert_file
-        else:
-            self._config[self.METRICS_CA_CERT_NAME] = None
+        self._config[self.METRICS_CA_CERT_NAME] = cert_file
         return self
 
     def set_logging_level(self, level: str):
@@ -446,7 +434,7 @@ class Configuration:
         """
         self._config[self.SKIP_INTERNET_CHECK_NAME] = value
         return self
-    
+
 
     class _Endpoint:
         def __init__(self, endpoint: str):
@@ -518,7 +506,6 @@ class Configuration:
 
             # If it's an IP, validate each octet
             if re.match(r"^(\d{1,3}\.)+\d{1,3}$", self.host):
-
                 quads = list(map(int, self.host.split('.')))
                 if len(quads) != 4:
                     raise ValueError(f"Invalid endpoint format: {endpoint}")
@@ -527,7 +514,7 @@ class Configuration:
                 for q in quads:
                     if q > 255:
                         raise ValueError(f"Invalid endpoint format: {endpoint}")
-    
+
     def _set_otel_signal_endpoint(self, endpoint: str, signal: str) -> str:
         endpoint_str = f"v1/{signal}"
         if not endpoint.endswith(endpoint_str):
@@ -550,12 +537,8 @@ class Configuration:
     def _get_metrics_endpoint(self) -> str:
         endpoint = self._config.get(self.METRICS_ENDPOINT_NAME, self._get_default_endpoint())
         return self._set_otel_signal_endpoint(endpoint, "metrics")
-    
-    def _prepare_ca_cert(self, protocol: str, cert_file: str) -> str:
 
-        if cert_file is None:
-            return cert_file
-        
+    def _prepare_ca_cert(self, protocol: str, cert_file: str) -> str:
         if protocol in ['http', 'https']:
             return cert_file  # just return cert file for HTTP exporter ca_cert
         else:
@@ -568,11 +551,11 @@ class Configuration:
                 # Use system trust store (for public CAs)
                 creds = grpc.ssl_channel_credentials()
                 return creds
-            
+
     def _get_ca_cert_default(self) -> str:
         cert_file = self._config.get(self.DEFAULT_CA_CERT_NAME, None)
         return self._prepare_ca_cert(self._get_request_protocol_default().protocol, cert_file)
-    
+
     def _get_ca_cert_logging(self) -> str:
         cert_file = self._config.get(self.LOGGING_CA_CERT_NAME, self._get_ca_cert_default())
         return self._prepare_ca_cert(self._get_request_protocol_logging(), cert_file)
@@ -596,7 +579,7 @@ class Configuration:
 
     def _get_auth_token_tracing(self) -> str:
         return self._config.get(self.TRACING_AUTH_TOKEN_NAME, self._get_auth_token_default())
-    
+
     def _get_auth_token_metrics(self) -> str:
         return self._config.get(self.METRICS_AUTH_TOKEN_NAME, self._get_auth_token_default())
 
@@ -624,19 +607,19 @@ class Configuration:
 
     def _get_TLS_metrics(self) -> str:
         return self._endpoints.get(self.METRICS_ENDPOINT_NAME, self._get_TLS_default()).tls
-    
+
     def _get_TLS_tracing(self) -> str:
         return self._endpoints.get(self.TRACING_ENDPOINT_NAME, self._get_TLS_default()).tls
-    
+
     def _get_request_protocol_default(self) -> str:
         # will raise if there is no default protocol (means there is no default endpoint)
         return self._endpoints[self.DEFAULT_ENDPOINT_NAME]
-    
+
     def _get_request_protocol_logging(self) -> str:
         return self._endpoints.get(self.LOGGING_ENDPOINT_NAME, self._get_request_protocol_default()).protocol
-    
+
     def _get_request_protocol_metrics(self) -> str:
         return self._endpoints.get(self.METRICS_ENDPOINT_NAME, self._get_request_protocol_default()).protocol
-    
+
     def _get_request_protocol_tracing(self) -> str:
         return self._endpoints.get(self.TRACING_ENDPOINT_NAME, self._get_request_protocol_default()).protocol
