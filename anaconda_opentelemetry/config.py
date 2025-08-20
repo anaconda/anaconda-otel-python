@@ -23,7 +23,8 @@ class Configuration:
     """
     Configuration class to supply settings for Anaconda Telemetry. For environment variables make these capitalized and
     prepend with 'ATEL\\_' and remove suffix '\\_NAME'. For example, the environment variable for the default endpoint would
-    be 'ATEL_DEFAULT_ENDPOINT'. The environment variable for the logging endpoint would be 'ATEL_LOGGING_ENDPOINT'.
+    be 'ATEL_DEFAULT_ENDPOINT'. The environment variable for the logging endpoint would be 'ATEL_LOGGING_ENDPOINT'. The bool
+    values can be represented by "1", "yes", "true" case-insensitive and all other values are considered False.
 
     - DEFAULT_ENDPOINT_NAME - Name for the default endpoint in the configuration files or dictionaries passed into this class.
     - LOGGING_ENDPOINT_NAME - Name for the logging endpoint in the configuration files or dictionaries passed into this class.
@@ -39,6 +40,7 @@ class Configuration:
     - SESSION_ENTROPY_VALUE_NAME - Name for the session entropy value in the configuration files or dictionaries passed into this class.
     - TLS_PRIVATE_CA_CERT_FILE_NAME - File name for the TLS private CA certificate in the configuration files or dictionaries passed into this class.
     - SKIP_INTERNET_CHECK_NAME - If you are running in an environment that does not have access to the internet, set this to True.
+    - USE_CUMULATIVE_METRICS_NAME - If aggregating data in the client is required for Counter, or Histogram set this to a True state.
 
     To initializes the Configuration instance.
 
@@ -67,6 +69,7 @@ class Configuration:
     TRACING_CA_CERT_NAME            = 'tracing_credentials'
     METRICS_CA_CERT_NAME            = 'metrics_credentials'
     SKIP_INTERNET_CHECK_NAME        = 'skip_internet_check'
+    USE_CUMULATIVE_METRICS_NAME     = 'use_cumulative_metrics'
 
     _base_names: List[str] = [
         DEFAULT_ENDPOINT_NAME,
@@ -85,7 +88,8 @@ class Configuration:
         LOGGING_CA_CERT_NAME,
         TRACING_CA_CERT_NAME,
         METRICS_CA_CERT_NAME,
-        SKIP_INTERNET_CHECK_NAME
+        SKIP_INTERNET_CHECK_NAME,
+        USE_CUMULATIVE_METRICS_NAME
     ]
 
     _endpoint_names: List[str] = [
@@ -111,7 +115,8 @@ class Configuration:
 
     _bool_value_names: List[str] = [
         USE_CONSOLE_EXPORTER_NAME,
-        SKIP_INTERNET_CHECK_NAME
+        SKIP_INTERNET_CHECK_NAME,
+        USE_CUMULATIVE_METRICS_NAME
     ]
 
     _int_value_names: List[str] = [
@@ -435,6 +440,20 @@ class Configuration:
         self._config[self.SKIP_INTERNET_CHECK_NAME] = value
         return self
 
+    def set_use_cumulative_metrics(self, value: bool):
+        """
+        Sets the use of cumulative aggregation temporality if True. The default (False) is delta
+        (not aggregated).
+
+        Args:
+            value (bool): True turns on cumulative aggregation, False (the default) is to send
+            deltas (no aggregation).
+
+        Returns:
+            Self
+        """
+        self._config[self.USE_CUMULATIVE_METRICS_NAME] = value
+        return self
 
     class _Endpoint:
         def __init__(self, endpoint: str):
@@ -623,3 +642,6 @@ class Configuration:
 
     def _get_request_protocol_tracing(self) -> str:
         return self._endpoints.get(self.TRACING_ENDPOINT_NAME, self._get_request_protocol_default()).protocol
+
+    def _get_use_cumulative_metrics(self) -> bool:
+        return self._config.get(self.USE_CUMULATIVE_METRICS_NAME, False)

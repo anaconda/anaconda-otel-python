@@ -672,6 +672,14 @@ class TestAnacondaMetrics:
         assert result is True
         mock_metric.add.assert_called_once_with(-1, {})  # Default by=1, attributes={}
 
+    def test_preferred_temporality(self):
+        cfg = Config(default_endpoint="http://localhost/v1/metrics")
+        cfg.set_use_cumulative_metrics(True).set_console_exporter(True)
+        attr = Attributes("test-service", "1.0.0")
+        with patch('opentelemetry.metrics.set_meter_provider'):
+            metrics = AnacondaMetrics(cfg, attr)
+            assert metrics._cumulative_temporality == metrics._get_temporality()
+
 class MockHistogram(Histogram):
     def __init__(self):
         self.counter = 0

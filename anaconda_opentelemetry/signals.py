@@ -17,8 +17,8 @@ from contextlib import contextmanager
 from dataclasses import fields
 
 from opentelemetry import metrics
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
@@ -157,6 +157,22 @@ class _AnacondaMetrics(_AnacondaCommon):
     # Singleton instance (internal only); provide a single instance of the metrics class
     _instance = None
 
+    _default_temporality: dict[type,AggregationTemporality] = {
+        Counter: AggregationTemporality.DELTA,
+        ObservableCounter: AggregationTemporality.DELTA,
+        Histogram: AggregationTemporality.DELTA,
+        UpDownCounter: AggregationTemporality.CUMULATIVE,
+        ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
+    }
+
+    _cumulative_temporality: dict[type,AggregationTemporality] = {
+        Counter: AggregationTemporality.CUMULATIVE,
+        ObservableCounter: AggregationTemporality.CUMULATIVE,
+        Histogram: AggregationTemporality.CUMULATIVE,
+        UpDownCounter: AggregationTemporality.CUMULATIVE,
+        ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
+    }
+
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
 
@@ -184,7 +200,7 @@ class _AnacondaMetrics(_AnacondaCommon):
 
     def _setup_metrics(self, config: Config) -> metrics.Meter:
         if self.use_console_exporters:
-            exporter = ConsoleMetricExporter()
+            exporter = ConsoleMetricExporter(preferred_temporality=self._get_temporality())
         else:
             auth_token = config._get_auth_token_metrics()
             headers: Dict[str, str] = {}
@@ -196,12 +212,14 @@ class _AnacondaMetrics(_AnacondaCommon):
                 exporter = OTLPMetricExportergRPC(endpoint=self.metrics_endpoint,
                                         insecure=insecure,
                                         credentials=config._get_ca_cert_metrics() if not insecure else None,
-                                        headers=headers)
+                                        headers=headers,
+                                        preferred_temporality=self._get_temporality())
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
                 exporter = OTLPMetricExporterHTTP(endpoint=self.metrics_endpoint,
                                         certificate_file=config._get_ca_cert_metrics(),
-                                        headers=headers)
+                                        headers=headers,
+                                        preferred_temporality=self._get_temporality())
         metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
 
         # Create and set meter provider
@@ -215,6 +233,11 @@ class _AnacondaMetrics(_AnacondaCommon):
             self.logger.warning(f"The metrics provider was previously set and will take precidence over this call.")
         # Get meter for this service
         return metrics.get_meter(self.service_name, self.service_version)
+
+    def _get_temporality(self) -> dict[type,AggregationTemporality]:
+        if self._config._get_use_cumulative_metrics() == True:
+            return _AnacondaMetrics._cumulative_temporality
+        return _AnacondaMetrics._default_temporality
 
     def _check_for_metric(self, metric_name: str, metric_type: str) -> bool:
         bucket_list = self.type_list.get(metric_type, None)
@@ -493,7 +516,8 @@ def initialize_telemetry(config: Config,
 
 def re_initialize_telemetry(attributes: Attributes):
     """
-    Re-intialize th telemetry with new attributes, configuration and signal types are identical to the original initialize_telemetry() call.
+    Re-intialize the telemetry with new attributes. The configuration and signal types are identical
+    to the original initialize_telemetry() call.
 
     Args:
         attributes (ResourceAttributes, optional): A class containing common attributes. If provided,
