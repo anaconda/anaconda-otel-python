@@ -673,6 +673,9 @@ class TestAnacondaMetrics:
         mock_metric.add.assert_called_once_with(-1, {})  # Default by=1, attributes={}
 
     def test_preferred_temporality(self):
+        """
+        - Checks that the temporaity is cumulative when set by caller.
+        """
         cfg = Config(default_endpoint="http://localhost/v1/metrics")
         cfg.set_use_cumulative_metrics(True).set_console_exporter(True)
         attr = Attributes("test-service", "1.0.0")
