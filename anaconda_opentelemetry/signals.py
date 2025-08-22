@@ -11,7 +11,7 @@ signals) using OpenTelemetry. It includes classes for handling logging, metrics,
 tracing, as well as functions for initializing the telemetry system and recording metrics.
 """
 
-import logging, hashlib, re, socket
+import logging, hashlib, re, socket, os
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
 from dataclasses import fields
@@ -173,6 +173,11 @@ class _AnacondaMetrics(_AnacondaCommon):
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
     }
 
+    _temporalityValue: dict[bool,str] = {
+        False: "DELTA",
+        True: "CUMULATIVE"
+    }
+
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
 
@@ -193,12 +198,23 @@ class _AnacondaMetrics(_AnacondaCommon):
             'simple_up_down_counter': self.up_down_counter_objects,
             'histogram': self.histogram_objects
         }
+        self.metric_reader: PeriodicExportingMetricReader = None
 
     def tear_down(self):
-        # TODO: flush and shutdown
+        if self.metric_reader is not None:
+            self.metric_reader.force_flush()
+            self.metric_reader.shutdown()
+            self.metric_reader = None
+
         _AnacondaMetrics._instance = None
 
+    def _setTemporalityEnvVar(self):
+        current = os.environ.get("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", '')
+        if current.lower() not in ['delta', 'cumulative', 'lowmemory']:
+            os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = _AnacondaMetrics._temporalityValue[self._config._get_use_cumulative_metrics()]
+
     def _setup_metrics(self, config: Config) -> metrics.Meter:
+        self._setTemporalityEnvVar()
         if self.use_console_exporters:
             exporter = ConsoleMetricExporter(preferred_temporality=self._get_temporality())
         else:
@@ -220,12 +236,12 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         certificate_file=config._get_ca_cert_metrics(),
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
-        metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
+        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
 
         # Create and set meter provider
         meter_provider = MeterProvider(
             resource=self.resource,
-            metric_readers=[metric_reader]
+            metric_readers=[self.metric_reader]
         )
         try:
             metrics.set_meter_provider(meter_provider)
