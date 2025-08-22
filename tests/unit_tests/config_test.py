@@ -15,7 +15,7 @@ class TestConfiguration:
         without={}
         has={Config.DEFAULT_ENDPOINT_NAME: 'grpc://localhost:4318'}
 
-        config1 = Config(default_endpoint='https://localhost:4317', config_dict=has)
+        config1 = Config(default_endpoint='https://localhost:4317', default_auth_token="SomeAuthToken", default_private_ca_cert_file='/tmp/cert', config_dict=has)
         assert 'https://localhost:4317' == config1._get_default_endpoint()
         config2 = Config(config_dict=has)
         assert 'grpc://localhost:4318' == config2._get_default_endpoint()
@@ -66,9 +66,9 @@ class TestConfiguration:
             Config(default_endpoint="http://127.0.0.255:1812")  # last quad cannot be ==255.
 
         cfg = Config(default_endpoint="http://localhost:2345")
-        cfg.set_logging_endpoint('http://localhost:2346')
-        cfg.set_metrics_endpoint('http://localhost:2347')
-        cfg.set_tracing_endpoint('http://localhost:2348')
+        cfg.set_logging_endpoint('http://localhost:2346', auth_token='', cert_ca_file='')
+        cfg.set_metrics_endpoint('http://localhost:2347', auth_token='', cert_ca_file='')
+        cfg.set_tracing_endpoint('http://localhost:2348', auth_token='', cert_ca_file='')
 
         with pytest.raises(ValueError):
             cfg.set_logging_endpoint('http://localhost:80000')

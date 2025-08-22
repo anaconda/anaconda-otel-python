@@ -10,7 +10,7 @@ This module provides the configuration setting from a file or a dictionary (or b
 """
 
 from typing import Dict, Any, List
-import re, os, grpc
+import re, os, grpc, warnings, functools
 
 
 """
@@ -18,6 +18,20 @@ Configuration class to supply settings for Anaconda Telemetry.
 It allows loading configuration from a JSON or YAML file, or from a dictionary.
 It validates the format of endpoints and ensures they conform to the expected structure.
 """
+
+
+def deprecated(func):
+    """This is a decorator to mark functions as deprecated."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        warnings.warn(
+            f"{func.__name__} is deprecated and will be removed in a future version.",
+            category=DeprecationWarning,
+            stacklevel=2
+        )
+        return func(*args, **kwargs)
+    return wrapper
+
 
 class Configuration:
     """
@@ -123,13 +137,29 @@ class Configuration:
         METRICS_EXPORT_INTERVAL_MS_NAME
     ]
 
-    def __init__(self, default_endpoint: str = None, config_dict: Dict[str, Any] = {}):
+    def __init__(self, default_endpoint: str = None, default_auth_token: str = None,
+                 default_private_ca_cert_file: str = None, config_dict: Dict[str, Any] = {}):
+        """
+        Creates the configuration object passed to initialize_telemetry.
+
+        Args:
+            default_endpoint (str): The endpoint used when not specifying a specific endpoint for a specific signal type. May be None.
+            default_auth_token (str): The default auth token use for the default_endpoint or None.
+            default_private_ca_cert_file (str): File name for the private cert file if used or None. Not used frequently.
+            config_dict (Dict[str,any]): An initialization map to configure the object in bulk or {}.
+        """
         self._config: Dict[str, Any] = {}
         self._config.update(config_dict)
 
         if default_endpoint is not None:
             endpoint = self._Endpoint(default_endpoint)
             self._config[self.DEFAULT_ENDPOINT_NAME] = endpoint.url
+
+        if default_auth_token is not None:
+            self._config[self.DEFAULT_AUTH_TOKEN_NAME] = default_auth_token
+
+        if default_private_ca_cert_file is not None:
+            self._config[self.DEFAULT_CA_CERT_NAME] = default_private_ca_cert_file
 
         # Merge environment variables into the config
         for base_name in self._base_names:
@@ -170,13 +200,15 @@ class Configuration:
 
         self._metric_defs: Dict[str,Configuration._MetricInfo] = {}
 
-    def set_logging_endpoint(self, endpoint: str):
+    def set_logging_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
         Sets the logging endpoint. If passed in a dict in the constructor, use predefined name
         LOGGING_ENDPOINT_NAME. if not set, the default endpoint will be used.
 
         Args:
             endpoint (str): Logging endpoint in the form '<IPv4|domain_name>:<port>'.
+            auth_token (str): Bearer auth token for the logging endpoint or None.
+            cert_ca_file (str): Absolute file path to the private cert file for logging or None. Rarely used.
 
         Returns:
             Self
@@ -187,15 +219,22 @@ class Configuration:
         logging_endpoint = self._Endpoint(endpoint)
         self._config[self.LOGGING_ENDPOINT_NAME] = logging_endpoint.url
         self._endpoints[self.LOGGING_ENDPOINT_NAME] = logging_endpoint
+        if auth_token is not None:
+            self._config[self.LOGGING_AUTH_TOKEN_NAME] = auth_token
+        if cert_ca_file is not None:
+            self._config[self.LOGGING_CA_CERT_NAME] = cert_ca_file
+
         return self
 
-    def set_tracing_endpoint(self, endpoint: str):
+    def set_tracing_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
         Sets the tracing endpoint. If passed in a dict in the constructor, use predefined name
         TRACING_ENDPOINT_NAME. If not set, the default endpoint is used.
 
         Args:
             endpoint (str): Tracing endpoint in the form '<IPv4|domain_name>:<port>'.
+            auth_token (str): Bearer auth token for the tracing endpoint or None.
+            cert_ca_file (str): Absolute file path to the private cert file for tracing or None. Rarely used.
 
         Returns:
             Self
@@ -206,15 +245,21 @@ class Configuration:
         tracing_endpoint = self._Endpoint(endpoint)
         self._config[self.TRACING_ENDPOINT_NAME] = tracing_endpoint.url
         self._endpoints[self.TRACING_ENDPOINT_NAME] = tracing_endpoint
+        if auth_token is not None:
+            self._config[self.TRACING_AUTH_TOKEN_NAME] = auth_token
+        if cert_ca_file is not None:
+            self._config[self.TRACING_CA_CERT_NAME] = cert_ca_file
         return self
 
-    def set_metrics_endpoint(self, endpoint: str):
+    def set_metrics_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
         Sets the metrics endpoint. If passed in a dict in the constructor, use predefined name
         METRICS_ENDPOINT_NAME. If not set, the default endpoint will be used.
 
         Args:
             endpoint (str): Metrics endpoint in the form '<IPv4|domain_name>:<port>'.
+            auth_token (str): Bearer auth token for the metrics endpoint or None.
+            cert_ca_file (str): Absolute file path to the private cert file for metrics or None. Rarely used.
 
         Returns:
             Self
@@ -225,6 +270,10 @@ class Configuration:
         metrics_endpoint = self._Endpoint(endpoint)
         self._config[self.METRICS_ENDPOINT_NAME] = metrics_endpoint.url
         self._endpoints[self.METRICS_ENDPOINT_NAME] = metrics_endpoint
+        if auth_token is not None:
+            self._config[self.METRICS_AUTH_TOKEN_NAME] = auth_token
+        if cert_ca_file is not None:
+            self._config[self.METRICS_CA_CERT_NAME] = cert_ca_file
         return self
 
     def set_console_exporter(self, use_console: bool = True):
@@ -245,6 +294,7 @@ class Configuration:
         self._config[self.USE_CONSOLE_EXPORTER_NAME] = use_console
         return self
 
+    @deprecated
     def set_auth_token(self, auth_token: str):
         """
         Sets the default authentication token for the endpoints (default endpoint). It is a fallback for all endpoints (default, logging,
@@ -260,6 +310,7 @@ class Configuration:
         self._config[self.DEFAULT_AUTH_TOKEN_NAME] = auth_token
         return self
 
+    @deprecated
     def set_auth_token_logging(self, auth_token: str):
         """
         Sets the authentication token for the logging endpoint. If passed in a dict in the constructor, use predefined name
@@ -274,6 +325,7 @@ class Configuration:
         self._config[self.LOGGING_AUTH_TOKEN_NAME] = auth_token
         return self
 
+    @deprecated
     def set_auth_token_tracing(self, auth_token: str):
         """
         Sets the authentication token for the tracing endpoint. If passed in a dict in the constructor, use predefined name
@@ -288,6 +340,7 @@ class Configuration:
         self._config[self.TRACING_AUTH_TOKEN_NAME] = auth_token
         return self
 
+    @deprecated
     def set_auth_token_metrics(self, auth_token: str):
         """
         Sets the authentication token for the metrics endpoint. If passed in a dict in the constructor, use predefined name
@@ -302,6 +355,7 @@ class Configuration:
         self._config[self.METRICS_AUTH_TOKEN_NAME] = auth_token
         return self
 
+    @deprecated
     def set_tls_private_ca_cert(self, cert_file: str):
         """
         TLS certificate used for default endpoint only.
@@ -320,6 +374,7 @@ class Configuration:
         self._config[self.DEFAULT_CA_CERT_NAME] = cert_file
         return self
 
+    @deprecated
     def set_tls_private_ca_cert_logging(self, cert_file: str):
         """
         TLS certificate used for logging endpoint only.
@@ -338,6 +393,7 @@ class Configuration:
         self._config[self.LOGGING_CA_CERT_NAME] = cert_file
         return self
 
+    @deprecated
     def set_tls_private_ca_cert_tracing(self, cert_file: str):
         """
         TLS certificate used for tracing endpoint only.
@@ -356,6 +412,7 @@ class Configuration:
         self._config[self.TRACING_CA_CERT_NAME] = cert_file
         return self
 
+    @deprecated
     def set_tls_private_ca_cert_metrics(self, cert_file: str):
         """
         TLS certificate used for metrics endpoint only.
