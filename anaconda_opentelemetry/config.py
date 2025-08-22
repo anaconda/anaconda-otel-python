@@ -445,6 +445,9 @@ class Configuration:
         Sets the use of cumulative aggregation temporality if True. The default (False) is delta
         (not aggregated).
 
+        Please Note, the underlying OTel API may or may not support setting DELTA. It is recommended
+        that the collector do the conversion from cumulative to delta.
+
         Args:
             value (bool): True turns on cumulative aggregation, False (the default) is to send
             deltas (no aggregation).
