@@ -208,13 +208,7 @@ class _AnacondaMetrics(_AnacondaCommon):
 
         _AnacondaMetrics._instance = None
 
-    def _setTemporalityEnvVar(self):
-        current = os.environ.get("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", '')
-        if current.lower() not in ['delta', 'cumulative', 'lowmemory']:
-            os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = _AnacondaMetrics._temporalityValue[self._config._get_use_cumulative_metrics()]
-
     def _setup_metrics(self, config: Config) -> metrics.Meter:
-        self._setTemporalityEnvVar()
         if self.use_console_exporters:
             exporter = ConsoleMetricExporter(preferred_temporality=self._get_temporality())
         else:
