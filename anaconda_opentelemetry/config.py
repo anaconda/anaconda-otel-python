@@ -21,7 +21,7 @@ It validates the format of endpoints and ensures they conform to the expected st
 
 
 def deprecated(func):
-    """This is a decorator to mark functions as deprecated."""
+    # This is a decorator to mark functions as deprecated.
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         warnings.warn(
