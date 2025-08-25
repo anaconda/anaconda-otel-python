@@ -347,3 +347,8 @@ class TestConfiguration:
         cfg = Config(default_endpoint="grpcs://localhost")
         creds = cfg._prepare_ca_cert('grpcs', None) is None
         assert creds is not None
+
+    def test_cumulative_metrics(self):
+        cfg = Config(default_endpoint="grpcs://localhost")
+        cfg.set_use_cumulative_metrics(True)
+        assert cfg._get_use_cumulative_metrics() == True
