@@ -150,7 +150,7 @@ class _AnacondaLogger(_AnacondaCommon):
         return levels.get(str_level.lower(), logging.DEBUG)
 
     def _test_set_console_mock(self, new_out):  # For testing only...
-        if self._console_exporter is not None:
+        if self._console_exporter is not None and new_out is not None:
             saved = self._console_exporter.out
             self._console_exporter.out = new_out
             return saved

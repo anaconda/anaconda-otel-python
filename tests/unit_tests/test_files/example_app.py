@@ -147,9 +147,12 @@ def simulate_log() -> str:
 
     # Force flush logs to ensure they're written to our StringIO
     inst._provider.force_flush()
-    if saved is not None:
-        inst._test_set_console_mock(saved)
+
+    # Restore logger state
+    inst._test_set_console_mock(saved)
     example.remove_handler()
+
+    # return outout as a string
     return mock_out.getvalue()
 
 def simulate_trace() -> str:
