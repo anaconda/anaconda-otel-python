@@ -130,9 +130,6 @@ def simulate_metric() -> str:
     return mock_out.getvalue()
 
 def simulate_log() -> str:
-    from opentelemetry.sdk._logs import LoggingHandler
-    from opentelemetry.sdk._logs.export import ConsoleLogExporter, BatchLogRecordProcessor
-
     # Create ExampleApp with logging enabled
     example = ExampleApp(use_console_exporter=True)
 
