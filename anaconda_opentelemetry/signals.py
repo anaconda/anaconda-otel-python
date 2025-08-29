@@ -105,11 +105,12 @@ class _AnacondaLogger(_AnacondaCommon):
         self.logger_endpoint = config._get_logging_endpoint()
 
         # Create logger provider
-        provider = LoggerProvider(resource=self.resource)
-
+        self._provider = LoggerProvider(resource=self.resource)
+        self._console_exporter: ConsoleLogExporter | None = None
         # Add OTLP exporter
         if self.use_console_exporters:
             exporter = ConsoleLogExporter()
+            self._console_exporter = exporter
         else:
             auth_token = config._get_auth_token_logging()
             headers: Dict[str, str] = {}
@@ -128,15 +129,11 @@ class _AnacondaLogger(_AnacondaCommon):
                                         certificate_file=config._get_ca_cert_logging(),
                                         headers=headers)
         self._exporter = exporter
-        provider.add_log_record_processor(
-            BatchLogRecordProcessor(
-                exporter
-            )
-        )
-        self._handler = LoggingHandler(level=self.log_level, logger_provider=provider)
+        self._processor = BatchLogRecordProcessor(self._exporter)
+        self._provider.add_log_record_processor(self._processor)
+        self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
 
     def tear_down(self):
-        # TODO: flush and shutdown
         _AnacondaLogger._instance = None
 
     def _get_log_level(self, str_level: str)-> int:
@@ -152,6 +149,12 @@ class _AnacondaLogger(_AnacondaCommon):
         }
         return levels.get(str_level.lower(), logging.DEBUG)
 
+    def _test_set_console_mock(self, new_out):  # For testing only...
+        if self._console_exporter is not None and new_out is not None:
+            saved = self._console_exporter.out
+            self._console_exporter.out = new_out
+            return saved
+        return None
 
 class _AnacondaMetrics(_AnacondaCommon):
     # Singleton instance (internal only); provide a single instance of the metrics class

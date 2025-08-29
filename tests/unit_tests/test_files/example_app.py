@@ -16,7 +16,8 @@ from anaconda_opentelemetry.signals import (
     record_histogram,
     increment_counter,
     get_trace,
-    _is_first_time
+    _is_first_time,
+    _AnacondaLogger
 )
 
 # Configure logging
@@ -56,11 +57,11 @@ class ExampleApp:
             initialize_telemetry(config, attrs, signal_types=["logging", "tracing", "metrics"])
         else:
             re_initialize_telemetry(attrs)
+        # inject logger
+        logger.addHandler(get_telemetry_logger_handler())
 
-        if first_time:
-            # inject logger
-            log = logging.getLogger()
-            log.addHandler(get_telemetry_logger_handler())
+    def remove_handler(self):
+        logger.removeHandler(get_telemetry_logger_handler())
 
     def export_log(self) -> None:
         """Simulate a user request with various telemetry signals."""
@@ -129,56 +130,26 @@ def simulate_metric() -> str:
     return mock_out.getvalue()
 
 def simulate_log() -> str:
-    from opentelemetry.sdk._logs import LoggingHandler
-    from opentelemetry.sdk._logs.export import ConsoleLogExporter, BatchLogRecordProcessor
-
     # Create ExampleApp with logging enabled
     example = ExampleApp(use_console_exporter=True)
 
     # Create a StringIO object to capture output
     mock_out = StringIO()
-    exporter_found = False
-
-    # Get the root logger
-    root_logger = logging.getLogger()
 
     # Find the LoggingHandler
-    for handler in root_logger.handlers:
-        if isinstance(handler, LoggingHandler):
-            # Access the logger provider
-            logger_provider = handler._logger_provider
-            # The logger provider should have _multi_log_record_processor list
-            if hasattr(logger_provider, '_multi_log_record_processor'):
-                # Iterate through the log record processors
-                processors = logger_provider._multi_log_record_processor._log_record_processors
-                for processor in processors:
-                    if isinstance(processor, BatchLogRecordProcessor):
-                        # Access the exporter through the processor
-                        if hasattr(processor, '_exporter'):
-                            exporter = processor._exporter
-                            if isinstance(exporter, ConsoleLogExporter):
-                                # Replace its out attribute
-                                exporter.out = mock_out
-                                exporter_found = True
-                                break
+    inst: _AnacondaLogger = _AnacondaLogger._instance
+    saved = inst._test_set_console_mock(mock_out)
 
-            if exporter_found:
-                break
-
-    if not exporter_found:
-        raise RuntimeError("ConsoleLogExporter not found in log record processors")
-
-    # Send a log to stdout
     example.export_log()
 
     # Force flush logs to ensure they're written to our StringIO
-    for handler in root_logger.handlers:
-        if isinstance(handler, LoggingHandler):
-            logger_provider = handler._logger_provider
-            if hasattr(logger_provider, 'force_flush'):
-                logger_provider.force_flush()
-            break
+    inst._provider.force_flush()
 
+    # Restore logger state
+    inst._test_set_console_mock(saved)
+    example.remove_handler()
+
+    # return outout as a string
     return mock_out.getvalue()
 
 def simulate_trace() -> str:
