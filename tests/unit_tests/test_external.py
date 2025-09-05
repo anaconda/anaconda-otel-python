@@ -7,7 +7,7 @@ sys.path.append("./")
 import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
 import anaconda_opentelemetry.signals as signals_package
-from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, decrement_counter, get_trace, get_telemetry_logger_handler
+from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized
 from anaconda_opentelemetry.signals import __check_internet_status as check_internet
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -507,10 +507,18 @@ class TestRecordHistogram:
         # Set up initialized state
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
-        mock_metrics_instance.record_histogram.side_effect = RuntimeError("Metrics system error")
+        mock_metrics_instance.record_histogram.side_effect = MetricsNotInitialized("Metrics system error")
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         assert False == record_histogram("exception_test", 100.0)
+
+        # For uncaught exceptions...
+        mock_metrics_instance.record_histogram.side_effect = RuntimeError("Metrics system error")
+        assert False == record_histogram("exception_test2", 100.0)
+        mock_metrics_instance.increment_counter.side_effect = RuntimeError("Metrics system error")
+        assert False == increment_counter("exception_test3")
+        mock_metrics_instance.decrement_counter.side_effect = RuntimeError("Metrics system error")
+        assert False == decrement_counter("exception_test4")
 
     def test_uninitialized_with_various_parameters(self):
         """
@@ -658,7 +666,7 @@ class TestIncrementCounter:
         # Set up initialized state
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
-        mock_metrics_instance.increment_counter.side_effect = RuntimeError("Counter system error")
+        mock_metrics_instance.increment_counter.side_effect = MetricsNotInitialized("Counter system error")
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         assert False == increment_counter("exception_test", by=1)
@@ -835,7 +843,7 @@ class TestDecrementCounter:
         # Set up initialized state
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
-        mock_metrics_instance.decrement_counter.side_effect = RuntimeError("Counter system error")
+        mock_metrics_instance.decrement_counter.side_effect = MetricsNotInitialized("Counter system error")
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         assert False == decrement_counter("exception_test", by=1)
