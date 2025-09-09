@@ -12,6 +12,7 @@ tracing, as well as functions for initializing the telemetry system and recordin
 """
 
 import logging, hashlib, re, socket, json
+from abc import ABC
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
 from dataclasses import fields
@@ -35,6 +36,11 @@ from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 # Limited Dict for attributes in OTel
 Scalar = Union[str, bool, int, float]
 AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
+
+
+class MetricsNotInitialized(RuntimeError):
+    pass
+
 
 class _AnacondaCommon:
     # Base class for common attributes and methods (internal only)
@@ -156,6 +162,7 @@ class _AnacondaLogger(_AnacondaCommon):
             return saved
         return None
 
+
 class _AnacondaMetrics(_AnacondaCommon):
     # Singleton instance (internal only); provide a single instance of the metrics class
     _instance = None
@@ -261,7 +268,7 @@ class _AnacondaMetrics(_AnacondaCommon):
     def _get_or_create_metric(self, metric_name: str, metric_type: str = 'simple_up_down_counter', units: str = '#', description='No description.') -> Any:
         bucket_list = self.type_list.get(metric_type, None)
         if bucket_list is None:
-            raise RuntimeError(f"Metric type '{metric_type}' is unknown!")
+            raise MetricsNotInitialized(f"Metric type '{metric_type}' is unknown!")
         metric = bucket_list.get(metric_name, None)
         if metric is None:
             if not re.fullmatch(r"^[A-Za-z][A-Za-z_0-9]+$", metric_name):
@@ -312,7 +319,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         metric.add(-abs(by), attributes)
         return True
 
-from abc import ABC
+
 class ASpan(ABC):
     """
     Abstract base class for a span in the tracing system. This class should not be instantiated directly.
@@ -354,6 +361,7 @@ class ASpan(ABC):
             attributes (dict): A dictionary of attributes to add for the span.
         """
         pass
+
 
 class _ASpan(ASpan):
     # A single class for the tracing yielded return value.
@@ -456,6 +464,7 @@ class _AnacondaTrace(_AnacondaCommon):
             context = get_global_textmap().extract(carrier)
         span = self.tracer.start_span(name, context=context, attributes=attributes)
         return _ASpan(name, span, attributes=attributes)
+
 
 # Internet and endpoint access check method
 def __check_internet_status(config: Config, timeout: float = 5.0) -> tuple[bool,bool]: # seconds max to pause....
@@ -596,7 +605,6 @@ def re_initialize_telemetry(attributes: Attributes):
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
 
-
 def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
     """
     Records a increasing only metric with the given name and value. The value will
@@ -616,8 +624,11 @@ def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
         return False
     try:
         return _AnacondaMetrics._instance.record_histogram(metric_name, value, attributes)
-    except:
+    except MetricsNotInitialized as me:
         logging.getLogger(__package__).warning(f"An attempt was made to record a histogram metric when metrics were not configured.")
+        return False
+    except Exception as e:
+        logging.getLogger(__package__).error(f"UNCAUGHT EXCEPTION:\n{e}")
         return False
 
 def increment_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
@@ -637,8 +648,11 @@ def increment_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         return False
     try:
         return _AnacondaMetrics._instance.increment_counter(counter_name, by, attributes)
-    except:
+    except MetricsNotInitialized as me:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
+        return False
+    except Exception as e:
+        logging.getLogger(__package__).error(f"UNCAUGHT EXCEPTION:\n{e}")
         return False
 
 def decrement_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
@@ -658,8 +672,11 @@ def decrement_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         return False
     try:
         return _AnacondaMetrics._instance.decrement_counter(counter_name, by, attributes)
-    except:
+    except MetricsNotInitialized as me:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
+        return False
+    except Exception as e:
+        logging.getLogger(__package__).error(f"UNCAUGHT EXCEPTION:\n{e}")
         return False
 
 @contextmanager
