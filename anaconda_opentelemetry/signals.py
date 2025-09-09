@@ -11,7 +11,7 @@ signals) using OpenTelemetry. It includes classes for handling logging, metrics,
 tracing, as well as functions for initializing the telemetry system and recording metrics.
 """
 
-import logging, hashlib, re, socket, os
+import logging, hashlib, re, socket, json
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
 from dataclasses import fields
@@ -64,8 +64,8 @@ class _AnacondaCommon:
         self.service_name = resource_attrs["service_name"]
         self.service_version = resource_attrs["service_version"]
         del resource_attrs["service_name"], resource_attrs["service_version"]
-        # cast parameters value to string
-        resource_attrs["parameters"] = str(resource_attrs["parameters"])
+        # convert parameters value to stringified JSON
+        resource_attrs["parameters"] = json.dumps(resource_attrs["parameters"])
         # Init resource_attributes
         self._resource_attributes = {
                 SERVICE_NAME: self.service_name,
