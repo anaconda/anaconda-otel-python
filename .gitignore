@@ -180,7 +180,5 @@ cython_debug/
 .vscode/
 .cursorrules
 
-################# Typescript
-**/node_modules
-# ignore compiled js files used for testing
-/typescript/src/*.js
+# specific test file to ignore
+telemetry_test.py
