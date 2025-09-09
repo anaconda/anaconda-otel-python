@@ -108,7 +108,7 @@ class ResourceAttributes:
         # check for valid environment
         valid_environments = {"", "test", "development", "staging", "production"}
         
-        # enforece lowercase
+        # enforce lowercase
         self.environment = self.environment.strip().lower()
         if self.environment not in valid_environments:
             logging.getLogger(__package__).warning(f"Invalid environment value `{self.environment}`, setting to empty string. Envrionment must be in {valid_environments}")

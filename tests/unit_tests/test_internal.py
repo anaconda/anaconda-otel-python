@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Anaconda, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-import sys, time
+import sys, time, json
 sys.path.append("./")
 
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -67,6 +67,7 @@ class TestAnacondaCommon:
         service_name = "test-service"
         service_version = "1.0.0"
         attributes = Attributes(service_name, service_version)
+        attributes.set_attributes(foo="test")
         attributes.user_id == TestAnacondaCommon.user_id
         # initialize class for testing
         instance = AnacondaTelBase(config, attributes)
@@ -180,6 +181,12 @@ class TestAnacondaCommon:
         - Checks that the resource created by AnacondaCommon is of type Resource
         """
         assert isinstance(AnacondaCommon.resource, Resource) is True
+
+    def test_json_stringify_on_parameters(self, AnacondaCommon: AnacondaTelBase):
+        """
+        - Checks that the resource attribute parameters is JSON stringified
+        """
+        assert AnacondaCommon._resource_attributes['parameters'] == json.dumps({"foo": "test"})
 
 
 class TestAnacondaLogger:
