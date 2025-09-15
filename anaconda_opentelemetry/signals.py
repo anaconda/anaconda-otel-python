@@ -240,7 +240,7 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         certificate_file=config._get_ca_cert_metrics(),
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
-        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
+        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis, export_timeout_millis=11000)
 
         # Create and set meter provider
         meter_provider = MeterProvider(

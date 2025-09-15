@@ -4,10 +4,11 @@
 
 # attributes.py
 
-import logging, platform, re
+import logging, platform, re, requests, threading
 from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
+from .signals import re_initialize_telemetry
 
 @dataclass
 class ResourceAttributes:
@@ -159,3 +160,53 @@ class ResourceAttributes:
                 self.parameters[str(kwarg)] = str(kwargs[kwarg])
 
         return self
+    
+    def get_ip_info(self, ipv4=True, ipv6=True) -> Tuple[str, str]:
+        """
+        Uses publicly available services to obtain public IPv4 and """
+        def fetch_ip():          
+            # IPv4 services
+            ipv4_services = [
+                "http://localhost:5000/v1/metrics"
+                # 'https://api.ipify.org?format=json',
+                # 'https://ipinfo.io/json'
+            ]
+            
+            # IPv6 services
+            ipv6_services = [
+                "http://localhost:5000/v1/metrics"
+                # 'https://api64.ipify.org?format=json',
+                # 'https://v6.ipinfo.io/json'
+            ]
+            
+            thread.result = {'ipv4': None, 'ipv6': None}
+            
+            # Try IPv4
+            for service in ipv4_services:
+                try:
+                    response = requests.get(service, timeout=5)
+                    data = response.json()
+                    ip = data.get('ip') or data.get('query')
+                    if ip and ':' not in ip:  # Ensure it's IPv4
+                        thread.result['ipv4'] = ip
+                        break
+                except Exception as e:
+                    continue
+            
+            # Try IPv6
+            for service in ipv6_services:
+                try:
+                    response = requests.get(service, timeout=5)
+                    data = response.json()
+                    # Different services use different field names
+                    ip = data.get('ip') or data.get('ip_addr') or data.get('ipv6')
+                    if ip and ':' in ip:  # Ensure it's IPv6
+                        thread.result['ipv6'] = ip
+                        break
+                except Exception as e:
+                    continue
+                    
+        thread = threading.Thread(target=fetch_ip, name="IP-Checker")
+        thread.result = None
+        thread.start()
+        return thread
