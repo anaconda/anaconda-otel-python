@@ -163,15 +163,13 @@ class ResourceAttributes:
 def get_public_ip(attributes: ResourceAttributes, IPv4=True, IPv6=True):
     """Get public IPs synchronously (runs in Telemetry-Init thread)"""  
     ipv4_services = [
-        'http://localhost:5000/v1/metrics',
-        #'https://api.ipify.org?format=json',
-        #'https://ipinfo.io/json',
+        'https://api.ipify.org?format=json',
+        'https://ipinfo.io/json',
     ]
     
     ipv6_services = [
-        'http://localhost:5000/v1/metrics',
-        #'https://v6.ipinfo.io/json',
-        #'https://api6.ipify.org?format=json'
+        'https://v6.ipinfo.io/json',
+        'https://api6.ipify.org?format=json'
     ]
     
     result = {'ipv4': None, 'ipv6': None}
