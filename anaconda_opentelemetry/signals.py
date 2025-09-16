@@ -599,7 +599,6 @@ def re_initialize_telemetry(attributes: Attributes, collect_IP: bool = False, IP
 
     # check for IP if enabled
     if collect_IP:
-        print("Checking public IP")
         get_public_ip(attributes, IPv4=IPv4, IPv6=IPv6)
 
     # all params are the same currently so only write them once
@@ -647,7 +646,6 @@ def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        print("Exporting histogram")
         return _AnacondaMetrics._instance.record_histogram(metric_name, value, attributes)
     except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to record a histogram metric when metrics were not configured.")
