@@ -11,7 +11,7 @@ signals) using OpenTelemetry. It includes classes for handling logging, metrics,
 tracing, as well as functions for initializing the telemetry system and recording metrics.
 """
 
-import logging, hashlib, re, socket, json, threading
+import logging, hashlib, re, socket, json
 from abc import ABC
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
@@ -38,10 +38,10 @@ from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 Scalar = Union[str, bool, int, float]
 AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
 
+TEL_INIT_THREAD_NAME = "Telemetry-Init"
 
 class MetricsNotInitialized(RuntimeError):
     pass
-
 
 class _AnacondaCommon:
     # Base class for common attributes and methods (internal only)
@@ -139,6 +139,7 @@ class _AnacondaLogger(_AnacondaCommon):
         self._processor = BatchLogRecordProcessor(self._exporter)
         self._provider.add_log_record_processor(self._processor)
         self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
+        print("DONE INITING LOGGING")
 
     def tear_down(self):
         _AnacondaLogger._instance = None
@@ -213,7 +214,7 @@ class _AnacondaMetrics(_AnacondaCommon):
     def tear_down(self):
         if self.metric_reader is not None:
             self.metric_reader.force_flush()
-            self.metric_reader.shutdown(timeout_millis=500)
+            self.metric_reader.shutdown()
             self.metric_reader = None
 
         _AnacondaMetrics._instance = None
@@ -240,14 +241,14 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         certificate_file=config._get_ca_cert_metrics(),
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
-        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis, export_timeout_millis=11000)
+        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
         # Create and set meter provider
-        self.meter_provider = MeterProvider(
+        meter_provider = MeterProvider(
             resource=self.resource,
             metric_readers=[self.metric_reader]
         )
         try:
-            metrics.set_meter_provider(self.meter_provider)
+            metrics.set_meter_provider(meter_provider)
         except Exception as e:
             self.logger.warning(f"The metrics provider was previously set and will take precidence over this call.")
         # Get meter for this service
@@ -507,7 +508,8 @@ def initialize_telemetry(config: Config,
                          IPv4: bool = True,
                          IPv6: bool = True):
     """
-    Initializes the telemetry system.
+    Initializes the telemetry system. Currently if collect_IP is True the main thread will be blocked by the requests sent
+    to gather IP. There is work in flight to improve this to become non-blocking.
 
     Args:
         service_name (str): The name of the service.
@@ -541,16 +543,7 @@ def initialize_telemetry(config: Config,
     __CONFIG = config
     __SIGNALS = signal_types
 
-    # Start in background and return immediately
-    thread = threading.Thread(
-        target=re_initialize_telemetry,
-        args=[attributes],
-        kwargs={'collect_IP': collect_IP, 'IPv4': IPv4, 'IPv6': IPv6},
-        name="Telemetry-Init",
-        daemon=True
-    )
-    thread.start()
-    # re_initialize_telemetry(attributes, collect_IP=collect_IP, IPv4=IPv4, IPv6=IPv6)
+    re_initialize_telemetry(attributes, collect_IP=collect_IP, IPv4=IPv4, IPv6=IPv6)
 
 def re_initialize_telemetry(attributes: Attributes, collect_IP: bool = False, IPv4: bool = True, IPv6: bool = True):
     """
