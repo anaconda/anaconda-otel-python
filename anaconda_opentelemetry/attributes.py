@@ -4,7 +4,7 @@
 
 # attributes.py
 
-import logging, platform, re
+import logging, platform, re, requests
 from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
@@ -159,3 +159,45 @@ class ResourceAttributes:
                 self.parameters[str(kwarg)] = str(kwargs[kwarg])
 
         return self
+    
+def get_public_ip(attributes: ResourceAttributes, IPv4=True, IPv6=True):
+    """Get public IPs synchronously (runs in Telemetry-Init thread)"""  
+    ipv4_services = [
+        'https://api.ipify.org?format=json',
+        'https://ipinfo.io/json',
+    ]
+    
+    ipv6_services = [
+        'https://v6.ipinfo.io/json',
+        'https://api6.ipify.org?format=json'
+    ]
+    
+    result = {'ipv4': None, 'ipv6': None}
+    
+    # Try IPv4
+    if IPv4:
+        for service in ipv4_services:
+            try:
+                response = requests.get(service, timeout=2)
+                data = response.json()
+                ip = data.get('ip') or data.get('query')
+                if ip and ':' not in ip:
+                    result['ipv4'] = ip
+                    break
+            except Exception:
+                pass
+    
+    # Try IPv6
+    if IPv6:
+        for service in ipv6_services:
+            try:
+                response = requests.get(service, timeout=2)
+                data = response.json()
+                ip = data.get('ip') or data.get('ipv6')
+                if ip and ':' in ip:
+                    result['ipv6'] = ip
+                    break
+            except Exception:
+                pass
+    
+    attributes.set_attributes(IPv4_address=result['ipv4'], IPv6_address=result['ipv6'])

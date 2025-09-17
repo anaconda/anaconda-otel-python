@@ -31,16 +31,15 @@ from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
+from .attributes import get_public_ip
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
 # Limited Dict for attributes in OTel
 Scalar = Union[str, bool, int, float]
 AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
 
-
 class MetricsNotInitialized(RuntimeError):
     pass
-
 
 class _AnacondaCommon:
     # Base class for common attributes and methods (internal only)
@@ -208,7 +207,6 @@ class _AnacondaMetrics(_AnacondaCommon):
             'simple_up_down_counter': self.up_down_counter_objects,
             'histogram': self.histogram_objects
         }
-        self.metric_reader: PeriodicExportingMetricReader = None
 
     def tear_down(self):
         if self.metric_reader is not None:
@@ -241,7 +239,6 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
         self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
-
         # Create and set meter provider
         meter_provider = MeterProvider(
             resource=self.resource,
@@ -503,9 +500,13 @@ def _is_first_time():  # For testing only.
 # Exposed APIs
 def initialize_telemetry(config: Config,
                          attributes: Attributes = None,
-                         signal_types: List[str] = ['metrics']):  # Follows what the backend has implemented.
+                         signal_types: List[str] = ['metrics'],  # Follows what the backend has implemented.
+                         collect_IP: bool = False,
+                         IPv4: bool = True,
+                         IPv6: bool = True):
     """
-    Initializes the telemetry system.
+    Initializes the telemetry system. Currently if collect_IP is True the main thread will be blocked by the requests sent
+    to gather IP. There is work in flight to improve this to become non-blocking.
 
     Args:
         service_name (str): The name of the service.
@@ -516,6 +517,11 @@ def initialize_telemetry(config: Config,
             it will override any values shared with configuration file.
         signal_types (list, optional): List of metric types to initialize. Defaults to ['logging','metrics','tracing'].
             Supported values are 'logging', 'metrics', and 'tracing'. If an empty list is provided, no metrics will be initialized.
+        collect_IP (bool): whether or not to collect public IP data
+        IPv4 (bool): whether or not to collect the public IPv4 address of the end device 
+            Only applies if collect_IP is True
+        IPv6 (bool): whether or not to collect the public IPv6 address of the end device 
+            Only applies if collect_IP is True
 
     Raises:
         ValueError: If the config passed is None or the attributes passed are None.
@@ -534,9 +540,9 @@ def initialize_telemetry(config: Config,
     __CONFIG = config
     __SIGNALS = signal_types
 
-    re_initialize_telemetry(attributes)
+    re_initialize_telemetry(attributes, collect_IP=collect_IP, IPv4=IPv4, IPv6=IPv6)
 
-def re_initialize_telemetry(attributes: Attributes):
+def re_initialize_telemetry(attributes: Attributes, collect_IP: bool = False, IPv4: bool = True, IPv6: bool = True):
     """
     Re-intialize the telemetry with new attributes. The configuration and signal types are identical
     to the original initialize_telemetry() call.
@@ -544,6 +550,9 @@ def re_initialize_telemetry(attributes: Attributes):
     Args:
         attributes (ResourceAttributes, optional): A class containing common attributes. If provided,
             it will override any values shared with configuration file.
+        collect_IP (bool): whether or not to collect public IP data
+        IPv4 (bool): whether or not to collect the public IPv4 address of the end device (only applies if collect_IP is True)
+        IPv6 (bool): whether or not to collect the public IPv6 address of the end device (only applies if collect_IP is True)
 
     Raises:
         ValueError: If the attributes passed are None. Will throw exceptions
@@ -554,7 +563,7 @@ def re_initialize_telemetry(attributes: Attributes):
     global __CONFIG
 
     if _is_first_time():
-        raise RuntimeError("re_initialize_telemetry called without first calling initialize_telemetry first!")
+        raise RuntimeError("re_initialize_telemetry called without calling initialize_telemetry first!")
 
     if __ANACONDA_TELEMETRY_INITIALIZED:
         if 'metrics' in __SIGNALS and _AnacondaMetrics._instance is not None:
@@ -575,8 +584,12 @@ def re_initialize_telemetry(attributes: Attributes):
     elif type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
 
-    # Right now, no acction is taken but it possible to disable telemetry with no access to the endpoint...
+    # Right now, no action is taken but it's possible to disable telemetry with no access to the endpoint...
     _, _ = __check_internet_status(config, timeout=4)  # Max wait 4 seconds...
+
+    # check for IP if enabled
+    if collect_IP:
+        get_public_ip(attributes, IPv4=IPv4, IPv6=IPv6)
 
     # all params are the same currently so only write them once
     init_params = (config, attributes)
@@ -624,7 +637,7 @@ def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
         return False
     try:
         return _AnacondaMetrics._instance.record_histogram(metric_name, value, attributes)
-    except MetricsNotInitialized as me:
+    except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to record a histogram metric when metrics were not configured.")
         return False
     except Exception as e:
