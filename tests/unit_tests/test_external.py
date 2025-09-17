@@ -1150,23 +1150,19 @@ class TestGetTrace:
 class TestLogging:
     _instance = None
     _initialized: bool = False
-    _initialize_in_progress: bool = False
 
     def setup_method(self):
         """Reset logger instance state before each test"""
         _initialized = False
-        _initialize_in_progress = False
         _instance = None
 
     @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda_opentelemetry.signals.__INITIALIZE_IN_PROGRESS', new=_initialize_in_progress)
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_without_init(self):
         with pytest.raises(RuntimeError):
             get_telemetry_logger_handler()
 
     @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda_opentelemetry.signals.__INITIALIZE_IN_PROGRESS', new=_initialize_in_progress)
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_without_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
@@ -1175,7 +1171,6 @@ class TestLogging:
         assert get_telemetry_logger_handler() is None
 
     @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda_opentelemetry.signals.__INITIALIZE_IN_PROGRESS', new=_initialize_in_progress)
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_with_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
