@@ -4,7 +4,7 @@
 
 # attributes.py
 
-import logging, platform, re, requests, threading
+import logging, platform, re, requests
 from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__

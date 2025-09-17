@@ -38,8 +38,6 @@ from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 Scalar = Union[str, bool, int, float]
 AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
 
-TEL_INIT_THREAD_NAME = "Telemetry-Init"
-
 class MetricsNotInitialized(RuntimeError):
     pass
 
@@ -139,7 +137,6 @@ class _AnacondaLogger(_AnacondaCommon):
         self._processor = BatchLogRecordProcessor(self._exporter)
         self._provider.add_log_record_processor(self._processor)
         self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
-        print("DONE INITING LOGGING")
 
     def tear_down(self):
         _AnacondaLogger._instance = None

@@ -11,7 +11,7 @@ unset ATEL_DEFAULT_ENDPOINT
 unset ATEL_METRICS_ENDPOINT
 
 # Run tests for the anaconda_opentelemetry package.
-pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term tests/unit_tests/test_external.py
+pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term tests/unit_tests
 
 if [ $? -ne 0 ]; then
     echo
