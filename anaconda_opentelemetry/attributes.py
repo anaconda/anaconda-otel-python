@@ -178,7 +178,7 @@ def get_public_ip(attributes: ResourceAttributes, IPv4=True, IPv6=True):
     if IPv4:
         for service in ipv4_services:
             try:
-                response = requests.get(service, timeout=10)
+                response = requests.get(service, timeout=2)
                 data = response.json()
                 ip = data.get('ip') or data.get('query')
                 if ip and ':' not in ip:
@@ -191,7 +191,7 @@ def get_public_ip(attributes: ResourceAttributes, IPv4=True, IPv6=True):
     if IPv6:
         for service in ipv6_services:
             try:
-                response = requests.get(service, timeout=10)
+                response = requests.get(service, timeout=2)
                 data = response.json()
                 ip = data.get('ip') or data.get('ipv6')
                 if ip and ':' in ip:
