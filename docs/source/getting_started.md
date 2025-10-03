@@ -35,15 +35,13 @@ Configs and Resource Attributes can be created and passed via their respective o
 
 ## Prepare the Configuration Object
 
-The first call you make to get started with telemetry is the `initialize_telemetry`. This requires a `Configuration` object be created. The bare minimal is:
-```python
-config = Configuration(default_endpoint='example.com:4317')
-```
+The first call you make to get started with telemetry is the `initialize_telemetry`. This requires a `Configuration` object be created. Auth token, TLS certificate, and/or a dictionary containing any values can be passed to the constructor.
+
 This class has a number of `set_*()` methods for setting various configuration options. See documentation below for details.
 
-For each configuration there is a corresponding environment variable. The environment variable name is the prefix 'ATEL_' on the configuration key
-name without the trailing '_NAME'. For example for the logging endpoint the name is `Configuration.LOGGING_ENDPOINT_NAME`. So the equivelent environment
-variable name is `ATEL_LOGGING_ENDPOINT`. Note the added prefix 'ATEL_' and missing suffix '_NAME'.
+For each configuration there is a corresponding environment variable. The environment variable name is the prefix 'ATEL_' on the configuration key name without the trailing '_NAME'. For example for the logging endpoint the name is `Configuration.LOGGING_ENDPOINT_NAME`. So the equivelent environment variable name is `ATEL_LOGGING_ENDPOINT`. Note the added prefix 'ATEL_' and missing suffix '_NAME'.
+
+[Example](/docs/source/onboarding_examples.md#creating-configuration)
 
 ### Configuration Default Endpoint
 A default endpoint must be passed either to the constructor via the `default_endpoint` kwarg or the `config_dict` kwarg. It is the only value in the configuration that must be specified. The usage of TLS is derived from the scheme specified in the endpoint, as well as the OpenTelemetry export protocol (HTTP or gRPC). Using an unallowed scheme will raise an error. The allowed schemes are:
@@ -53,10 +51,9 @@ A default endpoint must be passed either to the constructor via the `default_end
 - grpc (gRPC protocol, TLS disabled)
 
 ### Metric, Log, and Tracing Configuration
-If your use case requires different schemes/TLS settings, auth tokens, or CA certs for different signal types: you can use the appropriate setter for TLS and/or endpoint in the `Configuration` class signal endpoint. Where * is one of metrics, logging, or tracing:
-- `set_tls_private_ca_cert_*()`
-- `set_auth_token_metrics_*()`
-- `set_*_endpoint()`
+If your use case requires different schemes/TLS settings, auth tokens, or CA certs for different signal types: you can use the `set_*_endpoint()` method to set TLS, auth token, and endpoint values (* is one of metrics, logging, or tracing). These methods will raise an error if the endpoint is not a proper URL.
+
+[Example](/docs/source/onboarding_examples.md#specific-endpoint)
 
 Please note that if no specific signal configurations are applied all signal exporters will use the configurations applied to the default:
 - scheme/TLS settings: pulled from mandatory value assigned to `default_endpoint`
@@ -82,38 +79,9 @@ There are more fields than this which are documented in the API section and in t
 The telemetry system is designed as singleton objects and only need to be initialzed once per process. Calling
 `initialize_telemetry` a second time will silently return with no errors and with no undesireable behaviors.
 
-Use the `initialize_telemetry` function to initialize exporters (No SSL in this example):
+Use the `initialize_telemetry` function to initialize exporters (No SSL in this example). We recommend catching exceptions on this function call because if config or attributes are `None` it with raise an exception.
 
-```python
-from anaconda_opentelemetry import *
-
-config = Configuration(default_endpoint='example.com:4317').set_TLS(False)
-attributes = ResourceAttributes("service-a", "v1")
-try:
-  initialize_telemetry(
-      config=config,
-      attributes=attributes
-  )
-except:
-  # Handle error in the application.
-```
-
-or for SSL and Authentication Token support, specifying signals for metrics and logging:
-
-```python
-from anaconda_opentelemetry import *
-
-config = Configuration(default_endpoint='example.com:4317').set_auth_token('your_token_string_here')
-attributes = ResourceAttributes("service-a", "v1")
-try:
-  initialize_telemetry(
-      config=config,
-      attributes=attributes,
-      signal_types=['metrics', 'logging']
-  )
-except:
-  # Handle error in the application.
-```
+[Example](/docs/source/onboarding_examples.md#initializing-telemetry)
 
 
 ### Optional Signal Streams
