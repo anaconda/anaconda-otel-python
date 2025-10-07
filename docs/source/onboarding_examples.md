@@ -63,3 +63,51 @@ initialize_telemetry(
 ```
 
 ## Recording Telemetry
+
+### Logs
+```python
+log = logging.getLogger("your_logger_name_here")
+try:
+    log.addHandler(get_telemetry_logger_handler())
+except:
+  log.warning(f"OpenTelemetry logger failed to be initialized.")
+```
+
+### Metrics
+These functions do not need additional error handling. They will all catch exceptions.
+
+#### Histogram
+
+```python
+from anaconda_opentelemetry.signals import *
+
+record_histogram("request_duration_ms", value=123.4, attributes={"route": "/home"})
+```
+
+#### Counter (Increment)
+
+```python
+from anaconda_opentelemetry.signals import *
+
+increment_counter("active_sessions", by=1, attributes={"region": "us-east"})
+```
+
+#### Counter (Decrement)
+Restricted to type `simple_up_down_counter`.
+
+```python
+from anaconda_opentelemetry.signals import *
+
+decrement_counter("active_sessions", by=1, attributes={"region": "us-east"})
+```
+
+### Traces
+This function does not need additional error handling. It will all catch exceptions.
+
+```python
+from anaconda_opentelemetry.signals import *
+
+with get_trace("process_data", attributes={"job_id": "abc-123"}):
+    # Your business logic here
+    process_data()
+```
