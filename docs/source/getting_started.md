@@ -68,13 +68,20 @@ You may also optionally pass an entropy_param string which is used to create a s
 
 
 ## Prepare the ResourceAttributes Object
-The `initialize_telemetry` function also requires a `ResourceAttributes` object. Configure this class with attributes that belong to ALL telemetry generated per end-user session. For example if user `userxyz123` starts an application instrumenting with this package then ALL telemetry generated would have user_id `userxyz123` in common, so it is appropriate to be set in this class.
+The `initialize_telemetry` function also requires a `ResourceAttributes` object. Configure this class with attributes that belong to ALL telemetry generated per end-user session (these are [resource attributes](/docs/source/getting_started.md#resource-attributes)). For example if user `userxyz123` starts an application instrumenting with this package then ALL telemetry generated would have user_id `userxyz123` in common, so it is appropriate to be set in this class.
 
 Attributes that are unique per telemetry call, like a variable in code that changes conditionally, should be passed to the attributes parameter of telemetry generation methods (see [recording telemetry](#recording-telemetry), [`get_trace`](#tracing-with-context-manager), [`record_historgram`](#record-metrics), etc.).
 
 There are more fields than this which are documented in the API section and in the class docstring. The class also has a `set_attributes()` method which can create values under any key including dynamic keys unique to a specific application or runtime.
 
+No particular attribute values are required for the class from clients besides service_name and service_version at this time. There are two distinct patterns with which attributes are configured. In an OpenTelemetry payload, both patterns end up in its resource attributes.
+
 [Example](/docs/source/onboarding_examples.md#resourceattributes)
+
+### Adding more attributes
+Beyond the attributes already defined in the [schema](/docs/source/getting_started.md#telemetry-schema), any additional keys can be added as well.
+
+[Example](/docs/source/onboarding_examples.md)
 
 ---
 
@@ -139,51 +146,26 @@ While metrics have enforced regex rules, traces have more permissive options. Sp
 
 ---
 
-With telemetry initialized, your application will now automatically export traces, logs, and metrics to the configured OpenTelemetry Collector endpoints.
-
 # OpenTelemetry Concepts
+
 ## Resource Attributes
-No particular attribute values are required for the class from clients besides service_name and service_version at this time. There are two distinct patterns with which attributes are configured. In an OpenTelemetry payload, both patterns end up in its resource attributes.
+Resource attributes are attributes attached to OpenTelemetry payloads for all telemetry (metrics, logs, traces) that are static in the workload and never need to change. The `Resource` object in OpenTelemetry freezes these attributes when the object added to the provider for a given telemetry signal (provider cannot be re-initialized).
 
-### Common Attributes
-These are documented in the ResourceAttributes class string and are referred to as common because it is likely that most if not all clients will share them. They are part of the minimum telemetry schema for unified telemetry.
+## Attributes
+Attributes are attached to individual pieces of telemetry collected by OpenTelemetry. These are best utilized as dynamic values that can change at call time. When calling `increment_counter` or `record_histogram` in this package they can be passed as a dictionary.
 
-`service_name`, `service_version`, `os_type`, `os_version`,`python_version`, `hostname`, `platform`, `environment`, `user_id`, `client_sdk_version`, `schema_version`, `session_id`
+## Telemetry Schema
+Documented in the [schema outline](/docs/source/schema-versions.md). The `ResourceAttributes` class enforces this schema so that payloads are consistent.
 
 - You will not see session_id in the ResourceAttributes class even though it is a common attribute
 - This is because it is set by this package after the client is finished initializing
 - It is a result of hashing the SESSION_ENTROPY_VALUE_NAME
 
-A configuration of this class using all available initialization parameters would look like:
-```python
-attrs = ResourceAttributes(
-  "test_service",  # service_name requires a user-supplied value, not a keyword arg
-  "v1",  # service_version requires a user-supplied value, not a keyword arg
-  os_type="Darwin",
-  os_version="24.2.0",
-  python_version="3.13.2",
-  hostname="Users-MBP"
-)
-```
+A configuration of this class using all available initialization parameters would look like [this example](/docs/source/onboarding_examples.md#schema)
 
-We have implemented Python methods from `platform` and `socket` to gather os_type, os_version, python_version, and hostname by default if they are not provided. This is just an opportunity to provide your own values.
-- Example: if a server on AWS should have a hostname indicating it is part of the cloud provider
-
-### Dynamic Attributes
+### Dynamic Resource Attributes
 Dynamic attributes can be any key and any value. This is where a client can create telemetry attributes specific to their needs. In code they can be configured two ways. Dynamic attributes are sent to a dictionary called `parameters`.
-
-Passing kwargs to the ResourceAttributes set_attributes method
-```python
-attrs = ResourceAttributes("test-service", "1").set_attributes(foo="test")
-```
-Or passing a dictionary
-```python
-my_attributes = {
-  "test1": "one",
-  "test2": "two"
-}
-attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
-```
-
 - If you set keys for any of the class parameters the most recent set operation will overwrite the pre-existing value
 - Setting parameters directly is not allowed, it is modified by adding keys/values
+
+[Example](/docs/source/onboarding_examples.md#dynamic-resource-attributes-in-the-schema)

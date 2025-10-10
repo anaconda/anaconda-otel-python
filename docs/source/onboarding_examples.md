@@ -38,6 +38,15 @@ except:
     logging.warning(f"Telemetry `ResourceAttributes` failed to be created")
 ```
 
+### Adding more attributes
+```python
+try:
+    attributes = ResourceAttributes(service_name, service_version)
+    attributes.set_attributes(random_attribute_key="test1", random_attribute_key2="test2")
+except:
+    logging.warning(f"Telemetry `ResourceAttributes` failed to be created")
+```
+
 ## Initializing Telemetry
 ```python
 from anaconda_opentelemetry import *
@@ -110,4 +119,44 @@ from anaconda_opentelemetry.signals import *
 with get_trace("process_data", attributes={"job_id": "abc-123"}):
     # Your business logic here
     process_data()
+```
+
+## Schema
+```python
+attrs = ResourceAttributes(
+  "test_service",  # service_name requires a user-supplied value, not a keyword arg
+  "v1",  # service_version requires a user-supplied value, not a keyword arg
+  os_type="Darwin",
+  os_version="24.2.0",
+  python_version="3.13.2",
+  hostname="Users-MBP"
+)
+```
+
+### Dynamic Resource Attributes in the Schema
+Passing kwargs to the ResourceAttributes set_attributes method
+```python
+attrs = ResourceAttributes("test-service", "1").set_attributes(foo="test")
+```
+Or passing a dictionary
+```python
+my_attributes = {
+  "test1": "one",
+  "test2": "two"
+}
+attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
+```
+
+# Testing and Visualizing Telemetry Locally
+To test the telemetry package and view exports locally, the following code can be used. The console exporter exports telemetry payloads to standard output:
+```python
+from anaconda_opentelemetry.signals import initialize_telemetry, increment_counter
+from anaconda_opentelemetry.attributes import ResourceAttributes
+from anaconda_opentelemetry.config import Configuration
+
+cfg = Configuration(default_endpoint='http://localhost:4318').set_console_exporter(use_console=True)
+att = ResourceAttributes("test_service", "dev-build", environment="test")
+initialize_telemetry(config=cfg, attributes=att, signal_types=['metrics'])
+
+increment_counter("test", by=1)
 ```
