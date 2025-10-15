@@ -20,30 +20,32 @@ conda create -n test anaconda-opentelemetry
 ---
 
 ## Configuration vs. Attribute Values
-There are two sets of values that need to be provided to `initialize_telemetry`. The package will raise a `ValueError` if either are not provided.
-- Configs
+There are two sets of values that must be provided to `initialize_telemetry`. The package will raise a `ValueError` if either are not provided.
+
+`initialize_telemetry`
+- Configs (`Configuration` class)
   - These are key-value pairs used to configure the OpenTelemetry instrumentation like endpoint, logging_level, auth_token, etc.
-- Resource Attributes
+- Resource Attributes (`ResourceAttributes` class)
   - These are key-value pairs used as telemetry resource attributes. They can be thought of as labels and appear in the telemetry data stream
   - These are called resource attributes because they are attached to every piece of telemetry after initialization happens
   - Immutable
-- Attributes
-  - These are key-value pairs used as telemetry attributes (as opposed to resource attributes)
-  - They are different from resource attributes in that they are unique per telemetry call
 
-Configs and Resource Attributes can be created and passed via their respective objects: `Configuration` and `ResourceAttributes`. Attributes must be passed in calls to create telemetry like `record_histogram`, `get_trace`, etc.
+There is one additional set of values that can optionally be provided to calls which produce telemetry.
+
+`increment_counter`, `decrement_counter`, `record_histogram`, `get_trace`
+- Attributes
+  - These are key-value pairs used as telemetry attributes
+  - They are different from resource attributes in that they are unique per telemetry call (as opposed to resource attributes which are permanent)
 
 ## Prepare the Configuration Object
 
-The first call you make to get started with telemetry is the `initialize_telemetry`. This requires a `Configuration` object be created. The bare minimal is:
-```python
-config = Configuration(default_endpoint='example.com:4317')
-```
+The first call you make to get started with telemetry is the `initialize_telemetry`. This requires a `Configuration` object be created. Auth token, TLS certificate, and/or a dictionary containing any values can be passed to the constructor.
+
 This class has a number of `set_*()` methods for setting various configuration options. See documentation below for details.
 
-For each configuration there is a corresponding environment variable. The environment variable name is the prefix 'ATEL_' on the configuration key
-name without the trailing '_NAME'. For example for the logging endpoint the name is `Configuration.LOGGING_ENDPOINT_NAME`. So the equivelent environment
-variable name is `ATEL_LOGGING_ENDPOINT`. Note the added prefix 'ATEL_' and missing suffix '_NAME'.
+For each configuration there is a corresponding environment variable. The environment variable name is the prefix 'ATEL_' on the configuration key name without the trailing '_NAME'. For example for the logging endpoint the name is `Configuration.LOGGING_ENDPOINT_NAME`. So the equivelent environment variable name is `ATEL_LOGGING_ENDPOINT`. Note the added prefix 'ATEL_' and missing suffix '_NAME'.
+
+[Example](/docs/source/onboarding_examples.md#creating-configuration)
 
 ### Configuration Default Endpoint
 A default endpoint must be passed either to the constructor via the `default_endpoint` kwarg or the `config_dict` kwarg. It is the only value in the configuration that must be specified. The usage of TLS is derived from the scheme specified in the endpoint, as well as the OpenTelemetry export protocol (HTTP or gRPC). Using an unallowed scheme will raise an error. The allowed schemes are:
@@ -53,28 +55,33 @@ A default endpoint must be passed either to the constructor via the `default_end
 - grpc (gRPC protocol, TLS disabled)
 
 ### Metric, Log, and Tracing Configuration
-If your use case requires different schemes/TLS settings, auth tokens, or CA certs for different signal types: you can use the appropriate setter for TLS and/or endpoint in the `Configuration` class signal endpoint. Where * is one of metrics, logging, or tracing:
-- `set_tls_private_ca_cert_*()`
-- `set_auth_token_metrics_*()`
-- `set_*_endpoint()`
+If your use case requires different schemes/TLS settings, auth tokens, or CA certs for different signal types: you can use the `set_*_endpoint()` method to set TLS, auth token, and endpoint values (* is one of metrics, logging, or tracing). These methods will raise an error if the endpoint is not a proper URL.
 
-Please note that if no specific signal configurations are applied all signal exporters will use the configurations applied to the default:
-- scheme/TLS settings: pulled from mandatory value assigned to `default_endpoint`
-- auth token: defaults to optional (default `None`) value passed to `set_auth_token()`
-- CA certs: defaults to optional (default `None`) value passed to `set_tls_private_ca_cert()`
+[Example](/docs/source/onboarding_examples.md#specific-endpoint-for-signal)
+
+Please note that if no specific signal configurations are applied all signal exporters will use the configurations applied to the default.
+
+### Optional Session Entropy
+You may also optionally pass an entropy_param string which is used to create a session_id for all telemetry generated by a particular session. The session_id is most useful for tracing or user journey scenarios where a session identifier could be used to tie events together.
+
+[Example](/docs/source/onboarding_examples.md#optional-session-entropy)
+
 
 ## Prepare the ResourceAttributes Object
-The `initialize_telemetry` function also requires a `ResourceAttributes` object. Configure this class with attributes that belong to ALL telemetry generated per end-user session. For example if user `userxyz123` starts an application instrumenting with this package then ALL telemetry generated would have user_id `userxyz123` in common, so it is appropriate to be set in this class.
+The `initialize_telemetry` function also requires a `ResourceAttributes` object. Configure this class with attributes that belong to ALL telemetry generated per end-user session (these are [resource attributes](/docs/source/getting_started.md#resource-attributes)). For example if user `userxyz123` starts an application instrumenting with this package then ALL telemetry generated would have user_id `userxyz123` in common, so it is appropriate to be set in this class.
 
 Attributes that are unique per telemetry call, like a variable in code that changes conditionally, should be passed to the attributes parameter of telemetry generation methods (see [recording telemetry](#recording-telemetry), [`get_trace`](#tracing-with-context-manager), [`record_historgram`](#record-metrics), etc.).
 
-The simplest configuration requires a service_name and service_version and would look like:
-```python
-service_name = "service-a"
-service_version = "v1"
-attributes = ResourceAttributes(service_name, service_version)
-```
 There are more fields than this which are documented in the API section and in the class docstring. The class also has a `set_attributes()` method which can create values under any key including dynamic keys unique to a specific application or runtime.
+
+No particular attribute values are required for the class from clients besides service_name and service_version at this time. There are two distinct patterns with which attributes are configured. In an OpenTelemetry payload, both patterns end up in its resource attributes.
+
+[Example](/docs/source/onboarding_examples.md#resourceattributes)
+
+### Adding more attributes
+Beyond the attributes already defined in the [schema](/docs/source/getting_started.md#telemetry-schema), any additional keys can be added as well.
+
+[Example](/docs/source/onboarding_examples.md)
 
 ---
 
@@ -82,66 +89,14 @@ There are more fields than this which are documented in the API section and in t
 The telemetry system is designed as singleton objects and only need to be initialzed once per process. Calling
 `initialize_telemetry` a second time will silently return with no errors and with no undesireable behaviors.
 
-Use the `initialize_telemetry` function to initialize exporters (No SSL in this example):
+Use the `initialize_telemetry` function to initialize exporters (No SSL in this example). We recommend catching exceptions on this function call because if config or attributes are `None` it with raise an exception.
 
-```python
-from anaconda_opentelemetry import *
-
-config = Configuration(default_endpoint='example.com:4317').set_TLS(False)
-attributes = ResourceAttributes("service-a", "v1")
-try:
-  initialize_telemetry(
-      config=config,
-      attributes=attributes
-  )
-except:
-  # Handle error in the application.
-```
-
-or for SSL and Authentication Token support, specifying signals for metrics and logging:
-
-```python
-from anaconda_opentelemetry import *
-
-config = Configuration(default_endpoint='example.com:4317').set_auth_token('your_token_string_here')
-attributes = ResourceAttributes("service-a", "v1")
-try:
-  initialize_telemetry(
-      config=config,
-      attributes=attributes,
-      signal_types=['metrics', 'logging']
-  )
-except:
-  # Handle error in the application.
-```
-
+[Example](/docs/source/onboarding_examples.md#initializing-telemetry)
 
 ### Optional Signal Streams
-You may optionally restrict which signal types to enable (only metrics are enabled by default). The try catch was ommitted here:
+You may optionally restrict which signal types to enable (only metrics are enabled by default). Passing `[]` for `signal_types` will not initialize any metrics. This is a quick way to disable all metrics.
 
-```python
-config = Configuration(default_endpoint='example.com:4317').set_auth_token('your_token_string_here')
-attributes = ResourceAttributes("service-a", "v1")
-initialize_telemetry(
-    config=config,
-    attributes=attributes,
-    signal_types=["tracing", "metrics"]
-)
-```
-Passing `[]` for `signal_types` will not initialize any metrics. This is a quick way to disable all metrics.
-
-
-### Optional Session Entropy
-You may also optionally pass an entropy_param string which is used to create a session_id for all telemetry generated by a particular session. The session_id is the result of a hash which needs uniqueness to isolate sessions, hence the entropy parameter. The try catch was ommitted here:
-
-```python
-config = Configuration(default_endpoint='example.com:4317').set_tracing_session_entropy('your_apps_entropy_for_creating_a_session_id')
-attributes = ResourceAttributes("service-a", "v1")
-initialize_telemetry(
-    config=config,
-    attributes=attributes
-)
-```
+[Example](/docs/source/onboarding_examples.md#optional-signal-streams)
 
 By default, the session_id will depend on a call to time.time(), which happens when `initialize_telemetry()` is called. If single session of your application is liable to perform work in multiple processes, this entropy_param can be passed to each process and into the `initialize_telemetry()` call ensuring a common session_id among them.
 
@@ -153,50 +108,21 @@ This is useful because session_id can be used by a backend to tie all user actio
 Below are more in depth examples on recording telemetry once initialization is complete. These functions contain the `attributes` parameter. This is where call specific data can be passed as attributes to pieces of telemetry.
 
 ## Recording Logs
-Logging in this package uses the `logging` package built into Python. The function `get_telemetry_logger_handler()` returns the LoggingHandler that will deliver logs to the signal collector. Simply:
+Logging in this package uses the `logging` package built into Python. The function `get_telemetry_logger_handler()` returns the LoggingHandler that will deliver logs to the signal collector. The handler can be added to the logger you are already using in your code or a seperate logger if you want a seperation of logs. This is only done once per process.
 
-```python
-  log = logging.getLogger("your_logger_name_here")
-  log.addHandler(get_telemetry_logger_handler())
-```
-
-The handler can be added to the logger you are already using in your code or a seperate logger if you want a seperation of logs. This is only done once per process.
-
+[Example](/docs/source/onboarding_examples.md#logs)
 
 If you did not specify **'logging'** as one of the signal types during `initializer_telemetry` then the function `get_telemetry_logger_handler()` will return `None`.
 
 ---
 
 ## Record Metrics
-Metrics are usually counters or a interesting value that changes with time in your application. The types of metric objects that can be used in this package are:
+Metrics are numerical representations of events. The types of metric objects currently supported in this package are listed below along with their corresponding function. Each of these functions also catches exceptions generated by telemetry actions:
 - **simple_counter**: A cumulative sum. Only call `increase_counter` on this type.
 - **simple_up_down_counter**: Also a cumulative sum. This type can be used with functions `increase_counter` and `decrease_counter`. This is the default type created.
 - **histogram**: This metric should be used to create distributions of values rather than sums. Examples: current number of open network connections, latency. Use `record_histogram` with this type.
 
-### Histogram
-
-```python
-from anaconda_opentelemetry.signals import *
-
-record_histogram("request_duration_ms", value=123.4, attributes={"route": "/home"})
-```
-
-### Counter (Increment)
-
-```python
-from anaconda_opentelemetry.signals import *
-
-increment_counter("active_sessions", by=1, attributes={"region": "us-east"})
-```
-
-### Counter (Decrement)
-Restricted to type `simple_up_down_counter`.
-
-```python
-from anaconda_opentelemetry.signals import *
-
-decrement_counter("active_sessions", by=1, attributes={"region": "us-east"})
-```
+[Example](/docs/source/onboarding_examples.md#metrics)
 
 ### Naming Metrics
 Metrics named with improper characters make the Otel metrics SDK throw an exception, so we have restricted metric names to match the following Python regex:
@@ -209,67 +135,37 @@ Metric names must start with a letter and then only contain alphanumeric or unde
 
 ## Tracing with Context Manager
 
-Wrap operations inside a tracing context using `get_trace`:
+Wrap operations inside a tracing context using `get_trace`. 
 
-```python
-from anaconda_opentelemetry.signals import *
+[Example](/docs/source/onboarding_examples.md#traces)
 
-with get_trace("process_data", attributes={"job_id": "abc-123"}):
-    # Your business logic here
-    process_data()
-```
-
-You can also pass in a `carrier` dictionary for trace context propagation across services.
+You can also pass in a `carrier` dictionary for trace context propagation across services. This function will catch exceptions.
 
 ### Naming Traces
 While metrics have enforced regex rules, traces have more permissive options. Spaces and non-alphanumeric characters are allowed.
 
 ---
 
-With telemetry initialized, your application will now automatically export traces, logs, and metrics to the configured OpenTelemetry Collector endpoints.
+# OpenTelemetry Concepts
 
-## Notes on Resource Attributes
-No particular attribute values are required for the class from clients besides service_name and service_version at this time. There are two distinct patterns with which attributes are configured. In an OpenTelemetry payload, both patterns end up in its resource attributes.
+## Resource Attributes
+Resource attributes are attributes attached to OpenTelemetry payloads for all telemetry (metrics, logs, traces) that are static in the workload and never need to change. The `Resource` object in OpenTelemetry freezes these attributes when the object added to the provider for a given telemetry signal (provider cannot be re-initialized).
 
-### Common Attributes
-These are documented in the ResourceAttributes class string and are referred to as common because it is likely that most if not all clients will share them. They are part of the minimum telemetry schema for unified telemetry.
+## Attributes
+Attributes are attached to individual pieces of telemetry collected by OpenTelemetry. These are best utilized as dynamic values that can change at call time. When calling `increment_counter` or `record_histogram` in this package they can be passed as a dictionary.
 
-`service_name`, `service_version`, `os_type`, `os_version`,`python_version`, `hostname`, `platform`, `environment`, `user_id`, `client_sdk_version`, `schema_version`, `session_id`
+## Telemetry Schema
+Documented in the [schema outline](/docs/source/schema-versions.md). The `ResourceAttributes` class enforces this schema so that payloads are consistent.
 
 - You will not see session_id in the ResourceAttributes class even though it is a common attribute
 - This is because it is set by this package after the client is finished initializing
 - It is a result of hashing the SESSION_ENTROPY_VALUE_NAME
 
-A configuration of this class using all available initialization parameters would look like:
-```python
-attrs = ResourceAttributes(
-  "test_service",  # service_name requires a user-supplied value, not a keyword arg
-  "v1",  # service_version requires a user-supplied value, not a keyword arg
-  os_type="Darwin",
-  os_version="24.2.0",
-  python_version="3.13.2",
-  hostname="Users-MBP"
-)
-```
+A configuration of this class using all available initialization parameters would look like [this example](/docs/source/onboarding_examples.md#schema)
 
-We have implemented Python methods from `platform` and `socket` to gather os_type, os_version, python_version, and hostname by default if they are not provided. This is just an opportunity to provide your own values.
-- Example: if a server on AWS should have a hostname indicating it is part of the cloud provider
-
-### Dynamic Attributes
+### Dynamic Resource Attributes
 Dynamic attributes can be any key and any value. This is where a client can create telemetry attributes specific to their needs. In code they can be configured two ways. Dynamic attributes are sent to a dictionary called `parameters`.
-
-Passing kwargs to the ResourceAttributes set_attributes method
-```python
-attrs = ResourceAttributes("test-service", "1").set_attributes(foo="test")
-```
-Or passing a dictionary
-```python
-my_attributes = {
-  "test1": "one",
-  "test2": "two"
-}
-attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
-```
-
 - If you set keys for any of the class parameters the most recent set operation will overwrite the pre-existing value
 - Setting parameters directly is not allowed, it is modified by adding keys/values
+
+[Example](/docs/source/onboarding_examples.md#dynamic-resource-attributes-in-the-schema)

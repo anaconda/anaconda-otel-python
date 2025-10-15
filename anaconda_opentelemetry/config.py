@@ -147,6 +147,11 @@ class Configuration:
             default_auth_token (str): The default auth token use for the default_endpoint or None.
             default_private_ca_cert_file (str): File name for the private cert file if used or None. Not used frequently.
             config_dict (Dict[str,any]): An initialization map to configure the object in bulk or {}.
+
+        Raises:
+            ValueError: If there is no `default_endpoint` value passed to its arguments or in the `config_dict` kwarg,
+                        and no `ATEL_DEFAULT_ENDPOINT` environment variable set.
+            ValueError: Non integer value set for `ATEL_METRICS_EXPORT_INTERVAL_MS_NAME`
         """
         self._config: Dict[str, Any] = {}
         self._config.update(config_dict)
