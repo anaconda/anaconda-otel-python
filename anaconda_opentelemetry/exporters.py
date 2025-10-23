@@ -15,17 +15,18 @@ class OTLPExporterHTTPShim(OTLPMetricExporterHTTP):
             new_endpoint: str,
             auth_token: str = None
     ) -> bool:
-        set_endpoint_method = getattr(config, f"set_{signal}_endpoint", None)
-        if callable(set_endpoint_method):
-            set_endpoint_method(new_endpoint, auth_token=auth_token)
-        else:
-            return False
-        get_endpoint_method = getattr(config, f"_get_{signal}_endpoint", None)
-        if not callable(get_endpoint_method):
-            return False
-        endpoint = get_endpoint_method()
-
         with self._lock:
+            
+            set_endpoint_method = getattr(config, f"set_{signal}_endpoint", None)
+            if callable(set_endpoint_method):
+                set_endpoint_method(new_endpoint, auth_token=auth_token)
+            else:
+                return False
+            get_endpoint_method = getattr(config, f"_get_{signal}_endpoint", None)
+            if not callable(get_endpoint_method):
+                return False
+            endpoint = get_endpoint_method()
+
             self.force_flush()
             self.shutdown()
             self._init_kwargs['endpoint'] = endpoint
