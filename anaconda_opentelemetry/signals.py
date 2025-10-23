@@ -235,8 +235,8 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
             else:  # HTTP
-                from .exporters import DynamicOTLPExporterHTTP
-                exporter = DynamicOTLPExporterHTTP(endpoint=self.metrics_endpoint,
+                from .exporters import OTLPExporterHTTPShim
+                exporter = OTLPExporterHTTPShim(endpoint=self.metrics_endpoint,
                                         certificate_file=config._get_ca_cert_metrics(),
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())

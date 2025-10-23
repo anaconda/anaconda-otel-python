@@ -2,7 +2,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExp
 import threading
 from .config import Configuration
 
-class DynamicOTLPExporterHTTP(OTLPMetricExporterHTTP):
+class OTLPExporterHTTPShim(OTLPMetricExporterHTTP):
     def __init__(self, **kwargs):
         self._lock = threading.Lock()
         self._init_kwargs = kwargs
