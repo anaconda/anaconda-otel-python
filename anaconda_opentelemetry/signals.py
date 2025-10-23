@@ -235,11 +235,12 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
             else:  # HTTP
-                from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
-                exporter = OTLPMetricExporterHTTP(endpoint=self.metrics_endpoint,
+                from .exporters import DynamicOTLPExporterHTTP
+                exporter = DynamicOTLPExporterHTTP(endpoint=self.metrics_endpoint,
                                         certificate_file=config._get_ca_cert_metrics(),
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
+        self.exporter = exporter
         self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
 
         # Create and set meter provider
@@ -535,6 +536,20 @@ def initialize_telemetry(config: Config,
     __SIGNALS = signal_types
 
     re_initialize_telemetry(attributes)
+
+def update_endpoint(signal: str, new_endpoint: str):
+    endpoint_updated = _AnacondaMetrics._instance.exporter.update_endpoint(
+        _AnacondaMetrics._instance._config,
+        signal,
+        new_endpoint
+    )
+
+    if not endpoint_updated:
+        logging.getLogger(__package__).warning(f"Endpoint for {signal} failed to update.")
+    else:
+        logging.getLogger(__package__).info(f"Endpoint for {signal} was successfully updated.")
+
+    return endpoint_updated
 
 def re_initialize_telemetry(attributes: Attributes):
     """
