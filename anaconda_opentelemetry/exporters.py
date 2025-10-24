@@ -26,10 +26,12 @@ class OTLPExporterShim(MetricExporter):
     def update_endpoint(self, config, new_endpoint, auth_token=None):
         with self._lock:
             # Update config
-            set_endpoint = getattr(config, f"set_{self._signal}_endpoint", None)
-            set_endpoint(new_endpoint, auth_token=auth_token)
-            get_endpoint = getattr(config, f"_get_{self._signal}_endpoint", None)
-            endpoint = get_endpoint()
+            endpoint = config._change_endpoint(
+                self._signal,
+                new_endpoint,
+                auth_token=auth_token
+            )
+            # Reset exporter
             self._exporter.force_flush()
             self._exporter.shutdown()
             self._init_kwargs['endpoint'] = endpoint

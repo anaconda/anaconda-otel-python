@@ -545,17 +545,13 @@ def initialize_telemetry(config: Config,
     re_initialize_telemetry(attributes)
 
 def update_endpoint(signal: str, new_endpoint: str):
-    shim = _AnacondaMetrics._instance.exporter_shim
-    if shim is None:
-        logging.getLogger(__package__).warning(f"The Console Exporter is being used, `update_endpoint` has no effect.")
-        return False
-
-    new_exporter = shim.update_endpoint(
+    # no signal param usage yet
+    updated_endpoint = _AnacondaMetrics._instance.exporter.update_endpoint(
         _AnacondaMetrics._instance._config,
         new_endpoint
     )
 
-    if new_exporter is None:
+    if not updated_endpoint:
         logging.getLogger(__package__).warning(f"Endpoint for {signal} failed to update.")
         return False
     else:
