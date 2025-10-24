@@ -30,6 +30,7 @@ from opentelemetry.propagate import get_global_textmap
 from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
+from .exporters import OTLPExporterShim
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
@@ -221,6 +222,7 @@ class _AnacondaMetrics(_AnacondaCommon):
     def _setup_metrics(self, config: Config) -> metrics.Meter:
         if self.use_console_exporters:
             exporter = ConsoleMetricExporter(preferred_temporality=self._get_temporality())
+            self.exporter_shim = None
         else:
             auth_token = config._get_auth_token_metrics()
             headers: Dict[str, str] = {}
@@ -235,13 +237,18 @@ class _AnacondaMetrics(_AnacondaCommon):
                                         headers=headers,
                                         preferred_temporality=self._get_temporality())
             else:  # HTTP
-                from .exporters import OTLPExporterHTTPShim
-                exporter = OTLPExporterHTTPShim(endpoint=self.metrics_endpoint,
-                                        certificate_file=config._get_ca_cert_metrics(),
-                                        headers=headers,
-                                        preferred_temporality=self._get_temporality())
+                from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
+                self.exporter_shim = OTLPExporterShim(
+                    OTLPMetricExporterHTTP,
+                    endpoint=self.metrics_endpoint,
+                    certificate_file=config._get_ca_cert_metrics(),
+                    headers=headers,
+                    preferred_temporality=self._get_temporality()
+                )
+                exporter = self.exporter_shim
+
         self.exporter = exporter
-        self.metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=self.telemetry_export_interval_millis)
+        self.metric_reader = PeriodicExportingMetricReader(self.exporter, export_interval_millis=self.telemetry_export_interval_millis)
 
         # Create and set meter provider
         meter_provider = MeterProvider(
@@ -538,18 +545,22 @@ def initialize_telemetry(config: Config,
     re_initialize_telemetry(attributes)
 
 def update_endpoint(signal: str, new_endpoint: str):
-    endpoint_updated = _AnacondaMetrics._instance.exporter.update_endpoint(
+    shim = _AnacondaMetrics._instance.exporter_shim
+    if shim is None:
+        logging.getLogger(__package__).warning(f"The Console Exporter is being used, `update_endpoint` has no effect.")
+        return False
+
+    new_exporter = shim.update_endpoint(
         _AnacondaMetrics._instance._config,
-        signal,
         new_endpoint
     )
 
-    if not endpoint_updated:
+    if new_exporter is None:
         logging.getLogger(__package__).warning(f"Endpoint for {signal} failed to update.")
+        return False
     else:
         logging.getLogger(__package__).info(f"Endpoint for {signal} was successfully updated.")
-
-    return endpoint_updated
+    return True
 
 def re_initialize_telemetry(attributes: Attributes):
     """
