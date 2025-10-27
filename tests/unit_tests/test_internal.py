@@ -513,6 +513,7 @@ class TestAnacondaMetrics:
         - Checks that metrics object returned by the method is of type Meter (otel sdk object)
         - Checks that http library is called for exporter
         """
+        mock_exporter_http.__name__ = 'OTLPMetricExporter'
         config = Config(default_endpoint="http://localhost")
         metrics = AnacondaMetric._setup_metrics(config)
         mock_exporter_http.assert_called_once()
