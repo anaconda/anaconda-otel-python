@@ -30,7 +30,7 @@ from opentelemetry.propagate import get_global_textmap
 from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
-from .exporters import OTLPExporterShim
+from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
@@ -231,14 +231,18 @@ class _AnacondaMetrics(_AnacondaCommon):
             if config._get_request_protocol_metrics() in ['grpc', 'grpcs']:  # gRPC
                 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter as OTLPMetricExportergRPC
                 insecure = not config._get_TLS_metrics()
-                exporter = OTLPMetricExportergRPC(endpoint=self.metrics_endpoint,
-                                        insecure=insecure,
-                                        credentials=config._get_ca_cert_metrics() if not insecure else None,
-                                        headers=headers,
-                                        preferred_temporality=self._get_temporality())
+                self.exporter_shim = OTLPMetricExporterShim(
+                    OTLPMetricExportergRPC,
+                    endpoint=self.metrics_endpoint,
+                    insecure=insecure,
+                    credentials=config._get_ca_cert_metrics() if not insecure else None,
+                    headers=headers,
+                    preferred_temporality=self._get_temporality()
+                )
+                exporter = self.exporter_shim
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
-                self.exporter_shim = OTLPExporterShim(
+                self.exporter_shim = OTLPMetricExporterShim(
                     OTLPMetricExporterHTTP,
                     endpoint=self.metrics_endpoint,
                     certificate_file=config._get_ca_cert_metrics(),
