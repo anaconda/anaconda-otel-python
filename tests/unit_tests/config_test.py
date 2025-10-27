@@ -352,3 +352,35 @@ class TestConfiguration:
         cfg = Config(default_endpoint="grpcs://localhost")
         cfg.set_use_cumulative_metrics(True)
         assert cfg._get_use_cumulative_metrics() == True
+
+    def test_change_signal_endpoint(self):
+        """Test the _change_signal_endpoint method for different signals"""
+        cfg = Config(default_endpoint="http://localhost:4317")
+        
+        new_endpoint = cfg._change_signal_endpoint("metrics", "http://newhost:8080", auth_token="token123")
+        assert new_endpoint == "http://newhost:8080/v1/metrics"
+        assert cfg._get_auth_token_metrics() == "token123"
+        
+        new_endpoint = cfg._change_signal_endpoint("tracing", "https://tracehost:9090")
+        assert new_endpoint == "https://tracehost:9090/v1/traces"
+        
+        new_endpoint = cfg._change_signal_endpoint("logging", "grpc://loghost:4317", auth_token="logtoken")
+        assert new_endpoint == "grpc://loghost:4317/v1/logs"
+        assert cfg._get_auth_token_logging() == "logtoken"
+
+    def test_change_signal_endpoint_preserves_path(self):
+        """Test that _change_signal_endpoint preserves custom paths"""
+        cfg = Config(default_endpoint="http://localhost:4317")
+        
+        new_endpoint = cfg._change_signal_endpoint("metrics", "http://custom:8080/custom/path")
+        assert new_endpoint == "http://custom:8080/custom/path/v1/metrics"
+        
+        new_endpoint = cfg._change_signal_endpoint("logging", "http://host:8080/v1/logs")
+        assert new_endpoint == "http://host:8080/v1/logs"
+
+    def test_change_signal_endpoint_invalid(self):
+        """Test that _change_signal_endpoint raises errors for invalid endpoints"""
+        cfg = Config(default_endpoint="http://localhost:4317")
+        
+        with pytest.raises(ValueError):
+            cfg._change_signal_endpoint("metrics", "http://invalid port:8080")
