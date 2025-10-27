@@ -30,6 +30,7 @@ from opentelemetry.propagate import get_global_textmap
 from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
+from .config import deprecated
 from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
@@ -130,11 +131,14 @@ class _AnacondaLogger(_AnacondaCommon):
                                         insecure=insecure,
                                         credentials=config._get_ca_cert_logging() if not insecure else None,
                                         headers=headers)
+                self.exporter = exporter
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
                 exporter = OTLPLogExporterHTTP(endpoint=self.logger_endpoint,
                                         certificate_file=config._get_ca_cert_logging(),
                                         headers=headers)
+                self.exporter = exporter
+
         self._exporter = exporter
         self._processor = BatchLogRecordProcessor(self._exporter)
         self._provider.add_log_record_processor(self._processor)
@@ -222,7 +226,6 @@ class _AnacondaMetrics(_AnacondaCommon):
     def _setup_metrics(self, config: Config) -> metrics.Meter:
         if self.use_console_exporters:
             exporter = ConsoleMetricExporter(preferred_temporality=self._get_temporality())
-            self.exporter_shim = None
         else:
             auth_token = config._get_auth_token_metrics()
             headers: Dict[str, str] = {}
@@ -231,7 +234,7 @@ class _AnacondaMetrics(_AnacondaCommon):
             if config._get_request_protocol_metrics() in ['grpc', 'grpcs']:  # gRPC
                 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter as OTLPMetricExportergRPC
                 insecure = not config._get_TLS_metrics()
-                self.exporter_shim = OTLPMetricExporterShim(
+                exporter = OTLPMetricExporterShim(
                     OTLPMetricExportergRPC,
                     endpoint=self.metrics_endpoint,
                     insecure=insecure,
@@ -239,17 +242,15 @@ class _AnacondaMetrics(_AnacondaCommon):
                     headers=headers,
                     preferred_temporality=self._get_temporality()
                 )
-                exporter = self.exporter_shim
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
-                self.exporter_shim = OTLPMetricExporterShim(
+                exporter = OTLPMetricExporterShim(
                     OTLPMetricExporterHTTP,
                     endpoint=self.metrics_endpoint,
                     certificate_file=config._get_ca_cert_metrics(),
                     headers=headers,
                     preferred_temporality=self._get_temporality()
                 )
-                exporter = self.exporter_shim
 
         self.exporter = exporter
         self.metric_reader = PeriodicExportingMetricReader(self.exporter, export_interval_millis=self.telemetry_export_interval_millis)
@@ -446,15 +447,24 @@ class _AnacondaTrace(_AnacondaCommon):
             if config._get_request_protocol_tracing() in ['grpc', 'grpcs']:  # gRPC
                 insecure = not config._get_TLS_tracing()
                 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter as OTLPSpanExportergRPC
-                exporter = OTLPSpanExportergRPC(endpoint=self.tracing_endpoint,
-                                        insecure=insecure,
-                                        credentials=config._get_ca_cert_tracing() if not insecure else None,
-                                        headers=headers)
+                exporter = OTLPSpanExporterShim(
+                    OTLPSpanExportergRPC,
+                    endpoint=self.tracing_endpoint,
+                    insecure=insecure,
+                    credentials=config._get_ca_cert_tracing() if not insecure else None,
+                    headers=headers
+                )
+                self.exporter = exporter
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
-                exporter = OTLPSpanExporterHTTP(endpoint=self.tracing_endpoint,
-                                        certificate_file=config._get_ca_cert_tracing(),
-                                        headers=headers)
+                exporter = OTLPSpanExporterShim(
+                    OTLPSpanExporterHTTP,
+                    endpoint=self.tracing_endpoint,
+                    certificate_file=config._get_ca_cert_tracing(),
+                    headers=headers
+                )
+                self.exporter = exporter
+
         tracer_provider.add_span_processor(
             BatchSpanProcessor(exporter)
         )
@@ -548,24 +558,38 @@ def initialize_telemetry(config: Config,
 
     re_initialize_telemetry(attributes)
 
-def update_endpoint(signal: str, new_endpoint: str):
-    # no signal param usage yet
-    updated_endpoint = _AnacondaMetrics._instance.exporter.update_endpoint(
-        _AnacondaMetrics._instance._config,
+def update_endpoint(signal_type: str, new_endpoint: str):
+    """
+    Updates the endpoint for the passed signal"""
+    if signal_type.lower() == 'metrics':
+        _AnacondaTelInstance = _AnacondaMetrics
+    elif signal_type.lower() == 'tracing':
+        _AnacondaTelInstance = _AnacondaTrace
+    elif signal_type.lower() == 'logging':
+        _AnacondaTelInstance = _AnacondaLogger
+    else:
+        logging.getLogger(__package__).warning(f"{signal_type} not a valid signal type.")
+        return False
+    
+    updated_endpoint = _AnacondaTelInstance._instance.exporter.update_endpoint(
+        _AnacondaTelInstance._instance._config,
         new_endpoint
     )
 
     if not updated_endpoint:
-        logging.getLogger(__package__).warning(f"Endpoint for {signal} failed to update.")
+        logging.getLogger(__package__).warning(f"Endpoint for {signal_type} failed to update.")
         return False
     else:
-        logging.getLogger(__package__).info(f"Endpoint for {signal} was successfully updated.")
+        logging.getLogger(__package__).info(f"Endpoint for {signal_type} was successfully updated.")
     return True
 
+@deprecated
 def re_initialize_telemetry(attributes: Attributes):
     """
     Re-intialize the telemetry with new attributes. The configuration and signal types are identical
     to the original initialize_telemetry() call.
+
+    Deprecated.
 
     Args:
         attributes (ResourceAttributes, optional): A class containing common attributes. If provided,
