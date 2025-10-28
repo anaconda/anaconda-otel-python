@@ -67,7 +67,7 @@ class TestOTLPExporterMixin:
         assert mixin._init_kwargs == {"endpoint": "http://localhost:4317"}
         assert isinstance(mixin._exporter, MockExporter)
         assert mixin._state == ExporterState.READY
-        assert isinstance(mixin._lock, threading.Lock)
+        assert type(mixin._lock).__name__ == 'lock'
         
     def test_initialization_with_multiple_kwargs(self):
         kwargs = {
