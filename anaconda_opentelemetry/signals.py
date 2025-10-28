@@ -127,20 +127,24 @@ class _AnacondaLogger(_AnacondaCommon):
             if config._get_request_protocol_logging() in ['grpc', 'grpcs']:  # gRPC
                 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter as OTLPLogExportergRPC
                 insecure = not config._get_TLS_logging()
-                exporter = OTLPLogExportergRPC(endpoint=self.logger_endpoint,
-                                        insecure=insecure,
-                                        credentials=config._get_ca_cert_logging() if not insecure else None,
-                                        headers=headers)
-                self.exporter = exporter
+                exporter = OTLPLogExporterShim(
+                    OTLPLogExportergRPC,
+                    endpoint=self.logger_endpoint,
+                    insecure=insecure,
+                    credentials=config._get_ca_cert_logging() if not insecure else None,
+                    headers=headers
+                )
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
-                exporter = OTLPLogExporterHTTP(endpoint=self.logger_endpoint,
-                                        certificate_file=config._get_ca_cert_logging(),
-                                        headers=headers)
-                self.exporter = exporter
+                exporter = OTLPLogExporterShim(
+                    OTLPLogExporterHTTP,
+                    endpoint=self.logger_endpoint,
+                    certificate_file=config._get_ca_cert_logging(),
+                    headers=headers
+                )
 
-        self._exporter = exporter
-        self._processor = BatchLogRecordProcessor(self._exporter)
+        self.exporter = exporter
+        self._processor = BatchLogRecordProcessor(self.exporter)
         self._provider.add_log_record_processor(self._processor)
         self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
 
@@ -242,7 +246,6 @@ class _AnacondaMetrics(_AnacondaCommon):
 
         self.exporter = exporter
         self.metric_reader = PeriodicExportingMetricReader(self.exporter, export_interval_millis=self.telemetry_export_interval_millis)
-        print(f"Metric reader in _setup_metrics: {self.metric_reader}")
         # Create and set meter provider
         meter_provider = MeterProvider(
             resource=self.resource,
@@ -584,7 +587,6 @@ def update_endpoint(signal_type: str, new_endpoint: str):
     if signal_type.lower() == 'metrics':
         _AnacondaTelInstance = _AnacondaMetrics
         batch_access = _AnacondaTelInstance._instance.metric_reader
-        print(f"Metric reader in update_endpoint: {batch_access}")
     elif signal_type.lower() == 'tracing':
         _AnacondaTelInstance = _AnacondaTrace
         batch_access = _AnacondaTelInstance._instance._processor

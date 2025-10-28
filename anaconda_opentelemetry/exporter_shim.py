@@ -1,8 +1,8 @@
 import threading
+from enum import Enum
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk._logs.export import LogExporter
-from enum import Enum
 
 
 class ExporterState(Enum):
