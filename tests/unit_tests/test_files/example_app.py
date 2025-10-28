@@ -11,12 +11,10 @@ from anaconda_opentelemetry.attributes import ResourceAttributes
 from anaconda_opentelemetry.config import Configuration
 from anaconda_opentelemetry.signals import (
     initialize_telemetry,
-    re_initialize_telemetry,
     get_telemetry_logger_handler,
     record_histogram,
     increment_counter,
     get_trace,
-    _is_first_time,
     _AnacondaLogger
 )
 
@@ -52,11 +50,8 @@ class ExampleApp:
         attrs.set_attributes(**{"cheese": "american", "test": "hello"})
 
         # initialize package
-        first_time = _is_first_time()
-        if first_time:
-            initialize_telemetry(config, attrs, signal_types=["logging", "tracing", "metrics"])
-        else:
-            re_initialize_telemetry(attrs)
+        initialize_telemetry(config, attrs, signal_types=["logging", "tracing", "metrics"])
+
         # inject logger
         logger.addHandler(get_telemetry_logger_handler())
 

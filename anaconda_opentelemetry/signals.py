@@ -144,9 +144,6 @@ class _AnacondaLogger(_AnacondaCommon):
         self._provider.add_log_record_processor(self._processor)
         self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
 
-    def tear_down(self):
-        _AnacondaLogger._instance = None
-
     def _get_log_level(self, str_level: str)-> int:
         # Convert string from config file to logging level.
         levels = {
@@ -213,15 +210,6 @@ class _AnacondaMetrics(_AnacondaCommon):
             'simple_up_down_counter': self.up_down_counter_objects,
             'histogram': self.histogram_objects
         }
-        self.metric_reader: PeriodicExportingMetricReader = None
-
-    def tear_down(self):
-        if self.metric_reader is not None:
-            self.metric_reader.force_flush()
-            self.metric_reader.shutdown()
-            self.metric_reader = None
-
-        _AnacondaMetrics._instance = None
 
     def _setup_metrics(self, config: Config) -> metrics.Meter:
         if self.use_console_exporters:
@@ -254,7 +242,7 @@ class _AnacondaMetrics(_AnacondaCommon):
 
         self.exporter = exporter
         self.metric_reader = PeriodicExportingMetricReader(self.exporter, export_interval_millis=self.telemetry_export_interval_millis)
-
+        print(f"Metric reader in _setup_metrics: {self.metric_reader}")
         # Create and set meter provider
         meter_provider = MeterProvider(
             resource=self.resource,
@@ -428,10 +416,6 @@ class _AnacondaTrace(_AnacondaCommon):
 
         self.tracer = self._setup_tracing(config)
 
-    def tear_down(self):
-        # TODO: flush and shutdown
-        _AnacondaTrace._instance = None
-
     def _setup_tracing(self, config: Config) -> trace.Tracer:
         # Create tracer provider
         tracer_provider = TracerProvider(resource=self.resource)
@@ -454,7 +438,6 @@ class _AnacondaTrace(_AnacondaCommon):
                     credentials=config._get_ca_cert_tracing() if not insecure else None,
                     headers=headers
                 )
-                self.exporter = exporter
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
                 exporter = OTLPSpanExporterShim(
@@ -463,10 +446,11 @@ class _AnacondaTrace(_AnacondaCommon):
                     certificate_file=config._get_ca_cert_tracing(),
                     headers=headers
                 )
-                self.exporter = exporter
 
+        self.exporter = exporter
+        self._processor = BatchSpanProcessor(self.exporter)
         tracer_provider.add_span_processor(
-            BatchSpanProcessor(exporter)
+            self._processor
         )
 
         # Set as global provider
@@ -515,11 +499,6 @@ __ANACONDA_TELEMETRY_INITIALIZED = False
 __SIGNALS = None
 __CONFIG = None
 
-def _is_first_time():  # For testing only.
-    global __ANACONDA_TELEMETRY_INITIALIZED
-    global __SIGNALS
-    global __CONFIG
-    return __ANACONDA_TELEMETRY_INITIALIZED == False and (__CONFIG is None or __SIGNALS is None)
 
 ################################################################################
 # Exposed APIs
@@ -556,69 +535,6 @@ def initialize_telemetry(config: Config,
     __CONFIG = config
     __SIGNALS = signal_types
 
-    re_initialize_telemetry(attributes)
-
-def update_endpoint(signal_type: str, new_endpoint: str):
-    """
-    Updates the endpoint for the passed signal"""
-    if signal_type.lower() == 'metrics':
-        _AnacondaTelInstance = _AnacondaMetrics
-    elif signal_type.lower() == 'tracing':
-        _AnacondaTelInstance = _AnacondaTrace
-    elif signal_type.lower() == 'logging':
-        _AnacondaTelInstance = _AnacondaLogger
-    else:
-        logging.getLogger(__package__).warning(f"{signal_type} not a valid signal type.")
-        return False
-    
-    updated_endpoint = _AnacondaTelInstance._instance.exporter.update_endpoint(
-        _AnacondaTelInstance._instance._config,
-        new_endpoint
-    )
-
-    if not updated_endpoint:
-        logging.getLogger(__package__).warning(f"Endpoint for {signal_type} failed to update.")
-        return False
-    else:
-        logging.getLogger(__package__).info(f"Endpoint for {signal_type} was successfully updated.")
-    return True
-
-@deprecated
-def re_initialize_telemetry(attributes: Attributes):
-    """
-    Re-intialize the telemetry with new attributes. The configuration and signal types are identical
-    to the original initialize_telemetry() call.
-
-    Deprecated.
-
-    Args:
-        attributes (ResourceAttributes, optional): A class containing common attributes. If provided,
-            it will override any values shared with configuration file.
-
-    Raises:
-        ValueError: If the attributes passed are None. Will throw exceptions
-        if initialize_telemetry has not been previously run.
-    """
-    global __ANACONDA_TELEMETRY_INITIALIZED
-    global __SIGNALS
-    global __CONFIG
-
-    if _is_first_time():
-        raise RuntimeError("re_initialize_telemetry called without first calling initialize_telemetry first!")
-
-    if __ANACONDA_TELEMETRY_INITIALIZED:
-        if 'metrics' in __SIGNALS and _AnacondaMetrics._instance is not None:
-            _AnacondaMetrics._instance.tear_down()
-        if 'tracing' in __SIGNALS and _AnacondaTrace._instance is not None:
-            _AnacondaTrace._instance.tear_down()
-        if 'logging' in __SIGNALS and _AnacondaLogger._instance is not None:
-            _AnacondaLogger._instance.tear_down()
-
-        __ANACONDA_TELEMETRY_INITIALIZED = False
-
-    config = __CONFIG
-    signal_types = __SIGNALS
-
     # Check ResourceAttributes object
     if attributes is None:
         raise ValueError(f"The attributes argument is required but was None")
@@ -654,6 +570,43 @@ def re_initialize_telemetry(attributes: Attributes):
               "metric types in the parameter 'signal_types'."
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
+
+def update_endpoint(signal_type: str, new_endpoint: str):
+    """
+    Updates the endpoint for the passed signal
+    
+    Args:
+        signal_type (str): signal type to update endpoint for. Supported values are 'logging', 'metrics', and 'tracing'
+    
+    Returns:
+        boolean: value indicating whether the update was successful or not
+    """
+    if signal_type.lower() == 'metrics':
+        _AnacondaTelInstance = _AnacondaMetrics
+        batch_access = _AnacondaTelInstance._instance.metric_reader
+        print(f"Metric reader in update_endpoint: {batch_access}")
+    elif signal_type.lower() == 'tracing':
+        _AnacondaTelInstance = _AnacondaTrace
+        batch_access = _AnacondaTelInstance._instance._processor
+    elif signal_type.lower() == 'logging':
+        _AnacondaTelInstance = _AnacondaLogger
+        batch_access = _AnacondaTelInstance._instance._processor
+    else:
+        logging.getLogger(__package__).warning(f"{signal_type} not a valid signal type.")
+        return False
+    
+    updated_endpoint = _AnacondaTelInstance._instance.exporter.update_endpoint(
+        batch_access,
+        _AnacondaTelInstance._instance._config,
+        new_endpoint
+    )
+
+    if not updated_endpoint:
+        logging.getLogger(__package__).warning(f"Endpoint for {signal_type} failed to update.")
+        return False
+    else:
+        logging.getLogger(__package__).info(f"Endpoint for {signal_type} was successfully updated.")
+    return True
 
 def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
     """
