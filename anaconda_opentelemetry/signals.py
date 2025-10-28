@@ -574,7 +574,7 @@ def initialize_telemetry(config: Config,
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
 
-def update_endpoint(signal_type: str, new_endpoint: str):
+def update_endpoint(signal_type: str, new_endpoint: str, auth_token: str):
     """
     Updates the endpoint for the passed signal
     
@@ -600,7 +600,8 @@ def update_endpoint(signal_type: str, new_endpoint: str):
     updated_endpoint = _AnacondaTelInstance._instance.exporter.update_endpoint(
         batch_access,
         _AnacondaTelInstance._instance._config,
-        new_endpoint
+        new_endpoint,
+        auth_token=auth_token
     )
 
     if not updated_endpoint:
