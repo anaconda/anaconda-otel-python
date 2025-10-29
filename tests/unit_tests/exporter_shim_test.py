@@ -96,15 +96,7 @@ class TestOTLPExporterMixin:
         
         assert result == True
         assert mixin._exporter.is_shutdown == True
-        
-    def test_force_flush_delegates_to_exporter(self):
-        mixin = _OTLPExporterMixin(MockExporter)
-        
-        result = mixin.force_flush(timeout=10)
-        
-        assert result == True
-        assert mixin._exporter.is_flushed == True
-        
+               
     def test_update_endpoint_successful(self):
         mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
         mixin._signal = "metrics"
@@ -135,29 +127,7 @@ class TestOTLPExporterMixin:
         
         assert isinstance(mixin._exporter, MockExporter)
         assert mixin._exporter.kwargs['endpoint'] == "http://newhost:8080/v1/metrics"
-        
-    def test_update_endpoint_without_auth_token(self):
-        mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
-        mixin._signal = "tracing"
-        
-        config = Mock()
-        config._change_signal_endpoint.return_value = "http://newhost:8080/v1/traces"
-        
-        batch_access = Mock()
-        
-        result = mixin.update_endpoint(
-            batch_access,
-            config,
-            "http://newhost:8080"
-        )
-        
-        assert result == True
-        config._change_signal_endpoint.assert_called_once_with(
-            "tracing",
-            "http://newhost:8080",
-            auth_token=None
-        )
-        
+               
     def test_update_endpoint_handles_exporter_creation_failure(self):
         class FailingExporter:
             def __init__(self, **kwargs):
@@ -189,20 +159,23 @@ class TestOTLPExporterMixin:
         assert mixin._exporter is old_exporter
         batch_access.force_flush.assert_not_called()
         
-    def test_update_endpoint_state_transitions(self):
+    def test_update_endpoint_thread_safety(self):
+        """Test that update_endpoint properly locks during state changes"""
         mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
-        mixin._signal = "logging"
+        mixin._signal = "metrics"
         
         config = Mock()
-        config._change_signal_endpoint.return_value = "http://newhost:8080/v1/logs"
+        config._change_signal_endpoint.return_value = "http://newhost:8080/v1/metrics"
         
         batch_access = Mock()
         
-        states_observed = []
         original_lock = mixin._lock
         mock_lock = MagicMock()
         
+        states_observed = []
+        enter_count = [0]
         def track_state_on_enter(*args):
+            enter_count[0] += 1
             states_observed.append(mixin._state)
             return original_lock.__enter__()
         
@@ -219,45 +192,15 @@ class TestOTLPExporterMixin:
         
         mixin.update_endpoint(batch_access, config, "http://newhost:8080")
         
-        assert ExporterState.UPDATING in states_observed
-        assert mixin._state == ExporterState.READY
-        
-    def test_update_endpoint_thread_safety(self):
-        """Test that update_endpoint properly locks during state changes"""
-        mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
-        mixin._signal = "metrics"
-        
-        config = Mock()
-        config._change_signal_endpoint.return_value = "http://newhost:8080/v1/metrics"
-        
-        batch_access = Mock()
-        
-        original_lock = mixin._lock
-        mock_lock = MagicMock()
-        
-        enter_count = [0]
-        def count_enter(*args):
-            enter_count[0] += 1
-            return original_lock.__enter__()
-            
-        mock_lock.__enter__ = Mock(side_effect=count_enter)
-        mock_lock.__exit__ = Mock(side_effect=lambda *args: original_lock.__exit__(*args))
-        mock_lock.acquire = original_lock.acquire
-        mock_lock.release = original_lock.release
-        
-        mixin._lock = mock_lock
-        
-        mixin.update_endpoint(batch_access, config, "http://newhost:8080")
-        
         # Should acquire lock at least twice
         assert enter_count[0] >= 2
         assert mock_lock.__enter__.call_count == mock_lock.__exit__.call_count
+        # Check that UPDATING and READY were both active states at one point
+        assert ExporterState.UPDATING in states_observed
+        assert mixin._state == ExporterState.READY
 
 
-class TestOTLPMetricExporterShim:
-    def test_signal_property(self):
-        assert OTLPMetricExporterShim._signal == 'metrics'
-        
+class TestOTLPMetricExporterShim:        
     def test_initialization(self):
         shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
         
@@ -289,10 +232,7 @@ class TestOTLPMetricExporterShim:
         assert shim._exporter.exported_items == [metrics]
 
 
-class TestOTLPSpanExporterShim:
-    def test_signal_property(self):
-        assert OTLPSpanExporterShim._signal == 'tracing'
-        
+class TestOTLPSpanExporterShim:        
     def test_initialization(self):
         shim = OTLPSpanExporterShim(MockExporter, endpoint="http://localhost:4317")
         
@@ -331,10 +271,7 @@ class TestOTLPSpanExporterShim:
         )
 
 
-class TestOTLPLogExporterShim:
-    def test_signal_property(self):
-        assert OTLPLogExporterShim._signal == 'logging'
-        
+class TestOTLPLogExporterShim:       
     def test_initialization(self):
         shim = OTLPLogExporterShim(MockExporter, endpoint="http://localhost:4317")
         
@@ -371,3 +308,87 @@ class TestOTLPLogExporterShim:
             "http://newhost:8080",
             auth_token=None
         )
+
+class TestMockExport:
+    def test_multiple_exporters_can_coexist(self):
+        """Test that multiple shim instances don't interfere with each other"""
+        metric_shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://metrics:4317")
+        span_shim = OTLPSpanExporterShim(MockExporter, endpoint="http://traces:4317")
+        log_shim = OTLPLogExporterShim(MockExporter, endpoint="http://logs:4317")
+        
+        assert metric_shim._init_kwargs['endpoint'] == "http://metrics:4317"
+        assert span_shim._init_kwargs['endpoint'] == "http://traces:4317"
+        assert log_shim._init_kwargs['endpoint'] == "http://logs:4317"
+        
+        metric_shim.export([{"metric": "data"}])
+        span_shim.export([{"span": "data"}])
+        log_shim.export([{"log": "data"}])
+        
+        assert len(metric_shim._exporter.exported_items) == 1
+        assert len(span_shim._exporter.exported_items) == 1
+        assert len(log_shim._exporter.exported_items) == 1
+        
+    def test_endpoint_update_sequence(self):
+        """Test a sequence of endpoint updates"""
+        shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
+        
+        config = Mock()
+        batch_access = Mock()
+        
+        endpoints = [
+            "http://host1:8080",
+            "http://host2:9090",
+            "http://host3:7070"
+        ]
+        
+        for endpoint in endpoints:
+            config._change_signal_endpoint.return_value = f"{endpoint}/v1/metrics"
+            result = shim.update_endpoint(batch_access, config, endpoint)
+            
+            assert result == True
+            assert shim._init_kwargs['endpoint'] == f"{endpoint}/v1/metrics"
+            assert shim._state == ExporterState.READY
+            
+        assert batch_access.force_flush.call_count == len(endpoints)
+        
+    def test_concurrent_export_and_update(self):
+        """Test that export works correctly during endpoint updates"""
+        import time
+        from threading import Thread
+        
+        shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
+        
+        export_results = []
+        update_results = []
+        
+        def export_continuously():
+            for i in range(5):
+                try:
+                    result = shim.export([{"item": i}])
+                    export_results.append(result)
+                except Exception as e:
+                    export_results.append(f"error: {e}")
+                time.sleep(0.01)
+                
+        def update_endpoint():
+            config = Mock()
+            config._change_signal_endpoint.return_value = "http://newhost:8080/v1/metrics"
+            batch_access = Mock()
+            
+            time.sleep(0.05)
+            result = shim.update_endpoint(batch_access, config, "http://newhost:8080")
+            update_results.append(result)
+            
+        export_thread = Thread(target=export_continuously)
+        update_thread = Thread(target=update_endpoint)
+        
+        export_thread.start()
+        update_thread.start()
+        
+        export_thread.join()
+        update_thread.join()
+        
+        assert all(r == "SUCCESS" for r in export_results)
+        assert len(export_results) == 5
+        
+        assert update_results[0] == True

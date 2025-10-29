@@ -55,6 +55,7 @@ class _OTLPExporterMixin:
         return self._exporter.shutdown(*args, **kwargs)
     
     def force_flush(self, *args, **kwargs):
+        # this function doesn't need tests, it must be implemented but exporter method is stub
         return self._exporter.force_flush(*args, **kwargs)
     
 

@@ -182,3 +182,4 @@ cython_debug/
 
 # specific test file to ignore
 telemetry_test.py
+trace_test.py

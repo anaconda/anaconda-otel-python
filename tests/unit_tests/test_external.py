@@ -7,7 +7,8 @@ sys.path.append("./")
 import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
 import anaconda_opentelemetry.signals as signals_package
-from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized
+from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
+    decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized, update_endpoint
 from anaconda_opentelemetry.signals import __check_internet_status as check_internet
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -1177,3 +1178,160 @@ class TestLogging:
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
         assert get_telemetry_logger_handler() is not None
+
+class TestUpdateEndpoint:
+    _instance = None
+
+    def setup_method(self):
+        """Reset all instances state before each test"""
+        _instance = None
+
+    def test_update_endpoint_invalid_signal_type(self):
+        # Test with invalid signal type
+        result = update_endpoint('invalid_signal', 'http://new-endpoint:4317')
+        assert result is False
+
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
+    def test_update_endpoint_logging_success(self, mock_logger_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = True
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_logger_instance._processor = mock_processor
+        mock_logger_instance.exporter = mock_exporter
+        mock_logger_instance._config = mock_config
+        
+        result = update_endpoint('logging', 'http://new-endpoint:4317')
+        
+        mock_exporter.update_endpoint.assert_called_once_with(
+            mock_processor,
+            mock_config,
+            'http://new-endpoint:4317',
+            auth_token=None
+        )
+        assert result is True
+
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
+    def test_update_endpoint_logging_with_auth_token(self, mock_logger_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = True
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_logger_instance._processor = mock_processor
+        mock_logger_instance.exporter = mock_exporter
+        mock_logger_instance._config = mock_config
+        
+        result = update_endpoint('logging', 'http://new-endpoint:4317', auth_token='test_token')
+        
+        mock_exporter.update_endpoint.assert_called_once_with(
+            mock_processor,
+            mock_config,
+            'http://new-endpoint:4317',
+            auth_token='test_token'
+        )
+        assert result is True
+
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
+    def test_update_endpoint_logging_failure(self, mock_logger_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = False
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_logger_instance._processor = mock_processor
+        mock_logger_instance.exporter = mock_exporter
+        mock_logger_instance._config = mock_config
+        
+        result = update_endpoint('logging', 'http://new-endpoint:4317')
+        
+        assert result is False
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics._instance')
+    def test_update_endpoint_metrics_success(self, mock_metrics_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = True
+        mock_metric_reader = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_metrics_instance.metric_reader = mock_metric_reader
+        mock_metrics_instance.exporter = mock_exporter
+        mock_metrics_instance._config = mock_config
+        
+        result = update_endpoint('metrics', 'http://new-endpoint:4317')
+        
+        mock_exporter.update_endpoint.assert_called_once_with(
+            mock_metric_reader,
+            mock_config,
+            'http://new-endpoint:4317',
+            auth_token=None
+        )
+        assert result is True
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics._instance')
+    def test_update_endpoint_metrics_failure(self, mock_metrics_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = False
+        mock_metric_reader = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_metrics_instance.metric_reader = mock_metric_reader
+        mock_metrics_instance.exporter = mock_exporter
+        mock_metrics_instance._config = mock_config
+        
+        result = update_endpoint('metrics', 'http://new-endpoint:4317')
+        
+        assert result is False
+
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace._instance')
+    def test_update_endpoint_tracing_success(self, mock_trace_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = True
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_trace_instance._processor = mock_processor
+        mock_trace_instance.exporter = mock_exporter
+        mock_trace_instance._config = mock_config
+        
+        result = update_endpoint('tracing', 'http://new-endpoint:4317')
+        
+        mock_exporter.update_endpoint.assert_called_once_with(
+            mock_processor,
+            mock_config,
+            'http://new-endpoint:4317',
+            auth_token=None
+        )
+        assert result is True
+
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace._instance')
+    def test_update_endpoint_tracing_failure(self, mock_trace_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = False
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_trace_instance._processor = mock_processor
+        mock_trace_instance.exporter = mock_exporter
+        mock_trace_instance._config = mock_config
+        
+        result = update_endpoint('tracing', 'http://new-endpoint:4317')
+        
+        assert result is False
+
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
+    def test_update_endpoint_case_insensitive(self, mock_logger_instance):
+        mock_exporter = MagicMock()
+        mock_exporter.update_endpoint.return_value = True
+        mock_processor = MagicMock()
+        mock_config = MagicMock()
+        
+        mock_logger_instance._processor = mock_processor
+        mock_logger_instance.exporter = mock_exporter
+        mock_logger_instance._config = mock_config
+        
+        result = update_endpoint('LOGGING', 'http://new-endpoint:4317')
+        
+        assert result is True
+        mock_exporter.update_endpoint.assert_called_once()

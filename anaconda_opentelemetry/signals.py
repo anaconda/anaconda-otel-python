@@ -574,7 +574,7 @@ def initialize_telemetry(config: Config,
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
 
-def update_endpoint(signal_type: str, new_endpoint: str, auth_token: str):
+def update_endpoint(signal_type: str, new_endpoint: str, auth_token: str = None):
     """
     Updates the endpoint for the passed signal
     
