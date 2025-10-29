@@ -599,6 +599,12 @@ class Configuration:
                     if q > 255:
                         raise ValueError(f"Invalid endpoint format: {endpoint}")
 
+    def _change_signal_endpoint(self, signal: str, new_endpoint: str, auth_token: str=None):
+        set_endpoint = getattr(self, f"set_{signal}_endpoint", None)
+        set_endpoint(new_endpoint, auth_token=auth_token)
+        get_endpoint = getattr(self, f"_get_{signal}_endpoint", None)
+        return get_endpoint()
+
     def _set_otel_signal_endpoint(self, endpoint: str, signal: str) -> str:
         endpoint_str = f"v1/{signal}"
         if not endpoint.endswith(endpoint_str):
