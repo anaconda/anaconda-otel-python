@@ -30,7 +30,6 @@ from opentelemetry.propagate import get_global_textmap
 from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
-from .config import deprecated
 from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
@@ -574,7 +573,7 @@ def initialize_telemetry(config: Config,
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
 
-def update_endpoint(signal_type: str, new_endpoint: str, auth_token: str = None):
+def change_signal_endpoint(signal_type: str, new_endpoint: str, auth_token: str = None):
     """
     Updates the endpoint for the passed signal
     
@@ -597,7 +596,7 @@ def update_endpoint(signal_type: str, new_endpoint: str, auth_token: str = None)
         logging.getLogger(__package__).warning(f"{signal_type} not a valid signal type.")
         return False
     
-    updated_endpoint = _AnacondaTelInstance._instance.exporter.update_endpoint(
+    updated_endpoint = _AnacondaTelInstance._instance.exporter.change_signal_endpoint(
         batch_access,
         _AnacondaTelInstance._instance._config,
         new_endpoint,

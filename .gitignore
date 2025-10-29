@@ -181,5 +181,4 @@ cython_debug/
 .cursorrules
 
 # specific test file to ignore
-telemetry_test.py
-trace_test.py
+*_test_local.py

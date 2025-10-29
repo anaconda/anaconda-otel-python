@@ -20,7 +20,7 @@ class _OTLPExporterMixin:
         self._exporter = exporter_class(**kwargs)
         self._state = ExporterState.READY
     
-    def update_endpoint(self, batch_access, config, new_endpoint, auth_token=None):
+    def change_signal_endpoint(self, batch_access, config, new_endpoint, auth_token=None):
 
         endpoint = config._change_signal_endpoint(
             self._signal,

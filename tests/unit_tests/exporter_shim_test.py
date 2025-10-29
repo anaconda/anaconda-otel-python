@@ -97,7 +97,7 @@ class TestOTLPExporterMixin:
         assert result == True
         assert mixin._exporter.is_shutdown == True
                
-    def test_update_endpoint_successful(self):
+    def test_change_signal_endpoint_successful(self):
         mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
         mixin._signal = "metrics"
         
@@ -106,7 +106,7 @@ class TestOTLPExporterMixin:
         
         batch_access = Mock()
         
-        result = mixin.update_endpoint(
+        result = mixin.change_signal_endpoint(
             batch_access,
             config,
             "http://newhost:8080",
@@ -128,7 +128,7 @@ class TestOTLPExporterMixin:
         assert isinstance(mixin._exporter, MockExporter)
         assert mixin._exporter.kwargs['endpoint'] == "http://newhost:8080/v1/metrics"
                
-    def test_update_endpoint_handles_exporter_creation_failure(self):
+    def test_change_signal_endpoint_handles_exporter_creation_failure(self):
         class FailingExporter:
             def __init__(self, **kwargs):
                 if kwargs.get('endpoint') == "http://invalid:8080/v1/metrics":
@@ -148,7 +148,7 @@ class TestOTLPExporterMixin:
         
         batch_access = Mock()
         
-        result = mixin.update_endpoint(
+        result = mixin.change_signal_endpoint(
             batch_access,
             config,
             "http://invalid:8080"
@@ -159,8 +159,8 @@ class TestOTLPExporterMixin:
         assert mixin._exporter is old_exporter
         batch_access.force_flush.assert_not_called()
         
-    def test_update_endpoint_thread_safety(self):
-        """Test that update_endpoint properly locks during state changes"""
+    def test_change_signal_endpoint_thread_safety(self):
+        """Test that change_signal_endpoint properly locks during state changes"""
         mixin = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
         mixin._signal = "metrics"
         
@@ -190,7 +190,7 @@ class TestOTLPExporterMixin:
         
         mixin._lock = mock_lock
         
-        mixin.update_endpoint(batch_access, config, "http://newhost:8080")
+        mixin.change_signal_endpoint(batch_access, config, "http://newhost:8080")
         
         # Should acquire lock at least twice
         assert enter_count[0] >= 2
@@ -254,7 +254,7 @@ class TestOTLPSpanExporterShim:
         assert result == "SUCCESS"
         assert shim._exporter.exported_items == [spans]
         
-    def test_update_endpoint_uses_tracing_signal(self):
+    def test_change_signal_endpoint_uses_tracing_signal(self):
         shim = OTLPSpanExporterShim(MockExporter)
         
         config = Mock()
@@ -262,7 +262,7 @@ class TestOTLPSpanExporterShim:
         
         batch_access = Mock()
         
-        shim.update_endpoint(batch_access, config, "http://newhost:8080")
+        shim.change_signal_endpoint(batch_access, config, "http://newhost:8080")
         
         config._change_signal_endpoint.assert_called_once_with(
             "tracing",
@@ -293,7 +293,7 @@ class TestOTLPLogExporterShim:
         assert result == "SUCCESS"
         assert shim._exporter.exported_items == [logs]
         
-    def test_update_endpoint_uses_logging_signal(self):
+    def test_change_signal_endpoint_uses_logging_signal(self):
         shim = OTLPLogExporterShim(MockExporter)
         
         config = Mock()
@@ -301,7 +301,7 @@ class TestOTLPLogExporterShim:
         
         batch_access = Mock()
         
-        shim.update_endpoint(batch_access, config, "http://newhost:8080")
+        shim.change_signal_endpoint(batch_access, config, "http://newhost:8080")
         
         config._change_signal_endpoint.assert_called_once_with(
             "logging",
@@ -343,7 +343,7 @@ class TestMockExport:
         
         for endpoint in endpoints:
             config._change_signal_endpoint.return_value = f"{endpoint}/v1/metrics"
-            result = shim.update_endpoint(batch_access, config, endpoint)
+            result = shim.change_signal_endpoint(batch_access, config, endpoint)
             
             assert result == True
             assert shim._init_kwargs['endpoint'] == f"{endpoint}/v1/metrics"
@@ -370,17 +370,17 @@ class TestMockExport:
                     export_results.append(f"error: {e}")
                 time.sleep(0.01)
                 
-        def update_endpoint():
+        def change_signal_endpoint():
             config = Mock()
             config._change_signal_endpoint.return_value = "http://newhost:8080/v1/metrics"
             batch_access = Mock()
             
             time.sleep(0.05)
-            result = shim.update_endpoint(batch_access, config, "http://newhost:8080")
+            result = shim.change_signal_endpoint(batch_access, config, "http://newhost:8080")
             update_results.append(result)
             
         export_thread = Thread(target=export_continuously)
-        update_thread = Thread(target=update_endpoint)
+        update_thread = Thread(target=change_signal_endpoint)
         
         export_thread.start()
         update_thread.start()
