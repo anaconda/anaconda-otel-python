@@ -5,8 +5,7 @@
 import sys
 sys.path.append("./")
 
-import pytest
-import threading
+import pytest, threading
 from unittest.mock import Mock, MagicMock, patch, call
 from enum import Enum
 
@@ -17,7 +16,6 @@ from anaconda_opentelemetry.exporter_shim import (
     OTLPSpanExporterShim,
     OTLPLogExporterShim
 )
-
 
 class MockExporter:
     """Mock exporter class for testing"""

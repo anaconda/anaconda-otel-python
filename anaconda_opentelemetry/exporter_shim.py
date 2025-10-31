@@ -1,4 +1,4 @@
-import threading
+import threading, logging
 from enum import Enum
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -14,6 +14,7 @@ class _OTLPExporterMixin:
     """Mixin that provides common functionality for all OTLP exporter shims"""
     
     def __init__(self, exporter_class, **kwargs):
+        self._logger = logging.getLogger('exporter_shim_logger')
         self._lock = threading.Lock()
         self._exporter_class = exporter_class
         self._init_kwargs = kwargs
@@ -49,8 +50,12 @@ class _OTLPExporterMixin:
         return True
     
     def export(self, *args, **kwargs):
-        return self._exporter.export(*args, **kwargs)
-    
+        try:
+            return self._exporter.export(*args, **kwargs)
+        except Exception as exception:
+            self._logger.error(f"Failed to export: {exception}")
+            return False
+            
     def shutdown(self, *args, **kwargs):
         return self._exporter.shutdown(*args, **kwargs)
     
