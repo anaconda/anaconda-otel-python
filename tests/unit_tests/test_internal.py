@@ -502,15 +502,12 @@ class TestAnacondaTrace:
         parent_trace = parent._span.get_span_context().trace_id
         parent_span = parent._span.get_span_context().span_id
         
-        # Carrier should be populated
         assert len(carrier) > 0, "Carrier should contain trace context"
         
-        # Child using same carrier
         child = AnacondaTracer.get_span("child", {}, carrier)
         child_trace = child._span.get_span_context().trace_id
         child_span = child._span.get_span_context().span_id
         
-        # Verify relationship
         assert child_trace == parent_trace, "Child should share parent's trace_id"
         assert child_span != parent_span, "Child should have different span_id"
         
@@ -525,7 +522,6 @@ class TestAnacondaTrace:
         """
         Tests that no carrier or separate carriers create independent traces.
         """
-        # No carrier = independent traces
         span1 = AnacondaTracer.get_span("span1", {}, None)
         span2 = AnacondaTracer.get_span("span2", {}, None)
         
@@ -533,7 +529,6 @@ class TestAnacondaTrace:
             span2._span.get_span_context().trace_id, \
             "Spans without carrier should have different trace_ids"
         
-        # Separate carriers = independent traces  
         carrier1, carrier2 = {}, {}
         span3 = AnacondaTracer.get_span("span3", {}, carrier1)
         span4 = AnacondaTracer.get_span("span4", {}, carrier2)
@@ -558,16 +553,13 @@ class TestAnacondaTrace:
         trace_ids = []
         span_ids = []
         
-        # Create chain of 3 spans
         for i in range(3):
             span = AnacondaTracer.get_span(f"span-{i}", {}, carrier)
             spans.append(span)
             trace_ids.append(span._span.get_span_context().trace_id)
             span_ids.append(span._span.get_span_context().span_id)
         
-        # All share same trace
         assert len(set(trace_ids)) == 1, "All spans should share trace_id"
-        # All have unique span_ids
         assert len(set(span_ids)) == 3, "Each span should have unique span_id"
         
         for span in reversed(spans):

@@ -390,3 +390,22 @@ class TestMockExport:
         assert len(export_results) == 5
         
         assert update_results[0] == True
+
+    def test_export_handles_exception(self):
+        """Test that export catches and logs exceptions, returning False"""
+        from unittest.mock import MagicMock
+        
+        shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
+        
+        # Mock the exporter to raise an exception
+        shim._exporter = MagicMock()
+        shim._exporter.export.side_effect = ConnectionError("Connection refused")
+        
+        # Mock the logger to verify error logging
+        shim._logger = MagicMock()
+        
+        # Export should catch exception and return False
+        result = shim.export([{"test": "data"}])
+        
+        assert result == False
+        shim._logger.error.assert_called_once_with("Failed to export: Connection refused")
