@@ -465,12 +465,19 @@ class _AnacondaTrace(_AnacondaCommon):
         return trace.get_tracer(self.service_name, self.service_version)
 
     def get_span(self, name: str, attributes: AttrDict = {}, carrier: Dict[str,str] = None) -> trace.Span:
-        # Get a span with the given name and attributes.
+        # Extract context if applicable
         if carrier is None:
             context = None
         else:
             context = get_global_textmap().extract(carrier)
+
         span = self.tracer.start_span(name, context=context, attributes=attributes)
+
+        # Inject context if applicable
+        if carrier is not None:
+            context = trace.set_span_in_context(span, context)
+            get_global_textmap().inject(carrier, context=context)
+
         return _ASpan(name, span, attributes=attributes)
 
 

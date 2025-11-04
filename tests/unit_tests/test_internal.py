@@ -487,6 +487,84 @@ class TestAnacondaTrace:
         assert isinstance(ASpan._span, Span)
         ASpan._close()
 
+    def test_carrier_creates_parent_child_relationship(
+        self,
+        AnacondaTracer: AnacondaTrace
+    ):
+        """
+        Tests that carrier propagates trace context between spans.
+        - Parent and child share trace_id
+        - Parent and child have different span_ids
+        - Carrier gets populated with context
+        """
+        carrier = {}
+        parent = AnacondaTracer.get_span("parent", {}, carrier)
+        parent_trace = parent._span.get_span_context().trace_id
+        parent_span = parent._span.get_span_context().span_id
+        
+        assert len(carrier) > 0, "Carrier should contain trace context"
+        
+        child = AnacondaTracer.get_span("child", {}, carrier)
+        child_trace = child._span.get_span_context().trace_id
+        child_span = child._span.get_span_context().span_id
+        
+        assert child_trace == parent_trace, "Child should share parent's trace_id"
+        assert child_span != parent_span, "Child should have different span_id"
+        
+        child._close()
+        parent._close()
+
+
+    def test_carrier_none_creates_independent_traces(
+        self,
+        AnacondaTracer: AnacondaTrace
+    ):
+        """
+        Tests that no carrier or separate carriers create independent traces.
+        """
+        span1 = AnacondaTracer.get_span("span1", {}, None)
+        span2 = AnacondaTracer.get_span("span2", {}, None)
+        
+        assert span1._span.get_span_context().trace_id != \
+            span2._span.get_span_context().trace_id, \
+            "Spans without carrier should have different trace_ids"
+        
+        carrier1, carrier2 = {}, {}
+        span3 = AnacondaTracer.get_span("span3", {}, carrier1)
+        span4 = AnacondaTracer.get_span("span4", {}, carrier2)
+        
+        assert span3._span.get_span_context().trace_id != \
+            span4._span.get_span_context().trace_id, \
+            "Separate carriers should create separate traces"
+        
+        for span in [span1, span2, span3, span4]:
+            span._close()
+
+
+    def test_multiple_spans_share_trace_via_carrier(
+        self,
+        AnacondaTracer: AnacondaTrace
+    ):
+        """
+        Tests that multiple spans using same carrier share the trace.
+        """
+        carrier = {}
+        spans = []
+        trace_ids = []
+        span_ids = []
+        
+        for i in range(3):
+            span = AnacondaTracer.get_span(f"span-{i}", {}, carrier)
+            spans.append(span)
+            trace_ids.append(span._span.get_span_context().trace_id)
+            span_ids.append(span._span.get_span_context().span_id)
+        
+        assert len(set(trace_ids)) == 1, "All spans should share trace_id"
+        assert len(set(span_ids)) == 3, "Each span should have unique span_id"
+        
+        for span in reversed(spans):
+            span._close()
+
 class TestAnacondaMetrics:
     instance: AnacondaMetrics = None
 

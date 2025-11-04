@@ -5,8 +5,7 @@
 import sys
 sys.path.append("./")
 
-import pytest
-import threading
+import pytest, threading
 from unittest.mock import Mock, MagicMock, patch, call
 from enum import Enum
 
@@ -17,7 +16,6 @@ from anaconda_opentelemetry.exporter_shim import (
     OTLPSpanExporterShim,
     OTLPLogExporterShim
 )
-
 
 class MockExporter:
     """Mock exporter class for testing"""
@@ -392,3 +390,17 @@ class TestMockExport:
         assert len(export_results) == 5
         
         assert update_results[0] == True
+
+    def test_export_handles_exception(self):
+        """Test that export catches and logs exceptions, returning False"""       
+        shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
+        
+        shim._exporter = MagicMock()
+        shim._exporter.export.side_effect = ConnectionError("Connection refused")
+        
+        shim._logger = MagicMock()
+        
+        result = shim.export([{"test": "data"}])
+        
+        assert result == False
+        shim._logger.error.assert_called_once_with("Failed to export: Connection refused")
