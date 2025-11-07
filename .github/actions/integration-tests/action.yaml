@@ -4,12 +4,7 @@ inputs:
   python-version:
     description: 'Python version to use'
     required: true
-  otel-prod-token:
-    description: 'OpenTelemetry production token'
-    required: true
-  otel-prod-endpoint:
-    description: 'OpenTelemetry production endpoint'
-    required: true
+
 runs:
   using: 'composite'
   steps:
@@ -24,10 +19,8 @@ runs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest
+        pip install flask
 
     - name: Run integration tests
       shell: bash
-      env:
-        ATEL_DEFAULT_AUTH_TOKEN: ${{ inputs.otel-prod-token }}
-        ATEL_DEFAULT_ENDPOINT: ${{ inputs.otel-prod-endpoint }}
-      run: python -m pytest tests/integration_tests/test_external_prod_otel.py
+      run: python -m pytest tests/integration_tests/test_trace_carrier.py

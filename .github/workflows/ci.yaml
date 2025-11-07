@@ -20,8 +20,6 @@ jobs:
         uses: ./.github/actions/integration-tests
         with:
           python-version: ${{ matrix.python-version }}
-          otel-prod-token: ${{ secrets.OTEL_PROD_TOKEN }}
-          otel-prod-endpoint: ${{ secrets.OTEL_PROD_ENDPOINT }}
 
   test-all:
     name: All tests passed
