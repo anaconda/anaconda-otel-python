@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
       - name: Checkout code
@@ -20,8 +20,6 @@ jobs:
         uses: ./.github/actions/integration-tests
         with:
           python-version: ${{ matrix.python-version }}
-          otel-prod-token: ${{ secrets.OTEL_PROD_TOKEN }}
-          otel-prod-endpoint: ${{ secrets.OTEL_PROD_ENDPOINT }}
 
   test-all:
     name: All tests passed
