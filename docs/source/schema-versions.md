@@ -1,7 +1,28 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
 This schema refers to the resource.attributes portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
-## [v0.2.0] (07/18/25) - Current Schema
+## [v0.3.0] (11/19/2025) - Current Schema
+```
+{
+  "telemetry.sdk.language": "python",  # added by Otel
+  "telemetry.sdk.name": "opentelemetry",  # added by Otel
+  "telemetry.sdk.version": "1.33.1",  # added by Otel   
+  "service.name": "platform-service",
+  "service.version": "x.x.x",
+  "os.type": "Darwin",
+  "os.version": "x.x.x",
+  "python.version": "3.13.2",
+  "hostname": "Users-MBP",
+  "client.sdk.version": "x.x.x",
+  "schema.version": "x.x.x",
+  “platform”: “Such as cloud provider”,
+  “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
+  "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
+  "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
+}
+```
+
+## [v0.2.0] (07/18/25) - (11/19/2025)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel

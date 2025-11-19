@@ -23,7 +23,8 @@ class ResourceAttributes:
         hostname (str): hostname of client machine
         platform (str): infrastructure on which the software is provided
         environment (Literal["", "test", "development", "staging", "production"]): envrionment the software is running in
-        user_id (str): some string denoting a user of a client application
+        user_id (str): some string denoting a user of a client application.
+                       This will not be stored in Resource Attributes and will be moved to attributes.
         parameters (Dict[str, str]): optional dictionary containing all other telemetry attributes a client would like to add
         client_sdk_version (str): version of package. READONLY
         schema_version (str): version of telemetry schema used by package. READONLY

@@ -52,6 +52,8 @@ class _AnacondaCommon:
         self.resource = None
         # session id
         self._session_id = None
+        # user id
+        self._user_id = None
 
         # Make self._resource_attributes and self.resource
         self.make_otel_resource(attributes)
@@ -100,6 +102,15 @@ class _AnacondaCommon:
         hashed = hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
         return hashed
+
+    def _pull_user_id(self, attributes):
+        # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
+        # for backwards compatability
+        if not self._user_id:
+            # no op
+            return attributes
+        else:
+            
 
 
 class _AnacondaLogger(_AnacondaCommon):
