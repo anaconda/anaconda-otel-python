@@ -81,7 +81,7 @@ class TestAnacondaCommon:
         """
         # construct mock hash
         ts = int(time.time() * 1e9)  # format timestamp like in class function
-        expected_combined = f"{ts}|{AnacondaCommon._resource_attributes['user.id']}|{self.service_name}"
+        expected_combined = f"{ts}|{AnacondaCommon._user_id}|{self.service_name}"
         expected_hash = hashlib.sha256(expected_combined.encode("utf-8")).hexdigest()
         # real hash function call
         AnacondaCommon._hash_session_id(ts)
@@ -99,7 +99,7 @@ class TestAnacondaCommon:
         expected_combined = f"{ts}|{user_id}|{self.service_name}"
         expected_hash = hashlib.sha256(expected_combined.encode("utf-8")).hexdigest()
         # real hash function call
-        AnacondaCommon._resource_attributes['user.id'] = user_id
+        AnacondaCommon._user_id = user_id
         AnacondaCommon._hash_session_id(ts)
 
         assert AnacondaCommon._resource_attributes['session.id'] == expected_hash
@@ -119,7 +119,7 @@ class TestAnacondaCommon:
         """
         - Checks that the sha256 hash output is of length 64
         """
-        AnacondaCommon._resource_attributes['user.id'] = 'testuser'
+        AnacondaCommon._user_id = 'testuser'
         AnacondaCommon._hash_session_id("timestamp")
         result = AnacondaCommon._resource_attributes['session.id']
 
@@ -188,6 +188,46 @@ class TestAnacondaCommon:
         """
         assert AnacondaCommon._resource_attributes['parameters'] == json.dumps({"foo": "test"})
 
+    def test_pull_user_id_added(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        AnacondaCommon._user_id = 'user123'
+        attributes = {
+            "key1": "val1",
+            "key2": "val2"
+        }
+        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        attributes.update({'user.id': 'user123'})
+        assert output_attributes == attributes
+        assert 'user_id' not in output_attributes
+
+    def test_pull_user_id_noop(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        AnacondaCommon._user_id = None
+        attributes = {
+            "key1": "val1",
+            "key2": "val2"
+        }
+        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        assert 'user.id' not in output_attributes
+        assert 'user_id' not in output_attributes
+
+    def test_pull_user_id_existing(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        AnacondaCommon._user_id = 'testuser'
+        attributes = {
+            "key1": "val1",
+            "key2": "val2",
+            "user.id": "testuser"
+        }
+        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        assert output_attributes == attributes
+        assert 'user_id' not in output_attributes
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None
