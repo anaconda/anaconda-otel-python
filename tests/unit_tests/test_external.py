@@ -388,6 +388,7 @@ class TestRecordHistogram:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.record_histogram.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = record_histogram("cpu_usage", 85.7)
@@ -417,6 +418,7 @@ class TestRecordHistogram:
             "environment": "production",
             "region": "us-west-2"
         }
+        mock_metrics_instance._process_attributes.return_value = custom_attributes
 
         result = record_histogram("request_duration", 123.45, custom_attributes)
 
@@ -437,6 +439,7 @@ class TestRecordHistogram:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.record_histogram.return_value = False
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = record_histogram("failed_metric", 99.9)
@@ -488,6 +491,7 @@ class TestRecordHistogram:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.record_histogram.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = record_histogram("default_attrs_test", 50.0)
@@ -569,6 +573,7 @@ class TestIncrementCounter:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.increment_counter.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = increment_counter("api_requests")
@@ -598,6 +603,7 @@ class TestIncrementCounter:
             "endpoint": "/api/users",
             "status_code": 200
         }
+        mock_metrics_instance._process_attributes.return_value = custom_attributes
 
         result = increment_counter("http_requests", by=3, attributes=custom_attributes)
 
@@ -618,6 +624,7 @@ class TestIncrementCounter:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.increment_counter.return_value = False
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = increment_counter("failed_counter", by=2)
@@ -720,6 +727,7 @@ class TestDecrementCounter:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.decrement_counter.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = decrement_counter("api_failures")
@@ -749,6 +757,7 @@ class TestDecrementCounter:
             "cache_type": "redis",
             "region": "us-west-1"
         }
+        mock_metrics_instance._process_attributes.return_value = custom_attributes
 
         result = decrement_counter("cache_entries", by=10, attributes=custom_attributes)
 
@@ -769,6 +778,7 @@ class TestDecrementCounter:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_metrics_instance = MagicMock()
         mock_metrics_instance.decrement_counter.return_value = False
+        mock_metrics_instance._process_attributes.return_value = {}
         setattr(mock_metrics, '_instance', mock_metrics_instance)
 
         result = decrement_counter("failed_counter", by=3)
@@ -898,6 +908,7 @@ class TestGetTrace:
         mock_trace_instance = MagicMock()
         mock_span = MagicMock()
         mock_trace_instance.get_span.return_value = mock_span
+        mock_trace_instance._process_attributes.return_value = {}
         setattr(mock_trace, '_instance', mock_trace_instance)
 
         with get_trace("test_trace") as span:
@@ -927,6 +938,7 @@ class TestGetTrace:
             "operation": "batch_process",
             "user_id": "user123"
         }
+        mock_trace_instance._process_attributes.return_value = custom_attributes
 
         with get_trace("data_processing", attributes=custom_attributes) as span:
             assert span is mock_span
@@ -950,6 +962,7 @@ class TestGetTrace:
         mock_trace_instance = MagicMock()
         mock_span = MagicMock()
         mock_trace_instance.get_span.return_value = mock_span
+        mock_trace_instance._process_attributes.return_value = {}
         setattr(mock_trace, '_instance', mock_trace_instance)
 
         carrier = {
@@ -983,6 +996,7 @@ class TestGetTrace:
 
         attributes = {"operation": "full_test", "version": "1.0"}
         carrier = {"traceparent": "00-trace-span-01"}
+        mock_trace_instance._process_attributes.return_value = attributes
 
         with get_trace("full_trace", attributes=attributes, carrier=carrier) as span:
             assert span is mock_span
@@ -1008,6 +1022,7 @@ class TestGetTrace:
         mock_span = MagicMock()
         mock_logger = MagicMock()
         mock_trace_instance.get_span.return_value = mock_span
+        mock_trace_instance._process_attributes.return_value = {}
         mock_trace_instance.logger = mock_logger
         setattr(mock_trace, '_instance', mock_trace_instance)
 
@@ -1016,6 +1031,7 @@ class TestGetTrace:
         with get_trace("error_trace") as span:
             raise test_exception
 
+        mock_trace_instance._process_attributes.assert_called_once_with({})
         mock_trace_instance.get_span.assert_called_once_with("error_trace", {}, None)
         mock_span.add_exception.assert_called_once_with(test_exception)
         mock_span.set_error_status.assert_called_once()
@@ -1024,13 +1040,6 @@ class TestGetTrace:
 
     @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_invalid_attribute_keys_logs_error(self, mock_trace):
-        """
-        Test that invalid attribute keys are detected and logged
-        - Sets telemetry as initialized
-        - Calls get_trace with invalid attribute keys (empty string or non-string)
-        - Verifies error is logged about invalid attributes
-        - Confirms span is still created and handled properly
-        """
         # Set up initialized state
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         mock_trace_instance = MagicMock()
@@ -1040,9 +1049,10 @@ class TestGetTrace:
 
         invalid_attributes = {
             "valid_key": "valid_value",
-            "": "empty_key",  # Invalid: empty string key
-            123: "numeric_key"  # Invalid: non-string key
+            "": "empty_key",
+            123: "numeric_key"
         }
+        mock_trace_instance._process_attributes.return_value = invalid_attributes
 
         with patch('logging.getLogger') as mock_get_logger:
             mock_logger_instance = MagicMock()
@@ -1055,6 +1065,7 @@ class TestGetTrace:
                 "Attribute passed with non empty str type key. Invalid attributes."
             )
 
+        mock_trace_instance._process_attributes.assert_called_once_with(invalid_attributes)
         mock_trace_instance.get_span.assert_called_once_with(
             "invalid_attrs_trace", invalid_attributes, None
         )
@@ -1097,6 +1108,7 @@ class TestGetTrace:
         mock_trace_instance = MagicMock()
         mock_outer_span = MagicMock()
         mock_inner_span = MagicMock()
+        mock_trace_instance._process_attributes.side_effect = lambda x: x
         mock_trace_instance.get_span.side_effect = [mock_outer_span, mock_inner_span]
         setattr(mock_trace, '_instance', mock_trace_instance)
 
@@ -1116,8 +1128,8 @@ class TestGetTrace:
 
         # Verify both spans were created
         assert mock_trace_instance.get_span.call_count == 2
-        mock_trace_instance.get_span.assert_any_call("outer_trace", {"level": "outer"}, None)
-        mock_trace_instance.get_span.assert_any_call("inner_trace", {"level": "inner"}, None)
+        mock_trace_instance._process_attributes.assert_any_call({"level": "outer"})
+        mock_trace_instance._process_attributes.assert_any_call({"level": "inner"})
 
         # Verify both spans had proper lifecycle
         mock_outer_span._close.assert_called_once()

@@ -72,7 +72,7 @@ class _AnacondaCommon:
         # Required parameters
         self.service_name = resource_attrs["service_name"]
         self.service_version = resource_attrs["service_version"]
-        # prepare to use `_pull_user_id`
+        # prepare to use `_process_attributes`
         self._user_id = resource_attrs["user_id"]
         del resource_attrs["service_name"], resource_attrs["service_version"], resource_attrs["user_id"]
 
@@ -105,7 +105,7 @@ class _AnacondaCommon:
 
         return hashed
 
-    def _pull_user_id(self, attributes):
+    def _process_attributes(self, attributes):
         # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
         # for backwards compatability if people have been setting user.id with ResourceAttributes
         if not self._user_id:
@@ -652,7 +652,7 @@ def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.record_histogram(metric_name, value, _AnacondaCommon._pull_user_id(attributes))
+        return _AnacondaMetrics._instance.record_histogram(metric_name, value, _AnacondaMetrics._instance._process_attributes(attributes))
     except MetricsNotInitialized as me:
         logging.getLogger(__package__).warning(f"An attempt was made to record a histogram metric when metrics were not configured.")
         return False
@@ -678,8 +678,8 @@ def increment_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.increment_counter(counter_name, by, _AnacondaCommon._pull_user_id(attributes))
-    except MetricsNotInitialized as me:
+        return _AnacondaMetrics._instance.increment_counter(counter_name, by, _AnacondaMetrics._instance._process_attributes(attributes))
+    except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
         return False
     except Exception as e:
@@ -704,8 +704,8 @@ def decrement_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.decrement_counter(counter_name, by, _AnacondaCommon._pull_user_id(attributes))
-    except MetricsNotInitialized as me:
+        return _AnacondaMetrics._instance.decrement_counter(counter_name, by, _AnacondaMetrics._instance._process_attributes(attributes))
+    except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
         return False
     except Exception as e:
@@ -744,7 +744,7 @@ def get_trace(name: str, attributes: AttrDict = {}, carrier: Dict[str,str] = Non
         logging.getLogger(__package__).error("Attribute passed with non empty str type key. Invalid attributes.")
 
     try:
-        aspan = _AnacondaTrace._instance.get_span(name, _AnacondaCommon._pull_user_id(attributes), carrier)
+        aspan = _AnacondaTrace._instance.get_span(name, _AnacondaTrace._instance._process_attributes(attributes), carrier)
     except:  # Trace is different than the other signals, there is no easy way to log and continue.
         logging.getLogger(__package__).warning(f"Attempt to trace a with-block when tracing was not configured.")
         aspan = _ASpan("UNKNOWN", span=None, noop=True)

@@ -188,7 +188,7 @@ class TestAnacondaCommon:
         """
         assert AnacondaCommon._resource_attributes['parameters'] == json.dumps({"foo": "test"})
 
-    def test_pull_user_id_added(self, AnacondaCommon: AnacondaTelBase):
+    def test_process_attributes_added(self, AnacondaCommon: AnacondaTelBase):
         """
         Checks that the pull_user_id method works as expected
         """
@@ -197,12 +197,12 @@ class TestAnacondaCommon:
             "key1": "val1",
             "key2": "val2"
         }
-        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        output_attributes = AnacondaCommon._process_attributes(attributes.copy())
         attributes.update({'user.id': 'user123'})
         assert output_attributes == attributes
         assert 'user_id' not in output_attributes
 
-    def test_pull_user_id_noop(self, AnacondaCommon: AnacondaTelBase):
+    def test_process_attributes_noop(self, AnacondaCommon: AnacondaTelBase):
         """
         Checks that the pull_user_id method works as expected
         """
@@ -211,11 +211,11 @@ class TestAnacondaCommon:
             "key1": "val1",
             "key2": "val2"
         }
-        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        output_attributes = AnacondaCommon._process_attributes(attributes.copy())
         assert 'user.id' not in output_attributes
         assert 'user_id' not in output_attributes
 
-    def test_pull_user_id_existing(self, AnacondaCommon: AnacondaTelBase):
+    def test_process_attributes_existing(self, AnacondaCommon: AnacondaTelBase):
         """
         Checks that the pull_user_id method works as expected
         """
@@ -225,7 +225,7 @@ class TestAnacondaCommon:
             "key2": "val2",
             "user.id": "testuser"
         }
-        output_attributes = AnacondaCommon._pull_user_id(attributes.copy())
+        output_attributes = AnacondaCommon._process_attributes(attributes.copy())
         assert output_attributes == attributes
         assert 'user_id' not in output_attributes
 
