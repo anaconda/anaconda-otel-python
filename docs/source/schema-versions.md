@@ -4,25 +4,51 @@ This schema refers to the resource.attributes portion of the OpenTelemetry paylo
 ## [v0.3.0] (12/01/2025) - Current Schema
 ```
 {
-  "telemetry.sdk.language": "python",  # added by Otel
-  "telemetry.sdk.name": "opentelemetry",  # added by Otel
-  "telemetry.sdk.version": "1.33.1",  # added by Otel   
-  "service.name": "platform-service",
-  "service.version": "x.x.x",
-  "os.type": "Darwin",
-  "os.version": "x.x.x",
-  "python.version": "3.13.2",
-  "hostname": "Users-MBP",
-  "client.sdk.version": "x.x.x",
-  "schema.version": "x.x.x",
-  “platform”: “Such as cloud provider”,
-  “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
-  "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
-  "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
+  "resource_metrics": [
+    {
+      "resource": {
+        "attributes": {  # key value pairs within here are where data is added
+          "telemetry.sdk.language": "python",  # added by Otel
+          "telemetry.sdk.name": "opentelemetry",  # added by Otel
+          "telemetry.sdk.version": "1.33.1",  # added by Otel   
+          "service.name": "platform-service",
+          "service.version": "x.x.x",
+          "os.type": "Darwin",
+          "os.version": "x.x.x",
+          "python.version": "3.13.2",
+          "hostname": "Users-MBP",
+          "client.sdk.version": "x.x.x",
+          "schema.version": "x.x.x",
+          “platform”: “cloud provider”,
+          “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
+          "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
+          "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
+        }
+      }
+      "scope_metrics": [
+        {
+          "metrics": [
+            {
+              "data": {
+                "data_points": [
+                  {
+                    "attributes": {  # key value pairs within here are where data is added
+                      "user.id": "1234",
+                      # this section also includes event specific attributes
+                    },
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
 ```
 
-## [v0.2.0] (07/18/25) - (11/19/2025)
+## [v0.2.0] (07/18/25) - (12/01/2025)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
