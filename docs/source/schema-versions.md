@@ -1,5 +1,5 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
-This schema refers to the resource.attributes, and scope_metrics.metrics.data.data_points.attributes (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
+This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
 ## [v0.3.0] (12/01/2025) - Current Schema
 ```
