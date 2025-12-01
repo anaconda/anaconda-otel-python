@@ -57,8 +57,7 @@ class ResourceAttributes:
         metadata={"otel_name": "environment"}
     )
     user_id: str = field(
-        default="",
-        metadata={"otel_name": "user.id"}
+        default=""
     )
     # Readonly
     client_sdk_version: str = field(

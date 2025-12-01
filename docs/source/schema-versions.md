@@ -1,7 +1,7 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
 This schema refers to the resource.attributes portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
-## [v0.3.0] (11/19/2025) - Current Schema
+## [v0.3.0] (12/01/2025) - Current Schema
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
