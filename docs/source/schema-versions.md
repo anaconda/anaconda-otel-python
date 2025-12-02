@@ -33,7 +33,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
                 "data_points": [
                   {
                     "attributes": {  # key value pairs within here are where data is added
-                      "user.id": "1234",  # moved from resource.attributes in v3
+                      "user.id": "1234",  # moved from resource.attributes in v0.3.0
                       # this section also includes event specific attributes
                     },
                   }
