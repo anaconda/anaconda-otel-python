@@ -52,6 +52,8 @@ class _AnacondaCommon:
         self.resource = None
         # session id
         self._session_id = None
+        # user id
+        self._user_id = None
 
         # Make self._resource_attributes and self.resource
         self.make_otel_resource(attributes)
@@ -70,7 +72,10 @@ class _AnacondaCommon:
         # Required parameters
         self.service_name = resource_attrs["service_name"]
         self.service_version = resource_attrs["service_version"]
-        del resource_attrs["service_name"], resource_attrs["service_version"]
+        # prepare to use `_process_attributes`
+        self._user_id = resource_attrs["user_id"]
+        del resource_attrs["service_name"], resource_attrs["service_version"], resource_attrs["user_id"]
+
         # convert parameters value to stringified JSON
         resource_attrs["parameters"] = json.dumps(resource_attrs["parameters"])
         # Init resource_attributes
@@ -88,7 +93,6 @@ class _AnacondaCommon:
         self._resource_attributes['session.id'] = self._session_id
         self.resource = Resource.create(self._resource_attributes)
 
-
     def _hash_session_id(self, entropy):
         # Hashes a session id for common attributes based on timestamp and user_id
         # entropy value ensures unique session_ids
@@ -100,6 +104,26 @@ class _AnacondaCommon:
         hashed = hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
         return hashed
+
+    def _process_attributes(self, attributes: AttrDict={}):
+        # ensure attributes are of type AttrDict
+        if not isinstance(attributes, Dict):
+            self.logger.error(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
+            attributes = {}
+        # check attributes for invalid keys
+        if any(not isinstance(key, str) or not key for key in attributes):
+            self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
+            attributes = {}
+
+        # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
+        # for backwards compatability if people have been setting user.id with ResourceAttributes
+        if not self._user_id:
+            return attributes  # no op
+        elif 'user.id' in attributes:
+            return attributes  # key already exists
+        else:
+            attributes['user.id'] = self._user_id
+            return attributes
 
 
 class _AnacondaLogger(_AnacondaCommon):
@@ -637,7 +661,7 @@ def record_histogram(metric_name, value, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.record_histogram(metric_name, value, attributes)
+        return _AnacondaMetrics._instance.record_histogram(metric_name, value, _AnacondaMetrics._instance._process_attributes(attributes))
     except MetricsNotInitialized as me:
         logging.getLogger(__package__).warning(f"An attempt was made to record a histogram metric when metrics were not configured.")
         return False
@@ -663,8 +687,8 @@ def increment_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.increment_counter(counter_name, by, attributes)
-    except MetricsNotInitialized as me:
+        return _AnacondaMetrics._instance.increment_counter(counter_name, by, _AnacondaMetrics._instance._process_attributes(attributes))
+    except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
         return False
     except Exception as e:
@@ -689,8 +713,8 @@ def decrement_counter(counter_name, by=1, attributes: AttrDict={}) -> bool:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return False
     try:
-        return _AnacondaMetrics._instance.decrement_counter(counter_name, by, attributes)
-    except MetricsNotInitialized as me:
+        return _AnacondaMetrics._instance.decrement_counter(counter_name, by, _AnacondaMetrics._instance._process_attributes(attributes))
+    except MetricsNotInitialized:
         logging.getLogger(__package__).warning(f"An attempt was made to change/create a counter metric when metrics were not configured.")
         return False
     except Exception as e:
@@ -724,12 +748,8 @@ def get_trace(name: str, attributes: AttrDict = {}, carrier: Dict[str,str] = Non
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return None
 
-    # check attributes for invalid keys
-    if any(not isinstance(key, str) or not key for key in attributes):
-        logging.getLogger(__package__).error("Attribute passed with non empty str type key. Invalid attributes.")
-
     try:
-        aspan = _AnacondaTrace._instance.get_span(name, attributes, carrier)
+        aspan = _AnacondaTrace._instance.get_span(name, _AnacondaTrace._instance._process_attributes(attributes), carrier)
     except:  # Trace is different than the other signals, there is no easy way to log and continue.
         logging.getLogger(__package__).warning(f"Attempt to trace a with-block when tracing was not configured.")
         aspan = _ASpan("UNKNOWN", span=None, noop=True)
