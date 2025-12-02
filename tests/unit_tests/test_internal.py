@@ -229,6 +229,63 @@ class TestAnacondaCommon:
         assert output_attributes == attributes
         assert 'user_id' not in output_attributes
 
+    def test_process_attributes_empty(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        AnacondaCommon._user_id = None
+        output_attributes = AnacondaCommon._process_attributes()
+        assert output_attributes == {}
+
+    def test_process_attributes_none(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        with patch.object(AnacondaCommon, 'logger') as mock_logger:
+            AnacondaCommon._user_id = None
+            output_attributes = AnacondaCommon._process_attributes(None)
+            assert output_attributes == {}
+            mock_logger.error.assert_called_once_with(
+                "Attributes `None` are not a dictionary, they are not valid. They will be converted to an empty one."
+            )
+
+    def test_process_attributes_int(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        with patch.object(AnacondaCommon, 'logger') as mock_logger:
+            AnacondaCommon._user_id = None
+            output_attributes = AnacondaCommon._process_attributes(123)
+            assert output_attributes == {}
+            mock_logger.error.assert_called_once_with(
+                "Attributes `123` are not a dictionary, they are not valid. They will be converted to an empty one."
+            )
+
+    def test_process_attributes_invalid_keys(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        with patch.object(AnacondaCommon, 'logger') as mock_logger:
+            AnacondaCommon._user_id = None
+            output_attributes = AnacondaCommon._process_attributes({1: "val", 2: False})
+            assert output_attributes == {}
+            mock_logger.error.assert_called_once_with(
+                "Attributes `{1: 'val', 2: False}` passed with non empty str type key. Invalid attributes."
+            )
+
+    def test_process_attributes_none_keys(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that the pull_user_id method works as expected
+        """
+        with patch.object(AnacondaCommon, 'logger') as mock_logger:
+            AnacondaCommon._user_id = None
+            output_attributes = AnacondaCommon._process_attributes({None: "val"})
+            assert output_attributes == {}
+            mock_logger.error.assert_called_once_with(
+                "Attributes `{None: 'val'}` passed with non empty str type key. Invalid attributes."
+            )
+
+
 class TestAnacondaLogger:
     instance: AnacondaLogger = None
     # default mock time value that is class wide

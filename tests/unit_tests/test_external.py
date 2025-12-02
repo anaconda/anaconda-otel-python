@@ -1039,39 +1039,6 @@ class TestGetTrace:
         mock_logger.error.assert_called_once_with("Error in trace span error_trace: Test error")
 
     @patch('anaconda_opentelemetry.signals._AnacondaTrace')
-    def test_invalid_attribute_keys_logs_error(self, mock_trace):
-        # Set up initialized state
-        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
-        mock_trace_instance = MagicMock()
-        mock_span = MagicMock()
-        mock_trace_instance.get_span.return_value = mock_span
-        setattr(mock_trace, '_instance', mock_trace_instance)
-
-        invalid_attributes = {
-            "valid_key": "valid_value",
-            "": "empty_key",
-            123: "numeric_key"
-        }
-        mock_trace_instance._process_attributes.return_value = invalid_attributes
-
-        with patch('logging.getLogger') as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            with get_trace("invalid_attrs_trace", attributes=invalid_attributes) as span:
-                assert span is mock_span
-
-            mock_logger_instance.error.assert_called_once_with(
-                "Attribute passed with non empty str type key. Invalid attributes."
-            )
-
-        mock_trace_instance._process_attributes.assert_called_once_with(invalid_attributes)
-        mock_trace_instance.get_span.assert_called_once_with(
-            "invalid_attrs_trace", invalid_attributes, None
-        )
-        mock_span._close.assert_called_once()
-
-    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_span_close_called_even_if_status_methods_fail(self, mock_trace):
         """
         Test that span._close() is always called even if status methods fail

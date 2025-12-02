@@ -105,7 +105,17 @@ class _AnacondaCommon:
 
         return hashed
 
-    def _process_attributes(self, attributes):
+    def _process_attributes(self, attributes: AttrDict={}):
+        # ensure attributes are of type AttrDict
+        print(attributes)
+        if not isinstance(attributes, Dict):
+            self.logger.error(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
+            attributes = {}
+        # check attributes for invalid keys
+        if any(not isinstance(key, str) or not key for key in attributes):
+            self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
+            attributes = {}
+
         # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
         # for backwards compatability if people have been setting user.id with ResourceAttributes
         if not self._user_id:
@@ -738,10 +748,6 @@ def get_trace(name: str, attributes: AttrDict = {}, carrier: Dict[str,str] = Non
     if __ANACONDA_TELEMETRY_INITIALIZED is False:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         return None
-
-    # check attributes for invalid keys
-    if any(not isinstance(key, str) or not key for key in attributes):
-        logging.getLogger(__package__).error("Attribute passed with non empty str type key. Invalid attributes.")
 
     try:
         aspan = _AnacondaTrace._instance.get_span(name, _AnacondaTrace._instance._process_attributes(attributes), carrier)
