@@ -107,7 +107,6 @@ class _AnacondaCommon:
 
     def _process_attributes(self, attributes: AttrDict={}):
         # ensure attributes are of type AttrDict
-        print(attributes)
         if not isinstance(attributes, Dict):
             self.logger.error(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
             attributes = {}
