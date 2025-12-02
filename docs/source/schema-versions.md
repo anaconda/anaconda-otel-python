@@ -1,7 +1,54 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
-This schema refers to the resource.attributes portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
+This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
-## [v0.2.0] (07/18/25) - Current Schema
+## [v0.3.0] (12/01/2025) - Current Schema
+```
+{
+  "resource_metrics": [
+    {
+      "resource": {
+        "attributes": {  # key value pairs within here are where data is added
+          "telemetry.sdk.language": "python",  # added by Otel
+          "telemetry.sdk.name": "opentelemetry",  # added by Otel
+          "telemetry.sdk.version": "1.33.1",  # added by Otel   
+          "service.name": "platform-service",
+          "service.version": "x.x.x",
+          "os.type": "Darwin",
+          "os.version": "x.x.x",
+          "python.version": "3.13.2",
+          "hostname": "Users-MBP",
+          "client.sdk.version": "x.x.x",
+          "schema.version": "x.x.x",
+          “platform”: “cloud provider”,
+          “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
+          "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
+          "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
+        }
+      }
+      "scope_metrics": [
+        {
+          "metrics": [
+            {
+              "data": {
+                "data_points": [
+                  {
+                    "attributes": {  # key value pairs within here are where data is added
+                      "user.id": "1234",  # moved from resource.attributes in v0.3.0
+                      # this section also includes event specific attributes
+                    },
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## [v0.2.0] (07/18/25) - (12/01/2025)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
