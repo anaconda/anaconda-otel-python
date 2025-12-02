@@ -136,20 +136,21 @@ class ResourceAttributes:
     def set_attributes(self, **kwargs) -> None:
         """
         Sets attributes according to key value pairs passed to this function. Will overwrite existing attributes, unless they are readonly.
-
+        
+        Note: Setting user_id via this method is maintained for backwards compatability. Doing so will override any user_ids set later in event specific attributes.
+        
         Parameters:
             \\*\\*kwargs: any keyword arguments. This can set named class properties (common attributes), or any other wildcard name (stored in `parameters`)
-                        The following are the common attributes of the class:\n
-                        
-                        - service_name (str): name of client service\n
-                        - service_version (str): version of client service\n
-                        - os_type (str): operating system type of client machine\n
-                        - os_version (str): operating system version of client machine\n
-                        - python_version (str): python version of client the package\n
-                        - hostname (str): hostname of client machine\n
-                        - platform (str): infrastructure on which the software runs\n
-                        - environment (Literal["", "test", "development", "staging", "production"]): environment of the software\n
-                        - user_id (str): some string denoting a user of a client application\n
+        The following are the common attributes that can be set:
+            service_name (str): name of client service\n
+            service_version (str): version of client service\n
+            os_type (str): operating system type of client machine\n
+            os_version (str): operating system version of client machine\n
+            python_version (str): python version of client the package\n
+            hostname (str): hostname of client machine\n
+            platform (str): infrastructure on which the software runs\n
+            environment (Literal["", "test", "development", "staging", "production"]): environment of the software\n
+            user_id (str): some string denoting a user of a client application\n
         """
         for kwarg in kwargs:
             # if kwarg has already been initialized as a property
