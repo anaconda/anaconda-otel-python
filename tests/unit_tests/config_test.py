@@ -176,6 +176,15 @@ class TestConfiguration:
         config.set_metrics_export_interval_ms(-20)  # Silent fail...
         assert 10_000 == config._get_metrics_export_interval_ms()
 
+        # For tracing_export_interval_ms
+        assert 60_000 == config._get_tracing_export_interval_ms()  # default
+        config.set_tracing_export_interval_ms(10_000)
+        assert 10_000 == config._get_tracing_export_interval_ms()
+        with pytest.raises(TypeError):  # Must be an int type.
+            config.set_tracing_export_interval_ms(None)
+        config.set_tracing_export_interval_ms(-20)  # Silent fail...
+        assert 10_000 == config._get_tracing_export_interval_ms()
+
         # For tracing_session_entropy
         import time
         now=int(time.time() * 1e9)
