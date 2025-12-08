@@ -50,6 +50,7 @@ class Configuration:
     - TRACING_AUTH_TOKEN_NAME - Name for the tracing authentication token in the configuration files or dictionaries passed into this class.
     - METRICS_AUTH_TOKEN_NAME - Name for the metrics authentication token in the configuration files or dictionaries passed into this class.
     - METRICS_EXPORT_INTERVAL_MS_NAME - Name for the metrics export interval in milliseconds in the configuration files or dictionaries passed into this class.
+    - TRACING_EXPORT_INTERVAL_MS_NAME - Name for the tracing export interval in milliseconds in the configuration files or dictionaries passed into this class.
     - LOGGING_LEVEL_NAME - Name for the logging level in the configuration files or dictionaries passed into this class.
     - SESSION_ENTROPY_VALUE_NAME - Name for the session entropy value in the configuration files or dictionaries passed into this class.
     - TLS_PRIVATE_CA_CERT_FILE_NAME - File name for the TLS private CA certificate in the configuration files or dictionaries passed into this class.
@@ -76,6 +77,7 @@ class Configuration:
     TRACING_AUTH_TOKEN_NAME         = 'tracing_auth_token'
     METRICS_AUTH_TOKEN_NAME         = 'metrics_auth_token'
     METRICS_EXPORT_INTERVAL_MS_NAME = 'metrics_export_interval_ms'
+    TRACING_EXPORT_INTERVAL_MS_NAME = 'tracing_export_interval_ms'
     LOGGING_LEVEL_NAME              = 'logging_level'
     SESSION_ENTROPY_VALUE_NAME      = 'session_entropy_value'
     DEFAULT_CA_CERT_NAME            = 'default_credentials'
@@ -96,6 +98,7 @@ class Configuration:
         TRACING_AUTH_TOKEN_NAME,
         METRICS_AUTH_TOKEN_NAME,
         METRICS_EXPORT_INTERVAL_MS_NAME,
+        TRACING_EXPORT_INTERVAL_MS_NAME,
         LOGGING_LEVEL_NAME,
         SESSION_ENTROPY_VALUE_NAME,
         DEFAULT_CA_CERT_NAME,
@@ -472,6 +475,25 @@ class Configuration:
             return self
         self._config[self.METRICS_EXPORT_INTERVAL_MS_NAME] = interval_ms
         return self
+    
+    def set_tracing_export_interval_ms(self, interval_ms: int):
+        """
+        Sets the tracing export interval in milliseconds. If this value is not set,
+        the default is 60,000 milliseconds (1 minute). If passed in a dict in the constructor,
+        use predefined name TRACING_EXPORT_INTERVAL_NAME. This dictates how long the batching
+        inside OpenTelemetry lasts before sending to the collector.
+
+        Args:
+            interval (int): Interval in milliseconds for exporting metrics. If this is zero or
+            negative then the export interval is not set.
+
+        Returns:
+            Self
+        """
+        if interval_ms <= 0:
+            return self
+        self._config[self.TRACING_EXPORT_INTERVAL_MS_NAME] = interval_ms
+        return self
 
     def set_tracing_session_entropy(self, session_entropy):
         """
@@ -678,6 +700,9 @@ class Configuration:
 
     def _get_metrics_export_interval_ms(self) -> int:
         return self._config.get(self.METRICS_EXPORT_INTERVAL_MS_NAME, 60_000)
+    
+    def _get_tracing_export_interval_ms(self) -> int:
+        return self._config.get(self.TRACING_EXPORT_INTERVAL_MS_NAME, 60_000)
 
     def _get_tracing_session_entropy(self):
         if self._config.get(self.SESSION_ENTROPY_VALUE_NAME, None) is None:
