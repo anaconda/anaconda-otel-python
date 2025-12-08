@@ -438,6 +438,7 @@ class _AnacondaTrace(_AnacondaCommon):
     def __init__(self, config: Config, attributes: Attributes):
         # Init singleton instance
         super().__init__(config, attributes)
+        self.telemetry_export_interval_millis = config._get_tracing_export_interval_ms()
         self.tracing_endpoint = config._get_tracing_endpoint()
 
         self.tracer = self._setup_tracing(config)
@@ -474,7 +475,7 @@ class _AnacondaTrace(_AnacondaCommon):
                 )
 
         self.exporter = exporter
-        self._processor = BatchSpanProcessor(self.exporter)
+        self._processor = BatchSpanProcessor(self.exporter, schedule_delay_millis=self.telemetry_export_interval_millis)
         tracer_provider.add_span_processor(
             self._processor
         )
