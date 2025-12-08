@@ -96,8 +96,8 @@ echo ${__SDK_VERSION__} >version.txt
 replace_version "${__SDK_VERSION__}"
 
 # Install dependencies if needed
-CONDA=`which conda`
-[[ -z "${CONDA}" ]] && echo "ERROR: conda not found! Please install the latest version of miniconda from https://anaconda.com/." >&2 && restore_version && exit 1
+# CONDA=`which conda`
+# [[ -z "${CONDA}" ]] && echo "ERROR: conda not found! Please install the latest version of miniconda from https://anaconda.com/." >&2 && restore_version && exit 1
 install_latex
 pip_install
 
