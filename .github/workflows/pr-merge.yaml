@@ -25,10 +25,18 @@ jobs:
         run: |
           git fetch --tags
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.10
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-            python-version: 3.13
+            python-version: 3.10
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: myenv
+          python-version: 3.10
+          auto-update-conda: true
+          auto-activate-base: false
 
       - name: Install requirements.txt
         run: |
