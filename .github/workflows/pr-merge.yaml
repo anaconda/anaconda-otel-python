@@ -30,22 +30,19 @@ jobs:
         with:
             python-version: 3.11
 
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: myenv
-          python-version: "3.11"
-          auto-update-conda: true
-          auto-activate-base: false
-
       - name: Install requirements.txt
         run: |
           python -m pip install -r requirements.txt
 
+      - name: Run UT
+        shell: bash
+        run: |
+          OTEL_USE_CONSOLE_EXPORTER=TRUE pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
+
       - name: Run Build Script
         shell: bash
         run: |
-          scripts/build.sh
+          scripts/make-docs.sh
 
       - name: Stage Artifacts
         shell: bash
