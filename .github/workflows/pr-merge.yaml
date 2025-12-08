@@ -51,7 +51,7 @@ jobs:
           rm -rf site
           mkdir -p site/docs site/coverage
           cp -r docs/build/html/* site/docs/
-          cp -r htmlcov/* site/docs
+          cp -r htmlcov/* site/coverage
           touch site/.nojekyll
 
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
