@@ -2,7 +2,7 @@ name: Deploy docs & coverage to GitHub Pages (on PR merge)
 
 on:
   push:
-    branches: [ main ]  # This is for testing, change to main...
+    branches: [ main ]
 
 permissions:
   contents: read
