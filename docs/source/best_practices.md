@@ -13,7 +13,47 @@ If an event or piece of code you want telemetry for can be presented numerically
 - Response time in milliseconds (add to distribution)
 - RAM utilized by a machine in megabytes (gauge the signal)
 
-This does not necessarily mean that the primary interest in the telemetry is the number of user login events. You could be collecting this telemetry event because you're more interested in the characteristics of who logged in. Even still, the metric signal type is the best fit. OpenTelemetry packages metrics of the same name together in groups containing each individual event. It uses a set structure and fixed properties for all metrics to form consist payload contents. This makes metrics easier for backends to collate and query, and you'll be able to see specific metric events containing specific sets of labels. 
+This does not necessarily mean that the primary interest in the telemetry is the number of user login events. You could be collecting this telemetry event because you're more interested in the characteristics of who logged in. Even still, the metric signal type is the best fit. OpenTelemetry packages metrics of the same name together in groups containing each individual event. It uses a set structure and fixed properties for all metrics to form consist payload contents. This makes metrics easier for backends to collate and query, and you'll be able to see specific metric events containing specific sets of labels.
+
+#### Visual Example of a Metric
+```
+{
+    "
+    "scopeMetrics": [
+    {
+        "scope": {
+        "name": "test_service",
+        "version": "dev-build"
+        },
+        "metrics": [
+        {
+            "name": "test",
+            "description": "No description.",
+            "unit": "#",
+            "sum": {
+            "dataPoints": [
+                {
+                "attributes": [
+                    {
+                    "key": "user.id",
+                    "value": {
+                        "stringValue": "test123"
+                    }
+                    }
+                ],
+                "startTimeUnixNano": "1767886298183762000",
+                "timeUnixNano": "1767886298183888000",
+                "asInt": "1"
+                }
+            ],
+            "aggregationTemporality": 2
+            }
+        }
+        ]
+    }
+    ]
+}
+```
 
 ### Traces
 When the context of a group of events matters, such as a request path or the route of multiple events, traces are the signal type to use. The most common use case is request tracing across distributed systems, with user journeys being another possibility. In the case of tracing, the context is the important part. If the events in code do not matter in relation to each other then they should never be a trace.
@@ -68,3 +108,53 @@ In this example Service A calls service B which calls service C, and the chain e
 ```
 
 ### Logs
+When many developers think of logs, they think of application/developer logs. And if you desire those logs to be part of your telemetry then the log signal should be used. Log telemetry also acts a bit like a catch all. The main modifiable part of the OpenTelemetry payload for logs is the log body. You can send multi-line data as telemetry just by exporting logs. For data that doesn't clearly fit metrics or traces, logs are usually the best fit. Examples of good log telemetry:
+- JSON payloads
+- Large strings that can't be parsed into individual attributes
+- Multi-line messages
+
+The reason to default to logs rather than put telemetry data into a metric or trace where it doesn't necessarily fit is related to querying/processing. Log payloads are designed to be queried by their bodies, where as metrics and traces are designed to be queried by numerical or contextual values.
+
+#### Visual Example of a log payload
+```
+{
+    "scopeLogs": [
+    {
+        "scope": {
+        "name": "my_logger"
+        },
+        "logRecords": [
+        {
+            "timeUnixNano": "1767993488934098944",
+            "observedTimeUnixNano": "1767993488934126000",
+            "severityNumber": 13,
+            "severityText": "WARN",
+            "body": {
+            "stringValue": "Hello"
+            },
+            "attributes": [
+            {
+                "key": "code.file.path",
+                "value": {
+                "stringValue": "/Users/rhettsaunders/Documents/GitHub/anaconda-otel-python/telemetry_test_local.py"
+                }
+            },
+            {
+                "key": "code.function.name",
+                "value": {
+                "stringValue": "<module>"
+                }
+            },
+            {
+                "key": "code.line.number",
+                "value": {
+                "intValue": "33"
+                }
+            }
+            ],
+        }
+        ]
+    }
+    ]
+}
+```
