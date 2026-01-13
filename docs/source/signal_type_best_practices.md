@@ -2,9 +2,9 @@
 
 ## Deciding on a Signal Type (Traces vs Metrics vs Logs)
 There are three main signal types in OpenTelemetry (and general observability) and each one has tradeoffs that suit them to specific use cases. In OpenTelemetry, each signal type has a specific structure.
-- Metrics contain groups of recorded numbers and measurements, and these records contain numeric properties and metric scopes
-- Traces contain elements that are groupings of events that share parent/child relationships or context, each event contains event attributes
-- Logs contain a text body, each body contains optional attributes
+- Metrics contain groups of counter or measurement records, and these records contain numeric properties and metric scopes
+- Traces are groupings of individual events (spans) that share parent/child relationships or context
+- Logs contain a text body
 
 ### Metrics
 If an event or piece of code you want telemetry for can be presented numerically, then the use case is best for metrics. Several examples include:
@@ -13,12 +13,11 @@ If an event or piece of code you want telemetry for can be presented numerically
 - Response time in milliseconds (add to distribution)
 - RAM utilized by a machine in megabytes (gauge the signal)
 
-This does not necessarily mean that the primary interest in the telemetry is the number of user login events. You could be collecting this telemetry event because you're more interested in the characteristics of who logged in. Even still, the metric signal type is the best fit. OpenTelemetry packages metrics of the same name together in groups containing each individual event. It uses a set structure and fixed properties for all metrics to form consist payload contents. This makes metrics easier for backends to collate and query, and you'll be able to see specific metric events containing specific sets of labels.
+This does not necessarily mean that the primary interest in the telemetry is the number of user login events. You could be collecting this telemetry event because you're more interested in the characteristics of who logged in, which you can add via attributes. The metric signal type is still the best fit because the telemetry record is inherently a metric. OpenTelemetry packages metrics of the same name together in groups containing each individual event. It uses a set structure and fixed properties for all metrics to form consist payload contents. This makes metrics easier for metric backends to store and query, and you'll be able to see specific metric events containing specific sets of labels.
 
 #### Visual Example of a Metric
 ```
 {
-    "
     "scopeMetrics": [
     {
         "scope": {
@@ -56,18 +55,18 @@ This does not necessarily mean that the primary interest in the telemetry is the
 ```
 
 ### Traces
-When the context of a group of events matters, such as a request path or the route of multiple events, traces are the signal type to use. The most common use case is request tracing across distributed systems, with user journeys being another possibility. In the case of tracing, the context is the important part. If the events in code do not matter in relation to each other then they should never be a trace.
+When the context of a group of events matters, such as a request path or the route of multiple interconnected events, traces are the signal type to use. The most common use case is request tracing across distributed systems, with user journeys being another possibility. In the case of tracing, the context is the important part. If the events in code do not matter in relation to each other then they should never be a trace.
 
-Traces are made up of spans. Spans are the individual events, such as a request to Service A, and traces are the envelope grouping spans together. This grouping happens with instrumentation with the sharing of context, which is created on the initial call and typically passed via request headers. The context could also be passed via function parameters for a use case like tracking user journeys within an application.
+Traces are made up of spans. Spans are the individual events - such as a request to Service A - with traces being the container grouping spans together. This grouping happens with instrumentation via the sharing of context, which is created on the initial call and typically passed via request headers. The context could also be passed via function parameters for a use case like tracking user journeys within a single application.
 
-Spans have parent/child relationships. The context contains the most recent span so when a new span is created and there is context to be extracted the new span can refer to the previous span as its parent. Consider the following example:
+Spans have parent/child relationships. The context contains the most recent span, so when a new span is created if there is context to be extracted then the new span can refer to the previous span as its parent. Consider the following example:
 - Request from client to Service A
 - The request to Service A results in a call to Service B, where the chain of events ends
 
-Trace telemetry for this event would be a single trace. It would contain the parent span representing the call to Service A from the client, and that span's child span which represents the call from Service A to Service B. If service B was also instrumented then there would be a third span. This one would be the child of the span representing the call from Service A to Service B, and not have any child spans itself because there are no more requests generated by this API route.
+Trace telemetry for this event would be a single trace. It would contain the parent span representing the call to Service A from the client, and the parent span's child span which represents the call from Service A to Service B. If service B was also instrumented then there would be a third span. This one would just be the child of the span representing the call from Service A to Service B, and not have any child spans itself because there are no more requests generated by this API route.
 
 #### Visual example of a trace payload:
-In this example Service A calls service B which calls service C, and the chain ends there.
+In this example Service A calls service B which calls service C, and the chain ends there. Note the empty `parent_id` for the root parent span, and the matching `parent_id` of each subsequent span to its parent's `span_id`.
 ```
 {
     "name": "serviceC.process",
@@ -108,12 +107,12 @@ In this example Service A calls service B which calls service C, and the chain e
 ```
 
 ### Logs
-When many developers think of logs, they think of application/developer logs. And if you desire those logs to be part of your telemetry then the log signal should be used. Log telemetry also acts a bit like a catch all. The main modifiable part of the OpenTelemetry payload for logs is the log body. You can send multi-line data as telemetry just by exporting logs. For data that doesn't clearly fit metrics or traces, logs are usually the best fit. Examples of good log telemetry:
+When many developers think of logs, they think of application/developer logs. And if you desire those logs to be part of your telemetry then the log signal should be used. Log telemetry also acts a bit like a catch all. The main component of the OpenTelemetry log payload is the log body. You can send multi-line data as telemetry just by exporting logs. For data that doesn't clearly fit metrics or traces, logs are usually the best fit. Examples of good log telemetry:
 - JSON payloads
 - Large strings that can't be parsed into individual attributes
 - Multi-line messages
 
-The reason to default to logs rather than put telemetry data into a metric or trace where it doesn't necessarily fit is related to querying/processing. Log payloads are designed to be queried by their bodies, where as metrics and traces are designed to be queried by numerical or contextual values.
+The reason to use logs rather than put telemetry data into a suboptimally utilized metric or trace is related to querying/processing. Log payloads are designed to be queried by their log body. Only the log body, logger name, and attributes are of high interest. In comparison metrics and traces have other fields that make up their payloads and require more detail to parse through.
 
 #### Visual Example of a log payload
 ```
