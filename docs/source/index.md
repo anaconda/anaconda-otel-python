@@ -10,3 +10,4 @@ This document serves as both the API documentation and a quick start guide.
 
 getting_started.md
 anaconda_opentelemetry.rst
+best_practices.md
