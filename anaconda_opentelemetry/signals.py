@@ -200,7 +200,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         Counter: AggregationTemporality.DELTA,
         ObservableCounter: AggregationTemporality.DELTA,
         Histogram: AggregationTemporality.CUMULATIVE,
-        UpDownCounter: AggregationTemporality.CUMULATIVE,
+        UpDownCounter: AggregationTemporality.DELTA,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
     }
 
