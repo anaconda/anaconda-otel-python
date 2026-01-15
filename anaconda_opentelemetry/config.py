@@ -529,8 +529,9 @@ class Configuration:
         Sets the use of cumulative aggregation temporality if True. The default (False) is delta
         (not aggregated).
 
-        Please Note, the underlying OTel API may or may not support setting DELTA. It is recommended
-        that the collector do the conversion from cumulative to delta.
+        Cumulative counters report a measurement consistently for each export interval. The would result in "duplicate"
+        metrics. To get metric readings only for the difference between the current count and the previous count, use delta
+        aggregation.
 
         Args:
             value (bool): True turns on cumulative aggregation, False (the default) is to send

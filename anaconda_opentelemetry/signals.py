@@ -199,8 +199,8 @@ class _AnacondaMetrics(_AnacondaCommon):
     _default_temporality: dict[type,AggregationTemporality] = {
         Counter: AggregationTemporality.DELTA,
         ObservableCounter: AggregationTemporality.DELTA,
-        Histogram: AggregationTemporality.DELTA,
-        UpDownCounter: AggregationTemporality.CUMULATIVE,
+        Histogram: AggregationTemporality.CUMULATIVE,
+        UpDownCounter: AggregationTemporality.DELTA,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
     }
 
