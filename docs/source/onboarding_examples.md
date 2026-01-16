@@ -49,7 +49,7 @@ except:
 
 ## Initializing Telemetry
 ```python
-from anaconda_opentelemetry import *
+from  import *
 
 attributes = ResourceAttributes("service-a", "v1")
 try:
@@ -88,7 +88,7 @@ These functions do not need additional error handling. They will all catch excep
 #### Histogram
 
 ```python
-from anaconda_opentelemetry.signals import *
+from anaconda.opentelemetry.signals import *
 
 record_histogram("request_duration_ms", value=123.4, attributes={"route": "/home"})
 ```
@@ -96,7 +96,7 @@ record_histogram("request_duration_ms", value=123.4, attributes={"route": "/home
 #### Counter (Increment)
 
 ```python
-from anaconda_opentelemetry.signals import *
+from anaconda.opentelemetry.signals import *
 
 increment_counter("active_sessions", by=1, attributes={"region": "us-east"})
 ```
@@ -105,7 +105,7 @@ increment_counter("active_sessions", by=1, attributes={"region": "us-east"})
 Restricted to type `simple_up_down_counter`.
 
 ```python
-from anaconda_opentelemetry.signals import *
+from anaconda.opentelemetry.signals import *
 
 decrement_counter("active_sessions", by=1, attributes={"region": "us-east"})
 ```
@@ -114,7 +114,7 @@ decrement_counter("active_sessions", by=1, attributes={"region": "us-east"})
 This function does not need additional error handling. It will all catch exceptions.
 
 ```python
-from anaconda_opentelemetry.signals import *
+from anaconda.opentelemetry.signals import *
 
 with get_trace("process_data", attributes={"job_id": "abc-123"}):
     # Your business logic here
@@ -150,9 +150,9 @@ attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
 # Testing and Visualizing Telemetry Locally
 To test the telemetry package and view exports locally, the following code can be used. The console exporter exports telemetry payloads to standard output:
 ```python
-from anaconda_opentelemetry.signals import initialize_telemetry, increment_counter
-from anaconda_opentelemetry.attributes import ResourceAttributes
-from anaconda_opentelemetry.config import Configuration
+from anaconda.opentelemetry.signals import initialize_telemetry, increment_counter
+from anaconda.opentelemetry.attributes import ResourceAttributes
+from anaconda.opentelemetry.config import Configuration
 
 cfg = Configuration(default_endpoint='http://localhost:4318').set_console_exporter(use_console=True)
 att = ResourceAttributes("test_service", "dev-build", environment="test")

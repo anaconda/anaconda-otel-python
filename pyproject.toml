@@ -6,7 +6,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "anaconda_opentelemetry"
+name = "anaconda-opentelemetry"
 dynamic = ["version"]
 description = "Anaconda opentelemetry package wrapper."
 authors = [
@@ -28,10 +28,10 @@ dependencies = [
 requires-python = ">=3.9"
 
 [tool.setuptools.packages.find]
-include = ["anaconda_opentelemetry"]
+include = ["anaconda.opentelemetry"]
 
 [tool.setuptools.package-data]
-anaconda_opentelemetry = ["py.typed"]
+"anaconda.opentelemetry" = ["py.typed"]
 
 [project.optional-dependencies]
 dev = ["mypy"]
