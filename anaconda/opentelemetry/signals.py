@@ -484,7 +484,7 @@ class _AnacondaTrace(_AnacondaCommon):
         try:
             trace.set_tracer_provider(tracer_provider)
         except Exception:
-            self.logger.warning(f"The tracer provider was previously set, and will take precidence over the set in this package: anaconda_opentelemetry.")
+            self.logger.warning(f"The tracer provider was previously set, and will take precidence over the set in this package: anacondaopentelemetry.")
 
         # Get tracer for this service
         return trace.get_tracer(self.service_name, self.service_version)

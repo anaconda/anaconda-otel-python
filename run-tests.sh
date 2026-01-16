@@ -6,8 +6,8 @@ cd "$(dirname "$0")"
 
 export OTEL_USE_CONSOLE_EXPORTER=TRUE
 
-# Run tests for the anaconda_opentelemetry package.
-pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
+# Run tests for the anaconda.opentelemetry package.
+pytest --color=yes --cov=./anaconda/opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
 
 if [ $? -ne 0 ]; then
     echo
