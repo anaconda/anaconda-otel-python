@@ -31,7 +31,7 @@ requires-python = ">=3.9"
 include = ["anaconda.opentelemetry"]
 
 [tool.setuptools.package-data]
-anaconda.opentelemetry = ["py.typed"]
+"anaconda.opentelemetry" = ["py.typed"]
 
 [project.optional-dependencies]
 dev = ["mypy"]
