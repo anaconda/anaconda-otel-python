@@ -28,10 +28,10 @@ dependencies = [
 requires-python = ">=3.9"
 
 [tool.setuptools.packages.find]
-include = ["anaconda_opentelemetry"]
+include = ["anaconda.opentelemetry"]
 
 [tool.setuptools.package-data]
-anaconda_opentelemetry = ["py.typed"]
+anaconda.opentelemetry = ["py.typed"]
 
 [project.optional-dependencies]
 dev = ["mypy"]
