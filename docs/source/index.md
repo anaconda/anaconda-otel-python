@@ -9,5 +9,7 @@ This document serves as both the API documentation and a quick start guide.
 :caption: Anaconda OpenTelemetry Documentation
 
 getting_started.md
-anaconda_opentelemetry.rst
-best_practices.md
+signal_type_best_practices.md
+onboarding_examples.md
+schema-versions.md
+anaconda-opentelemetry.rst
