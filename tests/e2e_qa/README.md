@@ -143,38 +143,56 @@ python 03_initialization_examples.py
 When you run the examples, you'll see output like this:
 
 ```
-=== Configuration Examples ===
---- Example: Basic Configuration ---
-Description: Create basic configuration with default endpoint
-✓ Configuration created successfully
-Endpoint: http://localhost:4318
+--- Example 1: Initialize All Signals ---
+  Initialize telemetry with metrics, logs, and traces
+  📝 attrs = ResourceAttributes(service_name="example-01-all-signals", service_version="1.0.0")
+  📝 initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])
+✓ Telemetry initialized with all signals
+  Enabled: metrics, logs, traces
+  📝 increment_counter("example_01_initialization_test", by=1)
 
-=== Metrics Examples ===
---- Example: Counter Increment ---
-Description: Increment a counter with attributes
-Executing: increment_counter("user_login", by=1, attributes={"user_id": "123"})
+  ⚠️  TODO - VALIDATE BACKEND DATA:
+     ┌─ Metric Information
+     │  • Metric Name: example_01_initialization_test
+     │  • Expected Value: 1
+     ├─ Resource Attributes
+     │  • service.name: example-01-all-signals
+     │  • service.version: 1.0.0
+     │  • os.type: Darwin/Linux/Windows (auto-detected)
+     │  • python.version: 3.x.x (auto-detected)
+     │  • client.sdk.version: 0.0.0.devbuild
+     │  • schema.version: 0.3.0
+     └─ Verification Steps
+        1. Check metric appears in backend within 60 seconds
+        2. Verify metric name matches exactly
+        3. Verify value is correct
+        5. Verify resource attributes match
 
 [Console Exporter Output]
 {
-  "scopeMetrics": [
+  "resource_metrics": [
     {
-      "scope": {
-        "name": "hello-world-service",
-        "version": "1.0.0"
+      "resource": {
+        "attributes": {
+          "service.name": "example-01-all-signals",
+          "service.version": "1.0.0",
+          ...
+        }
       },
-      "metrics": [
+      "scope_metrics": [
         {
-          "name": "user_login",
-          "sum": {
-            "dataPoints": [
-              {
-                "attributes": [
-                  {"key": "user_id", "value": {"stringValue": "123"}}
-                ],
-                "asInt": "1"
+          "metrics": [
+            {
+              "name": "example_01_initialization_test",
+              "data": {
+                "data_points": [
+                  {
+                    "value": 1
+                  }
+                ]
               }
-            ]
-          }
+            }
+          ]
         }
       ]
     }
@@ -183,6 +201,14 @@ Executing: increment_counter("user_login", by=1, attributes={"user_id": "123"})
 
 ✓ Example completed successfully
 ```
+
+**Key Output Features:**
+- 📝 Shows actual SDK method calls for reference
+- ⚠️ **TODO sections** with complete backend validation checklists
+- ✓ Clear success indicators
+- Complete list of metric and resource attributes to verify
+- Step-by-step verification instructions
+- Detailed console exporter output when enabled
 
 ## Documentation
 

@@ -21,8 +21,65 @@ from config_utils import (
     print_example_section,
     print_success,
     print_info,
+    print_code,
+    print_validation_info,
     validate_environment
 )
+
+
+# ============================================================================
+# Test Data Constants
+# ============================================================================
+
+# Example 1: Initialize All Signals
+EXAMPLE_01_SERVICE_NAME = "example-01-all-signals"
+EXAMPLE_01_SERVICE_VERSION = "1.0.0"
+EXAMPLE_01_METRIC_NAME = "example_01_initialization_test"
+EXAMPLE_01_METRIC_VALUE = 1
+
+# Example 2: Initialize Metrics Only
+EXAMPLE_02_SERVICE_NAME = "example-02-metrics-only"
+EXAMPLE_02_SERVICE_VERSION = "1.0.0"
+EXAMPLE_02_METRIC_NAME = "example_02_metrics_test"
+EXAMPLE_02_METRIC_VALUE = 1
+
+# Example 3: Default Initialization
+EXAMPLE_03_SERVICE_NAME = "example-03-default"
+EXAMPLE_03_SERVICE_VERSION = "1.0.0"
+EXAMPLE_03_METRIC_NAME = "example_03_default_test"
+EXAMPLE_03_METRIC_VALUE = 1
+
+# Example 4: Selective Signals
+EXAMPLE_04_SERVICE_NAME = "example-04-selective"
+EXAMPLE_04_SERVICE_VERSION = "1.0.0"
+EXAMPLE_04_METRIC_NAME = "example_04_selective_test"
+EXAMPLE_04_METRIC_VALUE = 1
+
+# Example 5: Complete Initialization
+EXAMPLE_05_SERVICE_NAME = "example-05-complete"
+EXAMPLE_05_SERVICE_VERSION = "1.0.0"
+EXAMPLE_05_PLATFORM = "conda"
+EXAMPLE_05_ENVIRONMENT = "development"
+EXAMPLE_05_METRIC_NAME = "example_05_complete_test"
+EXAMPLE_05_METRIC_VALUE = 1
+EXAMPLE_05_CUSTOM_ATTRS = {
+    "example": "complete_initialization",
+    "test_type": "e2e-qa"
+}
+
+# Example 6: Environment-Based Initialization
+EXAMPLE_06_SERVICE_NAME = "example-06-env-based"
+EXAMPLE_06_SERVICE_VERSION = "1.0.0"
+EXAMPLE_06_METRIC_NAME = "example_06_env_based_test"
+EXAMPLE_06_METRIC_VALUE = 1
+
+# Common resource attributes (auto-detected)
+AUTO_DETECTED_ATTRS = {
+    "os.type": "Darwin/Linux/Windows (auto-detected)",
+    "python.version": "3.x.x (auto-detected)",
+    "client.sdk.version": "0.0.0.devbuild",
+    "schema.version": "0.3.0"
+}
 
 
 def example_01_initialize_all_signals():
@@ -40,9 +97,10 @@ def example_01_initialize_all_signals():
     
     # Create attributes
     attrs = ResourceAttributes(
-        service_name="example-01-all-signals",
-        service_version="1.0.0"
+        service_name=EXAMPLE_01_SERVICE_NAME,
+        service_version=EXAMPLE_01_SERVICE_VERSION
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_01_SERVICE_NAME}", service_version="{EXAMPLE_01_SERVICE_VERSION}")')
     
     # Initialize with all signals
     initialize_telemetry(
@@ -50,13 +108,23 @@ def example_01_initialize_all_signals():
         attributes=attrs,
         signal_types=['metrics', 'logging', 'tracing']
     )
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     
     print_success("Telemetry initialized with all signals")
     print_info("Enabled: metrics, logs, traces")
     
     # Send a test metric to verify initialization
-    increment_counter("example_01_initialization_test", by=1)
-    print_info("Test metric sent: example_01_initialization_test")
+    increment_counter(EXAMPLE_01_METRIC_NAME, by=EXAMPLE_01_METRIC_VALUE)
+    print_code(f'increment_counter("{EXAMPLE_01_METRIC_NAME}", by={EXAMPLE_01_METRIC_VALUE})')
+    print_validation_info(
+        metric_name=EXAMPLE_01_METRIC_NAME,
+        value=EXAMPLE_01_METRIC_VALUE,
+        service_name=EXAMPLE_01_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_01_SERVICE_VERSION,
+            **AUTO_DETECTED_ATTRS
+        }
+    )
 
 
 def example_02_initialize_metrics_only():
@@ -71,9 +139,10 @@ def example_02_initialize_metrics_only():
         config.set_console_exporter(use_console=True)
     
     attrs = ResourceAttributes(
-        service_name="example-02-metrics-only",
-        service_version="1.0.0"
+        service_name=EXAMPLE_02_SERVICE_NAME,
+        service_version=EXAMPLE_02_SERVICE_VERSION
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_02_SERVICE_NAME}", service_version="{EXAMPLE_02_SERVICE_VERSION}")')
     
     # Initialize with metrics only (default behavior)
     initialize_telemetry(
@@ -81,13 +150,22 @@ def example_02_initialize_metrics_only():
         attributes=attrs,
         signal_types=['metrics']
     )
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
     
     print_success("Telemetry initialized with metrics only")
     print_info("Enabled: metrics")
     
     # Send a test metric
-    increment_counter("example_02_metrics_test", by=1)
-    print_info("Test metric sent: example_02_metrics_test")
+    increment_counter(EXAMPLE_02_METRIC_NAME, by=EXAMPLE_02_METRIC_VALUE)
+    print_code(f'increment_counter("{EXAMPLE_02_METRIC_NAME}", by={EXAMPLE_02_METRIC_VALUE})')
+    print_validation_info(
+        metric_name=EXAMPLE_02_METRIC_NAME,
+        value=EXAMPLE_02_METRIC_VALUE,
+        service_name=EXAMPLE_02_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_02_SERVICE_VERSION
+        }
+    )
 
 
 def example_03_initialize_default():
@@ -102,19 +180,29 @@ def example_03_initialize_default():
         config.set_console_exporter(use_console=True)
     
     attrs = ResourceAttributes(
-        service_name="example-03-default",
-        service_version="1.0.0"
+        service_name=EXAMPLE_03_SERVICE_NAME,
+        service_version=EXAMPLE_03_SERVICE_VERSION
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_03_SERVICE_NAME}", service_version="{EXAMPLE_03_SERVICE_VERSION}")')
     
     # Initialize with default (metrics only)
     initialize_telemetry(config=config, attributes=attrs)
+    print_code("initialize_telemetry(config, attrs)  # No signal_types = defaults to metrics")
     
     print_success("Telemetry initialized with defaults")
     print_info("Default behavior: metrics signal enabled")
     
     # Send a test metric
-    increment_counter("example_03_default_test", by=1)
-    print_info("Test metric sent: example_03_default_test")
+    increment_counter(EXAMPLE_03_METRIC_NAME, by=EXAMPLE_03_METRIC_VALUE)
+    print_code(f'increment_counter("{EXAMPLE_03_METRIC_NAME}", by={EXAMPLE_03_METRIC_VALUE})')
+    print_validation_info(
+        metric_name=EXAMPLE_03_METRIC_NAME,
+        value=EXAMPLE_03_METRIC_VALUE,
+        service_name=EXAMPLE_03_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_03_SERVICE_VERSION
+        }
+    )
 
 
 def example_04_initialize_selective_signals():
@@ -129,9 +217,10 @@ def example_04_initialize_selective_signals():
         config.set_console_exporter(use_console=True)
     
     attrs = ResourceAttributes(
-        service_name="example-04-selective",
-        service_version="1.0.0"
+        service_name=EXAMPLE_04_SERVICE_NAME,
+        service_version=EXAMPLE_04_SERVICE_VERSION
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_04_SERVICE_NAME}", service_version="{EXAMPLE_04_SERVICE_VERSION}")')
     
     # Initialize with metrics and traces only (no logs)
     initialize_telemetry(
@@ -139,14 +228,23 @@ def example_04_initialize_selective_signals():
         attributes=attrs,
         signal_types=['metrics', 'tracing']
     )
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'tracing'])")
     
     print_success("Telemetry initialized with selective signals")
     print_info("Enabled: metrics, traces")
     print_info("Disabled: logs")
     
     # Send a test metric
-    increment_counter("example_04_selective_test", by=1)
-    print_info("Test metric sent: example_04_selective_test")
+    increment_counter(EXAMPLE_04_METRIC_NAME, by=EXAMPLE_04_METRIC_VALUE)
+    print_code(f'increment_counter("{EXAMPLE_04_METRIC_NAME}", by={EXAMPLE_04_METRIC_VALUE})')
+    print_validation_info(
+        metric_name=EXAMPLE_04_METRIC_NAME,
+        value=EXAMPLE_04_METRIC_VALUE,
+        service_name=EXAMPLE_04_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_04_SERVICE_VERSION
+        }
+    )
 
 
 def example_05_complete_initialization():
@@ -162,20 +260,24 @@ def example_05_complete_initialization():
     config.set_metrics_export_interval_ms(30000)  # 30 seconds
     config.set_logging_level('info')
     config.set_skip_internet_check(False)
+    print_code('config = Configuration(default_endpoint=endpoint)')
+    print_code('config.set_console_exporter(use_console=True)')
+    print_code('config.set_metrics_export_interval_ms(30000)')
+    print_code("config.set_logging_level('info')")
     
     # Create comprehensive attributes
     attrs = ResourceAttributes(
-        service_name="example-05-complete",
-        service_version="1.0.0",
-        platform="conda",
-        environment="development"
+        service_name=EXAMPLE_05_SERVICE_NAME,
+        service_version=EXAMPLE_05_SERVICE_VERSION,
+        platform=EXAMPLE_05_PLATFORM,
+        environment=EXAMPLE_05_ENVIRONMENT
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_05_SERVICE_NAME}", service_version="{EXAMPLE_05_SERVICE_VERSION}", platform="{EXAMPLE_05_PLATFORM}", environment="{EXAMPLE_05_ENVIRONMENT}")')
     
     # Add custom attributes
-    attrs.set_attributes(
-        example="complete_initialization",
-        test_type="e2e-qa"
-    )
+    attrs.set_attributes(**EXAMPLE_05_CUSTOM_ATTRS)
+    custom_attrs_str = ", ".join([f'{k}="{v}"' for k, v in EXAMPLE_05_CUSTOM_ATTRS.items()])
+    print_code(f'attrs.set_attributes({custom_attrs_str})')
     
     # Initialize with all signals
     initialize_telemetry(
@@ -183,6 +285,7 @@ def example_05_complete_initialization():
         attributes=attrs,
         signal_types=['metrics', 'logging', 'tracing']
     )
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     
     print_success("Complete telemetry initialization successful")
     print_info("Configuration:")
@@ -190,15 +293,29 @@ def example_05_complete_initialization():
     print_info("  ✓ Export interval: 30 seconds")
     print_info("  ✓ Logging level: info")
     print_info("Attributes:")
-    print_info(f"  ✓ Service: {attrs.service_name} v{attrs.service_version}")
-    print_info(f"  ✓ Platform: {attrs.platform}")
-    print_info(f"  ✓ Environment: {attrs.environment}")
+    print_info(f"  ✓ Service: {EXAMPLE_05_SERVICE_NAME} v{EXAMPLE_05_SERVICE_VERSION}")
+    print_info(f"  ✓ Platform: {EXAMPLE_05_PLATFORM}")
+    print_info(f"  ✓ Environment: {EXAMPLE_05_ENVIRONMENT}")
     print_info("Signals:")
     print_info("  ✓ Metrics, Logs, Traces")
     
     # Send a test metric
-    increment_counter("example_05_complete_test", by=1)
-    print_info("Test metric sent: example_05_complete_test")
+    increment_counter(EXAMPLE_05_METRIC_NAME, by=EXAMPLE_05_METRIC_VALUE)
+    print_code(f'increment_counter("{EXAMPLE_05_METRIC_NAME}", by={EXAMPLE_05_METRIC_VALUE})')
+    
+    import json
+    params_json = json.dumps(EXAMPLE_05_CUSTOM_ATTRS)
+    print_validation_info(
+        metric_name=EXAMPLE_05_METRIC_NAME,
+        value=EXAMPLE_05_METRIC_VALUE,
+        service_name=EXAMPLE_05_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_05_SERVICE_VERSION,
+            "platform": EXAMPLE_05_PLATFORM,
+            "environment": EXAMPLE_05_ENVIRONMENT,
+            "parameters": params_json
+        }
+    )
 
 
 def example_06_environment_based_initialization():
@@ -224,15 +341,18 @@ def example_06_environment_based_initialization():
     
     # Create attributes with environment info
     attrs = ResourceAttributes(
-        service_name="example-06-env-based",
-        service_version="1.0.0",
+        service_name=EXAMPLE_06_SERVICE_NAME,
+        service_version=EXAMPLE_06_SERVICE_VERSION,
         environment=environment
     )
+    print_code(f'attrs = ResourceAttributes(service_name="{EXAMPLE_06_SERVICE_NAME}", service_version="{EXAMPLE_06_SERVICE_VERSION}", environment="{environment}")')
     
-    attrs.set_attributes(
-        otel_environment=env_name,
-        test_type="e2e-qa"
-    )
+    custom_attrs = {
+        "otel_environment": env_name,
+        "test_type": "e2e-qa"
+    }
+    attrs.set_attributes(**custom_attrs)
+    print_code(f'attrs.set_attributes(otel_environment="{env_name}", test_type="e2e-qa")')
     
     # Initialize
     initialize_telemetry(
@@ -240,15 +360,31 @@ def example_06_environment_based_initialization():
         attributes=attrs,
         signal_types=['metrics', 'logging', 'tracing']
     )
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     
     print_success("Environment-based initialization successful")
     print_info(f"OTEL Environment: {env_name}")
     print_info(f"Endpoint: {endpoint}")
-    print_info(f"Service Environment: {attrs.environment}")
+    print_info(f"Service Environment: {environment}")
     
     # Send a test metric
-    increment_counter("example_06_env_based_test", by=1, attributes={"environment": env_name})
-    print_info(f"Test metric sent with environment tag: {env_name}")
+    metric_attrs = {"environment": env_name}
+    increment_counter(EXAMPLE_06_METRIC_NAME, by=EXAMPLE_06_METRIC_VALUE, attributes=metric_attrs)
+    print_code(f'increment_counter("{EXAMPLE_06_METRIC_NAME}", by={EXAMPLE_06_METRIC_VALUE}, attributes={{"environment": "{env_name}"}})')
+    
+    import json
+    params_json = json.dumps(custom_attrs)
+    print_validation_info(
+        metric_name=EXAMPLE_06_METRIC_NAME,
+        value=EXAMPLE_06_METRIC_VALUE,
+        attributes=metric_attrs,
+        service_name=EXAMPLE_06_SERVICE_NAME,
+        resource_attrs={
+            "service.version": EXAMPLE_06_SERVICE_VERSION,
+            "environment": environment,
+            "parameters": params_json
+        }
+    )
 
 
 def run_all_examples():

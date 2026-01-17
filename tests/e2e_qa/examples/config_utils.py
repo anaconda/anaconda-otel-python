@@ -147,6 +147,46 @@ def print_info(message: str):
     print(f"  {message}")
 
 
+def print_code(code: str):
+    """Print a code snippet to show what SDK method is being called."""
+    print(f"  📝 {code}")
+
+
+def print_validation_info(metric_name: str, value: any, attributes: dict = None, service_name: str = None, resource_attrs: dict = None):
+    """
+    Print information needed for backend validation.
+    
+    Args:
+        metric_name: Name of the metric
+        value: Value of the metric
+        attributes: Optional metric attributes
+        service_name: Service name from ResourceAttributes
+        resource_attrs: Additional resource attributes to validate
+    """
+    print(f"\n  ⚠️  TODO - VALIDATE BACKEND DATA:")
+    print(f"     ┌─ Metric Information")
+    print(f"     │  • Metric Name: {metric_name}")
+    print(f"     │  • Expected Value: {value}")
+    if attributes:
+        print(f"     │  • Metric Attributes: {attributes}")
+    
+    if service_name:
+        print(f"     ├─ Resource Attributes")
+        print(f"     │  • service.name: {service_name}")
+        if resource_attrs:
+            for key, val in resource_attrs.items():
+                print(f"     │  • {key}: {val}")
+    
+    print(f"     └─ Verification Steps")
+    print(f"        1. Check metric appears in backend within some delay")
+    print(f"        2. Verify metric name matches exactly")
+    print(f"        3. Verify value is correct")
+    if attributes:
+        print(f"        4. Verify metric attributes are present")
+    if service_name:
+        print(f"        5. Verify resource attributes match")
+
+
 def validate_environment():
     """
     Validate environment configuration and warn if using production.
