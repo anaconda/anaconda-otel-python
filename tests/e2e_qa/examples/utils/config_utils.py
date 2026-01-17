@@ -14,6 +14,16 @@ from pathlib import Path
 from dotenv import load_dotenv
 from anaconda.opentelemetry import Configuration, ResourceAttributes
 
+# Import print utilities for backward compatibility
+from .print_utils import (
+    print_example_header,
+    print_example_section,
+    print_success,
+    print_info,
+    print_code,
+    print_validation_info
+)
+
 
 # Environment to endpoint mapping
 # Note: Use WARP endpoints when connected to WARP VPN
@@ -34,14 +44,15 @@ def load_environment():
         tuple: (environment_name, endpoint_url, use_console_exporter)
     """
     # Find and load .env file from e2e_qa directory
-    e2e_qa_dir = Path(__file__).parent.parent
+    # Path: examples/utils/config_utils.py -> examples/utils -> examples -> e2e_qa
+    e2e_qa_dir = Path(__file__).parent.parent.parent
     env_file = e2e_qa_dir / '.env'
     
     if env_file.exists():
         load_dotenv(env_file)
     else:
         print(f"⚠️  Warning: .env file not found at {env_file}")
-        print("   Using default values. Copy env.example to .env to configure.")
+        print("   Using default values.")
     
     # Get configuration from environment
     environment = os.getenv('OTEL_ENVIRONMENT', 'staging-internal')
@@ -122,98 +133,6 @@ def create_basic_attributes(service_name: str = "e2e-qa-examples",
     return attrs
 
 
-def print_example_header(title: str, description: str = ""):
-    """Print a formatted example header."""
-    print("\n" + "=" * 70)
-    print(f"  {title}")
-    print("=" * 70)
-    if description:
-        print(f"  {description}")
-        print("-" * 70)
-
-
-def print_example_section(section_name: str):
-    """Print a formatted section header."""
-    print(f"\n--- {section_name} ---")
-
-
-def print_success(message: str):
-    """Print a success message."""
-    print(f"✓ {message}")
-
-
-def print_info(message: str):
-    """Print an info message."""
-    print(f"  {message}")
-
-
-def print_code(code: str):
-    """Print a code snippet to show what SDK method is being called."""
-    print(f"  📝 {code}")
-
-
-def print_validation_info(metric_name: str, value: any, attributes: dict = None, service_name: str = None, resource_attrs: dict = None, session_id: str = None):
-    """
-    Print information needed for backend validation.
-    
-    Args:
-        metric_name: Name of the metric
-        value: Value of the metric
-        attributes: Optional metric attributes
-        service_name: Service name from ResourceAttributes
-        resource_attrs: Additional resource attributes to validate
-        session_id: Session ID for backend correlation
-    """
-    print(f"\n  ⚠️  TODO - VALIDATE BACKEND DATA:")
-    
-    # Session ID section (if provided)
-    if session_id:
-        print(f"     ┌─ Session Information")
-        print(f"     │  • Session ID: {session_id}")
-        print(f"     │  • Use this to query backend for this specific test run")
-        print(f"     │")
-        print(f"     ├─ Metric Information")
-    else:
-        print(f"     ┌─ Session Information")
-        print(f"     │  • Session ID: See console JSON output or summary at end")
-        print(f"     │  • All metrics in this run share the same session ID")
-        print(f"     │")
-        print(f"     ├─ Metric Information")
-    print(f"     │  • Metric Name: {metric_name}")
-    print(f"     │  • Expected Value: {value}")
-    if attributes:
-        print(f"     │  • Metric Attributes: {attributes}")
-    
-    # Resource Attributes section
-    if service_name:
-        print(f"     │")
-        print(f"     ├─ Resource Attributes")
-        print(f"     │  • service.name: {service_name}")
-        if resource_attrs:
-            for key, val in resource_attrs.items():
-                print(f"     │  • {key}: {val}")
-    
-    # Verification Steps section
-    print(f"     │")
-    print(f"     └─ Verification Steps")
-    print(f"        1. Check metric appears in backend within some delay")
-    if session_id:
-        print(f"        2. Query backend using session ID above")
-        print(f"        3. Verify metric name matches exactly")
-        print(f"        4. Verify value is correct")
-        if attributes:
-            print(f"        5. Verify metric attributes are present")
-        if service_name:
-            print(f"        6. Verify resource attributes match")
-    else:
-        print(f"        2. Verify metric name matches exactly")
-        print(f"        3. Verify value is correct")
-        if attributes:
-            print(f"        4. Verify metric attributes are present")
-        if service_name:
-            print(f"        5. Verify resource attributes match")
-
-
 def get_session_id(attrs):
     """
     Get the session ID from ResourceAttributes.
@@ -257,3 +176,19 @@ def validate_environment():
             raise ValueError("Production environment usage cancelled")
     
     return environment
+
+
+# Export all print utilities for convenience
+__all__ = [
+    'load_environment',
+    'create_basic_config',
+    'create_basic_attributes',
+    'get_session_id',
+    'validate_environment',
+    'print_example_header',
+    'print_example_section',
+    'print_success',
+    'print_info',
+    'print_code',
+    'print_validation_info',
+]

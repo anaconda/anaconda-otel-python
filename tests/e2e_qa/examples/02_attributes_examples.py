@@ -10,7 +10,7 @@ for the Anaconda OpenTelemetry SDK.
 """
 
 from anaconda.opentelemetry import ResourceAttributes
-from config_utils import (
+from utils import (
     print_example_header,
     print_example_section,
     print_success,

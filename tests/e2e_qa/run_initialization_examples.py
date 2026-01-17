@@ -13,7 +13,7 @@ single script would cause only the first initialization to succeed.
 import subprocess
 import sys
 from pathlib import Path
-from examples.config_utils import load_environment
+from examples.utils import load_environment
 
 # Example scripts to run (in order)
 EXAMPLES = [

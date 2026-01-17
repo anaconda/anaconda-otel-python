@@ -14,7 +14,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
 from opentelemetry import metrics
-from config_utils import load_environment, print_code
+from utils import (
+    load_environment,
+    print_header,
+    print_footer,
+    print_info,
+    print_code,
+    print_environment_config,
+    print_resource_attributes,
+    print_metric_info,
+    print_backend_validation,
+    print_flush_status
+)
 
 # Test data constants
 SERVICE_NAME = "example-03-default"
@@ -29,22 +40,18 @@ def flush_telemetry():
         meter_provider = metrics.get_meter_provider()
         if hasattr(meter_provider, 'force_flush'):
             meter_provider.force_flush(timeout_millis=5000)
-        print("  ✓ Telemetry flushed to backend")
+        print_flush_status(success=True)
     except Exception as e:
-        print(f"  ⚠️  Warning: Error during flush: {e}")
+        print_flush_status(success=False, error=e)
 
 
 def main():
-    print("\n" + "=" * 70)
-    print("  Example 3: Default Initialization")
-    print("=" * 70)
-    print("  Initialize with default settings (no signals parameter)")
-    print("-" * 70)
+    print_header("Example 3: Default Initialization",
+                 "Initialize with default settings (no signals parameter)")
     
     # Load environment
     _, endpoint, use_console = load_environment()
-    print(f"  Endpoint: {endpoint}")
-    print(f"  Console Exporter: {use_console}")
+    print_environment_config(endpoint, use_console)
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
@@ -65,52 +72,23 @@ def main():
     )
     print_code("initialize_telemetry(config, attrs)  # No signal_types = defaults to metrics")
     
-    print("  ✓ Telemetry initialized with defaults")
-    print("  Default behavior: metrics signal enabled")
+    print_info("✓ Telemetry initialized with defaults")
+    print_info("Default behavior: metrics signal enabled")
     
     # Print resource attributes
-    print("\n  📋 Resource Attributes (sent with every metric):")
-    print(f"     • service.name: {attrs.service_name}")
-    print(f"     • service.version: {attrs.service_version}")
-    print(f"     • os.type: {attrs.os_type}")
-    print(f"     • os.version: {attrs.os_version}")
-    print(f"     • python.version: {attrs.python_version}")
-    print(f"     • hostname: {attrs.hostname}")
-    print(f"     • platform: {attrs.platform if attrs.platform else '(empty)'}")
-    print(f"     • environment: {attrs.environment if attrs.environment else '(empty)'}")
-    print(f"     • client.sdk.version: {attrs.client_sdk_version}")
-    print(f"     • schema.version: {attrs.schema_version}")
-    print(f"     • session.id: (auto-generated, visible with console exporter)")
-    if attrs.parameters:
-        print(f"     • parameters: {attrs.parameters}")
+    print_resource_attributes(attrs)
     
     # Send a test metric
-    print("\n  📊 Sending Metric:")
     increment_counter(METRIC_NAME, by=METRIC_VALUE)
-    print_code(f'increment_counter("{METRIC_NAME}", by={METRIC_VALUE})')
+    print_metric_info(METRIC_NAME, METRIC_VALUE)
     
     # Print backend validation checklist
-    print("\n  ✅ BACKEND VALIDATION CHECKLIST:")
-    print("     Query backend for this service:")
-    print(f"       WHERE service.name = '{SERVICE_NAME}'")
-    print(f"       AND timestamp >= NOW() - INTERVAL '10 minutes'")
-    print("\n     Expected in backend:")
-    print(f"       • Metric Name: {METRIC_NAME}")
-    print(f"       • Metric Value: {METRIC_VALUE}")
-    print(f"       • service.name: {SERVICE_NAME}")
-    print(f"       • service.version: {SERVICE_VERSION}")
-    print(f"       • os.type: {attrs.os_type}")
-    print(f"       • python.version: {attrs.python_version}")
-    print(f"       • client.sdk.version: {attrs.client_sdk_version}")
-    print(f"       • schema.version: {attrs.schema_version}")
+    print_backend_validation(SERVICE_NAME, METRIC_NAME, METRIC_VALUE, attrs)
     
     # Flush telemetry
-    print("\n  Flushing telemetry data...")
     flush_telemetry()
     
-    print("\n" + "=" * 70)
-    print("  ✓ Example 3 completed successfully!")
-    print("=" * 70 + "\n")
+    print_footer("✓ Example 3 completed successfully!")
 
 
 if __name__ == "__main__":

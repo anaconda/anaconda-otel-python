@@ -22,7 +22,7 @@ from pathlib import Path
 examples_dir = Path(__file__).parent / "examples"
 sys.path.insert(0, str(examples_dir))
 
-from config_utils import print_example_header, print_success, print_info
+from utils import print_example_header, print_success, print_info
 
 
 def run_example_module(module_name: str, description: str):
