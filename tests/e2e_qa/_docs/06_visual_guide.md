@@ -201,16 +201,16 @@ logger_handler()       decrement_counter()    span.add_event()
               ├──► No exceptions raised
               └──► Expected data structure
 
-    pytest (Test Runner)
+    run_all_examples.py (Main Runner)
          │
-         ├──► Discovers Tests
-         │    tests/test_*.py
+         ├──► Discovers Examples
+         │    examples/*.py
          │
-         ├──► Runs Each Test
+         ├──► Runs Each Example
          │    ├──► Setup
          │    ├──► Execute
-         │    ├──► Validate
-         │    └──► Teardown
+         │    ├──► Display Output
+         │    └──► Cleanup
          │
          └──► Reports Results
               ├──► Passed: ✓

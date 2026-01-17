@@ -60,11 +60,7 @@ pip is **not documented** as an installation method in the main SDK documentatio
 ## Dependencies
 
 ### Core Dependency
-- `anaconda-opentelemetry` (the SDK being tested)
-
-### Test Dependencies
-- `pytest>=7.0.0` - Test framework
-- `pytest-cov>=4.0.0` - Coverage reporting
+- `anaconda-opentelemetry` (the SDK being demonstrated)
 
 ### Optional Development Dependencies
 - `black` - Code formatting
@@ -77,14 +73,13 @@ pip is **not documented** as an installation method in the main SDK documentatio
 
 ### Quick Start (Recommended)
 ```bash
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
-conda activate e2e-qa-test
-pip install pytest pytest-cov
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
+conda activate e2e-qa-examples
 ```
 
 ### Minimum Version
 ```bash
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.9
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.9
 ```
 
 ### Using Environment File

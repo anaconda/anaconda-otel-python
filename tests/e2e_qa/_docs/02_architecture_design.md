@@ -11,7 +11,7 @@ This document focuses on the **architecture and design principles** rather than 
 ### 1. Separation of Concerns
 - **Configuration Examples**: Isolated in `config_examples.py`
 - **Signal Examples**: Each signal type (logging, metrics, tracing) in separate files
-- **Test Validation**: Separate test files mirror example files
+- **Clear Organization**: Each module focuses on a specific SDK feature area
 
 ### 2. Progressive Complexity
 Each example file follows this pattern:
@@ -108,34 +108,6 @@ Demonstrates complex scenarios:
 - Performance monitoring patterns
 - Real-world application simulation
 
-## Test Strategy
-
-### Unit-Style Validation Tests
-Each test file validates corresponding examples:
-
-```python
-def test_basic_configuration():
-    """Validate basic configuration example works"""
-    result = config_examples.basic_configuration()
-    assert result is not None
-    assert isinstance(result, Configuration)
-
-def test_increment_counter():
-    """Validate counter increment works"""
-    result = metrics_examples.increment_counter_example()
-    assert result is True
-```
-
-### Integration Validation
-- Verify all examples run without errors
-- Validate output contains expected telemetry data
-- Check console exporter output for correctness
-
-### Coverage Goals
-- 100% of SDK public methods demonstrated
-- All common usage patterns covered
-- Error scenarios documented
-
 ## Execution Flow
 
 ### Main Entry Point (`run_examples.py`)
@@ -212,21 +184,9 @@ conda install anaconda-opentelemetry
 pip install anaconda-opentelemetry>=1.0.0
 ```
 
-### Development Dependencies
-```
-pytest>=7.0.0                   # Test framework
-pytest-cov>=4.0.0              # Coverage reporting
-```
-
-**Installation**:
-```bash
-# Install test dependencies (after SDK is installed)
-pip install pytest pytest-cov
-```
-
 ### Optional Dependencies
 ```
-# None - keeping it minimal
+# None - keeping it minimal for hello-world demonstrations
 ```
 
 ### Environment Setup
@@ -234,13 +194,10 @@ pip install pytest pytest-cov
 **Recommended Approach**:
 ```bash
 # Create conda environment with SDK
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 
 # Activate environment
-conda activate e2e-qa-test
-
-# Install test dependencies
-pip install pytest pytest-cov
+conda activate e2e-qa-examples
 ```
 
 ## Error Handling Strategy
@@ -259,8 +216,8 @@ def example_with_error_handling():
         return False
 ```
 
-### Validation Feedback
-- Clear success/failure indicators
+### User Feedback
+- Clear success/failure indicators in console output
 - Descriptive error messages
 - Suggestions for common issues
 
@@ -270,11 +227,5 @@ def example_with_error_handling():
 1. Create function in appropriate module
 2. Follow naming convention: `{feature}_example()`
 3. Add docstring with description
-4. Include in main runner
-5. Create corresponding test
-
-### Adding New Test Scenarios
-1. Identify SDK feature to test
-2. Create example demonstrating feature
-3. Write validation test
-4. Document expected behavior
+4. Include in main runner (`run_all_examples.py`)
+5. Document expected behavior and output

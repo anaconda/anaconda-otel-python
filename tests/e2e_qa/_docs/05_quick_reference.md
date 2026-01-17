@@ -112,31 +112,23 @@ See [README.md](../README.md#project-structure) for the complete project structu
 ### Install (Conda - Official Method)
 ```bash
 # Create conda environment with SDK
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 
 # Activate environment
-conda activate e2e-qa-test
-
-# Install test dependencies
-cd tests/e2e_qa
-pip install pytest pytest-cov
+conda activate e2e-qa-examples
 ```
 
 **Note**: Conda is the only installation method documented by the SDK.
 
 ### Run All Examples
 ```bash
-python run_examples.py
+cd tests/e2e_qa
+python run_all_examples.py
 ```
 
 ### Run Specific Example
 ```bash
-python -m src.metrics_examples
-```
-
-### Run Tests
-```bash
-pytest tests/
+python examples/01_configuration.py
 ```
 
 ---
@@ -281,7 +273,7 @@ Each example includes setup, execution, and validation. Can run independently.
 ### Long Term
 1. Implement advanced examples
 2. Create main runner
-3. Full test suite
+3. Verify all examples work
 4. Polish and refine
 
 ---
@@ -346,8 +338,8 @@ Each example includes setup, execution, and validation. Can run independently.
 ### For QA Engineers
 1. Read [04_test_scenarios.md](04_test_scenarios.md)
 2. Review [02_architecture_design.md](02_architecture_design.md)
-3. Check test files (after implementation)
-4. Run test suite
+3. Check example files (after implementation)
+4. Run all examples
 
 ---
 
@@ -362,8 +354,8 @@ Each example includes setup, execution, and validation. Can run independently.
 ### Functionality
 - All examples work
 - Clear output
-- Tests pass
-- 100% coverage
+- 100% SDK method coverage
+- Error-free execution
 
 ### Documentation
 - Complete design docs ✅

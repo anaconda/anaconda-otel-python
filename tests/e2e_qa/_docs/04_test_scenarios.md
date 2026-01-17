@@ -762,31 +762,25 @@ def performance_monitoring_example():
 
 ## Test Execution Strategy
 
-### Running Individual Scenarios
+### Running Individual Examples
 ```bash
 # Run specific example
-python -m src.metrics_examples
-
-# Run specific test
-pytest tests/test_metrics.py::test_counter_increment
+python examples/03_metrics.py
 ```
 
-### Running All Scenarios
+### Running All Examples
 ```bash
 # Run all examples
-python run_examples.py
-
-# Run all tests
-pytest tests/
+python run_all_examples.py
 ```
 
-### Validation Criteria
+### Success Criteria
 
-Each scenario must:
+Each example should:
 1. ✅ Execute without errors
 2. ✅ Produce expected console output
-3. ✅ Pass automated test validation
-4. ✅ Demonstrate documented SDK behavior
+3. ✅ Demonstrate documented SDK behavior
+4. ✅ Be clear and easy to understand
 5. ✅ Be simple and understandable
 
 ### Output Verification

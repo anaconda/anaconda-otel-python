@@ -32,16 +32,13 @@ Create a new conda environment with the SDK in one command:
 
 ```bash
 # Create environment with SDK and Python 3.10
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 
 # Activate the environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Navigate to project directory
 cd tests/e2e_qa
-
-# Install test dependencies
-pip install pytest pytest-cov
 
 # Verify installation
 python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
@@ -56,7 +53,7 @@ Create a conda environment from a specification file:
 **Step 1**: Create `environment.yml` file:
 
 ```yaml
-name: e2e-qa-test
+name: e2e-qa-examples
 channels:
   - conda-forge
   - defaults
@@ -64,9 +61,7 @@ dependencies:
   - python=3.10
   - anaconda-opentelemetry
   - pip
-  - pip:
-    - pytest>=7.0.0
-    - pytest-cov>=4.0.0
+  # No additional pip dependencies needed for hello-world examples
 ```
 
 **Step 2**: Create environment from file:
@@ -76,7 +71,7 @@ dependencies:
 conda env create -f environment.yml
 
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Verify installation
 python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
@@ -94,9 +89,6 @@ conda activate your-existing-env
 
 # Install the SDK
 conda install anaconda-opentelemetry
-
-# Install test dependencies
-pip install pytest pytest-cov
 
 # Verify installation
 python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
@@ -133,9 +125,7 @@ dependencies:
   - python=3.10
   - anaconda-opentelemetry
   - pip
-  - pip:
-    - pytest>=7.0.0
-    - pytest-cov>=4.0.0
+  # No additional pip dependencies needed for hello-world examples
     - black  # Code formatting
     - flake8  # Linting
 ```
@@ -155,10 +145,7 @@ dependencies:
   - pip
   - ipython  # Interactive shell
   - jupyter  # Notebooks (optional)
-  - pip:
-    - pytest>=7.0.0
-    - pytest-cov>=4.0.0
-    - pytest-xdist  # Parallel testing
+  # No additional pip dependencies needed for hello-world examples
     - black
     - flake8
     - mypy  # Type checking
@@ -183,14 +170,14 @@ conda --version
 # List all conda environments
 conda env list
 
-# Should show e2e-qa-test in the list
+# Should show e2e-qa-examples in the list
 ```
 
 ### 3. Verify SDK Installation
 
 ```bash
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Check installed packages
 conda list anaconda-opentelemetry
@@ -244,7 +231,7 @@ python verify_sdk.py
 
 ```bash
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Navigate to project
 cd tests/e2e_qa
@@ -260,22 +247,19 @@ python -m src.metrics_examples
 
 ```bash
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Navigate to project
 cd tests/e2e_qa
 
-# Run all tests
-pytest tests/
+# Run all examples
+python run_all_examples.py
 
-# Run with coverage
-pytest --cov=src tests/
-
-# Run specific test file
-pytest tests/test_metrics.py
+# Run specific example
+python examples/01_configuration.py
 
 # Run with verbose output
-pytest -v tests/
+python run_all_examples.py --verbose
 ```
 
 ---
@@ -293,7 +277,7 @@ conda env list
 
 ```bash
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Deactivate environment
 conda deactivate
@@ -303,7 +287,7 @@ conda deactivate
 
 ```bash
 # Activate environment
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Update SDK to latest version
 conda update anaconda-opentelemetry
@@ -329,7 +313,7 @@ conda env export --from-history > environment.yml
 
 ```bash
 # Clone existing environment
-conda create --name e2e-qa-test-clone --clone e2e-qa-test
+conda create --name e2e-qa-examples-clone --clone e2e-qa-examples
 ```
 
 ### Remove Environment
@@ -339,7 +323,7 @@ conda create --name e2e-qa-test-clone --clone e2e-qa-test
 conda deactivate
 
 # Remove environment
-conda env remove -n e2e-qa-test
+conda env remove -n e2e-qa-examples
 ```
 
 ---
@@ -352,7 +336,7 @@ conda env remove -n e2e-qa-test
 # Problem: ImportError: No module named 'anaconda.opentelemetry'
 
 # Solution 1: Verify environment is activated
-conda activate e2e-qa-test
+conda activate e2e-qa-examples
 
 # Solution 2: Reinstall SDK
 conda install --force-reinstall anaconda-opentelemetry
@@ -367,7 +351,7 @@ conda config --show channels
 # Problem: Python version incompatible
 
 # Solution: Create new environment with correct Python
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 ```
 
 ### Issue: Dependency Conflicts
@@ -382,7 +366,7 @@ conda update conda
 conda install -c conda-forge anaconda-opentelemetry
 
 # Solution 3: Create fresh environment
-conda create -n e2e-qa-test-new anaconda-opentelemetry
+conda create -n e2e-qa-examples-new anaconda-opentelemetry
 ```
 
 ### Issue: Environment Not Activating
@@ -394,7 +378,7 @@ conda create -n e2e-qa-test-new anaconda-opentelemetry
 conda init bash  # or zsh, fish, etc.
 
 # Solution 2: Use source activate (older conda)
-source activate e2e-qa-test
+source activate e2e-qa-examples
 
 # Solution 3: Restart shell
 exec $SHELL
@@ -427,14 +411,10 @@ jobs:
         run: |
           conda install anaconda-opentelemetry
           
-      - name: Install test dependencies
-        run: |
-          pip install pytest pytest-cov
-          
-      - name: Run tests
+      - name: Run examples
         run: |
           cd tests/e2e_qa
-          pytest tests/
+          python run_all_examples.py
 ```
 
 ### GitLab CI Example
@@ -444,9 +424,8 @@ test:
   image: continuumio/miniconda3
   script:
     - conda install anaconda-opentelemetry
-    - pip install pytest pytest-cov
     - cd tests/e2e_qa
-    - pytest tests/
+    - python run_all_examples.py
 ```
 
 ---
@@ -467,7 +446,7 @@ dependencies:
 
 ### 3. Separate Environments
 - Development: `e2e-qa-dev`
-- Testing: `e2e-qa-test`
+- Testing: `e2e-qa-examples`
 - Production: `e2e-qa-prod`
 
 ### 4. Regular Updates
@@ -493,13 +472,10 @@ conda clean --all
 
 ```bash
 # Create environment
-conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
+conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 
 # Activate environment
-conda activate e2e-qa-test
-
-# Install test deps
-pip install pytest pytest-cov
+conda activate e2e-qa-examples
 
 # Verify installation
 python -c "from anaconda.opentelemetry import initialize_telemetry; print('OK')"
@@ -507,8 +483,8 @@ python -c "from anaconda.opentelemetry import initialize_telemetry; print('OK')"
 # Run examples
 python run_examples.py
 
-# Run tests
-pytest tests/
+# Run examples
+python run_all_examples.py
 
 # Deactivate
 conda deactivate
