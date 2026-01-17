@@ -20,6 +20,7 @@ Create a **hello-world style, low-complexity Python project** that demonstrates 
 - **04_test_scenarios.md** - Test scenarios with code
 - **05_visual_guide.md** - Visual diagrams
 - **06_conda_setup.md** - Conda setup guide
+- **07_environment_configuration.md** - Environment & endpoint configuration
 - **INDEX.md** - Documentation index
 - **README.md** - User guide
 

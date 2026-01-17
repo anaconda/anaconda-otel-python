@@ -16,6 +16,7 @@ tests/e2e_qa/
 │   ├── 04_test_scenarios.md        # Example scenarios
 │   ├── 05_visual_guide.md          # Visual diagrams
 │   ├── 06_conda_setup.md           # Conda setup guide
+│   ├── 07_environment_configuration.md  # Environment & endpoint config
 │   └── INDEX.md                    # Documentation index
 │
 ├── examples/                       # Example implementations (to be created)
@@ -27,6 +28,9 @@ tests/e2e_qa/
 │   ├── 06_tracing_examples.py      # Tracing signal examples
 │   └── 07_advanced_examples.py     # Advanced usage patterns
 │
+├── .env                            # Environment configuration (create from env.example)
+├── env.example                     # Example environment configuration
+├── ENDPOINTS_REFERENCE.md          # Quick reference for all endpoints
 ├── environment.yml.template        # Conda environment specification
 ├── README.md                       # This file
 └── run_all_examples.py             # Main entry point (to be created)
@@ -53,6 +57,20 @@ Or create manually:
 conda create -n e2e-qa-test anaconda-opentelemetry python=3.10
 conda activate e2e-qa-test
 ```
+
+### Environment Configuration
+
+Configure the target endpoint for telemetry data:
+
+```bash
+# Copy the example environment file
+cp env.example .env
+
+# Edit .env to set your environment (defaults to staging-internal)
+# OTEL_ENVIRONMENT=staging-internal
+```
+
+⚠️ **Important**: Only send test data to staging environments. See [07_environment_configuration.md](_docs/07_environment_configuration.md) for details on all supported environments.
 
 ### Running Examples
 
@@ -169,7 +187,13 @@ See `_docs/` directory for:
 - Architecture and design
 - Implementation plan
 - Detailed scenarios
+- Environment configuration
 - Documentation index
+
+Key documents:
+- **[ENDPOINTS_REFERENCE.md](ENDPOINTS_REFERENCE.md)** - Quick reference for all endpoints
+- **[07_environment_configuration.md](_docs/07_environment_configuration.md)** - Detailed endpoint configuration guide
+- **[INDEX.md](_docs/INDEX.md)** - Complete documentation index
 
 ## Development
 

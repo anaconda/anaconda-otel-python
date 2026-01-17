@@ -15,9 +15,11 @@
 ### Reference
 - **[05_visual_guide.md](05_visual_guide.md)** - Visual diagrams
 - **[06_conda_setup.md](06_conda_setup.md)** - Conda setup
+- **[07_environment_configuration.md](07_environment_configuration.md)** - Environment & endpoint configuration
 
 ## Reading Paths
 
-**Quick Start**: README → 00_summary
+**Quick Start**: README → 00_summary → 07_environment_configuration
 **Implementation**: 02_architecture → 03_implementation_plan → 04_test_scenarios
 **Visual**: 05_visual_guide
+**Configuration**: 07_environment_configuration
