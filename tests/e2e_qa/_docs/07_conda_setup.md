@@ -54,14 +54,9 @@ Create a conda environment from a specification file:
 
 ```yaml
 name: e2e-qa-examples
-channels:
-  - conda-forge
-  - defaults
 dependencies:
   - python=3.10
   - anaconda-opentelemetry
-  - pip
-  # No additional pip dependencies needed for hello-world examples
 ```
 
 **Step 2**: Create environment from file:
@@ -98,57 +93,30 @@ python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ S
 
 ## Environment Specification
 
-### Minimal Environment
+### Simple Environment (Recommended)
 
-For running examples only:
-
-```yaml
-name: e2e-qa-minimal
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - python>=3.9  # SDK requires Python 3.9+
-  - anaconda-opentelemetry
-```
-
-### Development Environment
-
-For development and testing:
+For running hello-world examples:
 
 ```yaml
-name: e2e-qa-dev
-channels:
-  - conda-forge
-  - defaults
+name: e2e-qa-examples
 dependencies:
   - python=3.10
   - anaconda-opentelemetry
-  - pip
-  # No additional pip dependencies needed for hello-world examples
-    - black  # Code formatting
-    - flake8  # Linting
 ```
 
-### Full Environment
+**That's it!** No additional dependencies needed for hello-world examples.
 
-For complete development setup:
+### With Optional Development Tools
+
+If you want code formatting and linting:
 
 ```yaml
-name: e2e-qa-full
-channels:
-  - conda-forge
-  - defaults
+name: e2e-qa-examples
 dependencies:
   - python=3.10
   - anaconda-opentelemetry
-  - pip
-  - ipython  # Interactive shell
-  - jupyter  # Notebooks (optional)
-  # No additional pip dependencies needed for hello-world examples
-    - black
-    - flake8
-    - mypy  # Type checking
+  - black   # Optional: code formatting
+  - flake8  # Optional: linting
 ```
 
 ---
@@ -362,11 +330,8 @@ conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 # Solution 1: Update conda
 conda update conda
 
-# Solution 2: Use conda-forge channel
-conda install -c conda-forge anaconda-opentelemetry
-
-# Solution 3: Create fresh environment
-conda create -n e2e-qa-examples-new anaconda-opentelemetry
+# Solution 2: Create fresh environment
+conda create -n e2e-qa-examples-new anaconda-opentelemetry python=3.10
 ```
 
 ### Issue: Environment Not Activating

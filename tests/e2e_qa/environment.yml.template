@@ -1,45 +1,29 @@
-# Conda Environment Template for E2E QA Project
+# Conda Environment for E2E QA Hello-World Examples
 # 
-# This file defines the conda environment for the anaconda-opentelemetry E2E QA project.
-# It ensures all developers have the same dependencies and versions.
+# This file defines the conda environment for running the anaconda-opentelemetry
+# hello-world demonstration examples.
 #
 # Usage:
 #   conda env create -f environment.yml
-#   conda activate e2e-qa-test
+#   conda activate e2e-qa-examples
 #
 # To update an existing environment:
 #   conda env update -f environment.yml --prune
 
-name: e2e-qa-test
-
-channels:
-  - conda-forge
-  - defaults
+name: e2e-qa-examples
 
 dependencies:
-  # Python version
+  # Python version (3.10 recommended, 3.9+ required)
   - python=3.10
-
-  # Core dependency: anaconda-opentelemetry SDK
-  # This is the package being tested
+  
+  # The SDK being demonstrated
   - anaconda-opentelemetry
-
-  # Pip for additional packages
-  - pip
-
-  # Install additional packages via pip
-  - pip:
-      # Testing framework
-      - pytest>=7.0.0
-      - pytest-cov>=4.0.0
-      
-      # Optional: Add more test dependencies as needed
-      # - pytest-xdist  # For parallel test execution
-      # - black         # Code formatting
-      # - flake8        # Linting
+  
+  # Optional development tools (uncomment if needed)
+  # - black   # Code formatting
+  # - flake8  # Linting
 
 # Notes:
-# 1. The SDK (anaconda-opentelemetry) is installed via conda (recommended)
-# 2. Test dependencies are installed via pip
-# 3. Python 3.10 is recommended (see _docs/01_requirements.md for version details)
-# 4. Uncomment optional dependencies as needed for development
+# 1. No channels specified - uses default Anaconda channels
+# 2. No additional dependencies needed for hello-world examples
+# 3. See _docs/01_requirements.md for Python version details
