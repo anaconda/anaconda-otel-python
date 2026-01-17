@@ -8,10 +8,14 @@ Run All E2E QA Examples
 
 This script runs all example modules to demonstrate the complete
 Anaconda OpenTelemetry SDK functionality.
+
+IMPORTANT: Initialization examples run via subprocess to ensure proper
+telemetry initialization (OpenTelemetry only allows one init per process).
 """
 
 import sys
 import time
+import subprocess
 from pathlib import Path
 
 # Add examples directory to path
@@ -51,6 +55,34 @@ def run_example_module(module_name: str, description: str):
         return False
 
 
+def run_initialization_examples():
+    """
+    Run initialization examples via subprocess.
+    
+    CRITICAL: Must run in separate processes because OpenTelemetry
+    only allows one initialization per process.
+    """
+    print_info("Starting initialization examples (via subprocess)...")
+    
+    try:
+        script_path = Path(__file__).parent / "run_initialization_examples.py"
+        result = subprocess.run(
+            [sys.executable, str(script_path)],
+            check=True,
+            capture_output=False
+        )
+        print_success("Completed: initialization examples\n")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Error running initialization examples: exit code {e.returncode}")
+        return False
+    except Exception as e:
+        print(f"\n❌ Error running initialization examples: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def main():
     """Main entry point for running all examples"""
     print("\n" + "=" * 70)
@@ -60,25 +92,26 @@ def main():
     print("  simple, runnable examples.\n")
     print("=" * 70 + "\n")
     
-    # Define examples to run
+    # Define examples to run (modules that can run in same process)
     examples = [
         ("01_config_examples", "Configuration class and methods"),
         ("02_attributes_examples", "ResourceAttributes class and methods"),
-        ("03_initialization_examples", "Telemetry initialization patterns"),
     ]
     
     results = {}
     
-    # Run each example
+    # Run each example module
     for module_name, description in examples:
         print_info(f"Starting {module_name}...")
         success = run_example_module(module_name, description)
         results[module_name] = success
         
-        # Small delay between examples
-        if module_name != examples[-1][0]:
-            print_info("Waiting before next example...\n")
-            time.sleep(2)
+        print_info("Waiting before next example...\n")
+        time.sleep(2)
+    
+    # Run initialization examples (must be in separate processes)
+    success = run_initialization_examples()
+    results["initialization_examples"] = success
     
     # Print summary
     print("\n" + "=" * 70)
@@ -104,10 +137,10 @@ def main():
         sys.exit(1)
     else:
         print_success("\n🎉 All examples completed successfully!")
-        print_info("You can now run individual examples:")
+        print_info("You can now run individual example categories:")
         print_info("  python examples/01_config_examples.py")
         print_info("  python examples/02_attributes_examples.py")
-        print_info("  python examples/03_initialization_examples.py")
+        print_info("  python run_initialization_examples.py")
         print("\n" + "=" * 70 + "\n")
         sys.exit(0)
 
