@@ -13,7 +13,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
-from opentelemetry import metrics, trace
 from utils import (
     load_environment,
     print_header,
@@ -24,7 +23,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
-    print_flush_status
+    flush_telemetry
 )
 
 # Test data constants
@@ -32,22 +31,6 @@ SERVICE_NAME = "example-04-selective"
 SERVICE_VERSION = "1.0.0"
 METRIC_NAME = "example_04_selective_test"
 METRIC_VALUE = 1
-
-
-def flush_telemetry():
-    """Force flush all telemetry data to ensure it's sent to the backend."""
-    try:
-        meter_provider = metrics.get_meter_provider()
-        if hasattr(meter_provider, 'force_flush'):
-            meter_provider.force_flush(timeout_millis=5000)
-        
-        tracer_provider = trace.get_tracer_provider()
-        if hasattr(tracer_provider, 'force_flush'):
-            tracer_provider.force_flush(timeout_millis=5000)
-        
-        print_flush_status(success=True)
-    except Exception as e:
-        print_flush_status(success=False, error=e)
 
 
 def main():

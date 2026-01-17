@@ -8,6 +8,7 @@ Utilities Package for E2E QA Examples
 This package provides shared utilities for E2E QA examples including:
 - Configuration management (config_utils)
 - Print/output formatting (print_utils)
+- Telemetry operations (telemetry_utils)
 """
 
 # Import from config_utils
@@ -43,6 +44,14 @@ from .print_utils import (
     print_example_section,
 )
 
+# Import from telemetry_utils
+from .telemetry_utils import (
+    flush_telemetry,
+    flush_metrics,
+    flush_traces,
+    flush_logs,
+)
+
 __all__ = [
     # Config utils
     'load_environment',
@@ -70,4 +79,9 @@ __all__ = [
     # Print utils - Backward compatibility
     'print_example_header',
     'print_example_section',
+    # Telemetry utils
+    'flush_telemetry',
+    'flush_metrics',
+    'flush_traces',
+    'flush_logs',
 ]
