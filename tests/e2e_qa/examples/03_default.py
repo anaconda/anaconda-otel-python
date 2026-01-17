@@ -25,12 +25,13 @@ from utils import (
     print_backend_validation,
     flush_telemetry
 )
+from test_data import ServiceName, ServiceVersion, MetricName, MetricValue
 
 # Test data constants
-SERVICE_NAME = "example-03-default"
-SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_03_default_test"
-METRIC_VALUE = 1
+SERVICE_NAME = ServiceName.EXAMPLE_03.value
+SERVICE_VERSION = ServiceVersion.DEFAULT.value
+METRIC_NAME = MetricName.EXAMPLE_03.value
+METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
 
 
 def main():

@@ -18,6 +18,7 @@ from utils import (
     print_info,
     validate_environment
 )
+from test_data import ExportInterval, LoggingLevel
 
 
 def example_01_basic_configuration():
@@ -88,8 +89,8 @@ def example_04_export_intervals():
     config = Configuration(default_endpoint=endpoint)
     
     # Set export intervals (in milliseconds)
-    config.set_metrics_export_interval_ms(30000)  # 30 seconds
-    config.set_tracing_export_interval_ms(15000)  # 15 seconds
+    config.set_metrics_export_interval_ms(ExportInterval.METRICS_30S.value)  # 30 seconds
+    config.set_tracing_export_interval_ms(ExportInterval.TRACING_15S.value)  # 15 seconds
     
     print_success("Export intervals configured")
     print_info("Metrics export interval: 30 seconds")
@@ -109,7 +110,7 @@ def example_05_logging_level():
     config = Configuration(default_endpoint=endpoint)
     
     # Set logging level (only logs at this level or higher will be sent)
-    config.set_logging_level('info')
+    config.set_logging_level(LoggingLevel.INFO.value)
     
     print_success("Logging level configured")
     print_info("Logging level: info (info, warning, error will be sent)")
@@ -190,11 +191,11 @@ def example_09_complete_configuration():
     config.set_console_exporter(use_console=True)
     
     # Set export intervals
-    config.set_metrics_export_interval_ms(60000)  # 1 minute
-    config.set_tracing_export_interval_ms(30000)  # 30 seconds
+    config.set_metrics_export_interval_ms(ExportInterval.METRICS_60S.value)  # 1 minute
+    config.set_tracing_export_interval_ms(ExportInterval.TRACING_30S.value)  # 30 seconds
     
     # Set logging level
-    config.set_logging_level('warning')
+    config.set_logging_level(LoggingLevel.WARNING.value)
     
     # Set session entropy
     import time

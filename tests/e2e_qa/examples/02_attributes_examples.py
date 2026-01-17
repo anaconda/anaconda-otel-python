@@ -16,6 +16,16 @@ from utils import (
     print_success,
     print_info
 )
+from test_data import (
+    ServiceName,
+    ServiceVersion,
+    Environment,
+    Platform,
+    CustomAttributes,
+    DeploymentAttributes,
+    UserId,
+    Hostname
+)
 
 
 def example_01_basic_attributes():
@@ -24,9 +34,11 @@ def example_01_basic_attributes():
     print_info("Create ResourceAttributes with required service_name and service_version")
     
     # Create basic attributes (only required fields)
+    service_name = ServiceName.ATTRIBUTES_EXAMPLES.value
+    service_version = ServiceVersion.DEFAULT.value
     attrs = ResourceAttributes(
-        service_name="my-service",
-        service_version="1.0.0"
+        service_name=service_name,
+        service_version=service_version
     )
     
     print_success("ResourceAttributes created")
@@ -45,11 +57,11 @@ def example_02_optional_fields():
     
     # Create attributes with optional fields
     attrs = ResourceAttributes(
-        service_name="my-service",
-        service_version="1.0.0",
-        platform="conda",
-        hostname="my-laptop",
-        environment="development"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.DEFAULT.value,
+        platform=Platform.CONDA.value,
+        hostname=Hostname.MY_LAPTOP.value,
+        environment=Environment.DEVELOPMENT.value
     )
     
     print_success("ResourceAttributes with optional fields created")
@@ -67,8 +79,8 @@ def example_03_auto_populated_fields():
     
     # Create attributes without optional fields - they'll be auto-populated
     attrs = ResourceAttributes(
-        service_name="my-service",
-        service_version="1.0.0"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.DEFAULT.value
     )
     
     print_success("ResourceAttributes created with auto-populated fields")
@@ -87,16 +99,12 @@ def example_04_set_attributes_method():
     
     # Create basic attributes
     attrs = ResourceAttributes(
-        service_name="my-service",
-        service_version="1.0.0"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.DEFAULT.value
     )
     
     # Add custom attributes
-    attrs.set_attributes(
-        team="data-science",
-        project="ml-pipeline",
-        region="us-west-2"
-    )
+    attrs.set_attributes(**CustomAttributes.TEAM_PROJECT.value)
     
     print_success("Custom attributes added")
     print_info("Custom attributes stored in 'parameters' dict:")
@@ -114,15 +122,15 @@ def example_05_update_existing_attributes():
     
     # Create attributes
     attrs = ResourceAttributes(
-        service_name="my-service",
-        service_version="1.0.0",
-        environment="development"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.DEFAULT.value,
+        environment=Environment.DEVELOPMENT.value
     )
     
     print_info(f"Initial environment: {attrs.environment}")
     
     # Update environment
-    attrs.set_attributes(environment="staging")
+    attrs.set_attributes(environment=Environment.STAGING.value)
     
     print_success("Attribute updated")
     print_info(f"Updated environment: {attrs.environment}")
@@ -137,18 +145,14 @@ def example_06_environment_specific_attributes():
     
     # Create attributes with environment information
     attrs = ResourceAttributes(
-        service_name="web-api",
-        service_version="2.1.0",
-        environment="production",
-        platform="kubernetes"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.V2_1.value,
+        environment=Environment.PRODUCTION.value,
+        platform=Platform.KUBERNETES.value
     )
     
     # Add deployment-specific attributes
-    attrs.set_attributes(
-        deployment_environment="production",
-        deployment_region="us-east-1",
-        deployment_cluster="prod-cluster-01"
-    )
+    attrs.set_attributes(**DeploymentAttributes.US_EAST_PROD.value)
     
     print_success("Environment-specific attributes configured")
     print_info(f"Environment: {attrs.environment}")
@@ -167,9 +171,9 @@ def example_07_user_identification():
     
     # Create attributes with user_id
     attrs = ResourceAttributes(
-        service_name="user-app",
-        service_version="1.0.0",
-        user_id="user_12345"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.DEFAULT.value,
+        user_id=UserId.TEST_USER_1.value
     )
     
     print_success("User identification configured")
@@ -186,22 +190,16 @@ def example_08_complete_attributes():
     
     # Create comprehensive attributes
     attrs = ResourceAttributes(
-        service_name="analytics-service",
-        service_version="3.2.1",
-        platform="conda",
-        environment="production",
-        user_id="analyst_001"
+        service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
+        service_version=ServiceVersion.V3_2_1.value,
+        platform=Platform.CONDA.value,
+        environment=Environment.PRODUCTION.value,
+        user_id=UserId.ANALYST_1.value
     )
     
     # Add custom attributes
-    attrs.set_attributes(
-        team="analytics",
-        project="user-behavior-analysis",
-        deployment_region="us-west-2",
-        deployment_cluster="prod-analytics-01",
-        cost_center="engineering",
-        data_classification="confidential"
-    )
+    custom_attrs = {**CustomAttributes.ANALYTICS_TEAM.value, **DeploymentAttributes.ANALYTICS_PROD.value}
+    attrs.set_attributes(**custom_attrs)
     
     print_success("Complete attributes configuration created")
     print_info("Standard attributes:")

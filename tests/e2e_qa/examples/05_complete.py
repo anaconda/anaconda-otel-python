@@ -25,12 +25,24 @@ from utils import (
     print_backend_validation,
     flush_telemetry
 )
+from test_data import (
+    ServiceName,
+    ServiceVersion,
+    MetricName,
+    MetricValue,
+    Environment,
+    Platform,
+    CustomAttributes,
+    ExportInterval,
+    LoggingLevel,
+    SignalTypes
+)
 
 # Test data constants
-SERVICE_NAME = "example-05-complete"
-SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_05_complete_test"
-METRIC_VALUE = 1
+SERVICE_NAME = ServiceName.EXAMPLE_05.value
+SERVICE_VERSION = ServiceVersion.DEFAULT.value
+METRIC_NAME = MetricName.EXAMPLE_05.value
+METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
 
 
 def main():
@@ -45,8 +57,8 @@ def main():
     config = Configuration(default_endpoint=endpoint)
     if use_console:
         config.set_console_exporter(use_console=True)
-    config.set_metrics_export_interval_ms(30000)
-    config.set_logging_level('info')
+    config.set_metrics_export_interval_ms(ExportInterval.METRICS_30S.value)
+    config.set_logging_level(LoggingLevel.INFO.value)
     
     print_code("config = Configuration(default_endpoint=endpoint)")
     if use_console:
@@ -58,10 +70,10 @@ def main():
     attrs = ResourceAttributes(
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION,
-        platform="conda",
-        environment="development"
+        platform=Platform.CONDA.value,
+        environment=Environment.DEVELOPMENT.value
     )
-    attrs.set_attributes(example="complete_initialization", test_type="e2e-qa")
+    attrs.set_attributes(**CustomAttributes.EXAMPLE_COMPLETE.value)
     
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", platform="conda", environment="development")')
     print_code('attrs.set_attributes(example="complete_initialization", test_type="e2e-qa")')
@@ -70,7 +82,7 @@ def main():
     initialize_telemetry(
         config=config,
         attributes=attrs,
-        signal_types=['metrics', 'logging', 'tracing']
+        signal_types=SignalTypes.ALL_SIGNALS.value
     )
     print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     

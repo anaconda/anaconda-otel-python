@@ -25,12 +25,13 @@ from utils import (
     print_backend_validation,
     flush_telemetry
 )
+from test_data import ServiceName, ServiceVersion, MetricName, MetricValue, SignalTypes
 
 # Test data constants
-SERVICE_NAME = "example-04-selective"
-SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_04_selective_test"
-METRIC_VALUE = 1
+SERVICE_NAME = ServiceName.EXAMPLE_04.value
+SERVICE_VERSION = ServiceVersion.DEFAULT.value
+METRIC_NAME = MetricName.EXAMPLE_04.value
+METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
 
 
 def main():
@@ -57,7 +58,7 @@ def main():
     initialize_telemetry(
         config=config,
         attributes=attrs,
-        signal_types=['metrics', 'tracing']
+        signal_types=SignalTypes.METRICS_AND_TRACING.value
     )
     print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'tracing'])")
     

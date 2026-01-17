@@ -25,12 +25,21 @@ from utils import (
     print_backend_validation,
     flush_telemetry
 )
+from test_data import (
+    ServiceName,
+    ServiceVersion,
+    MetricName,
+    MetricValue,
+    Environment,
+    SignalTypes,
+    TestType
+)
 
 # Test data constants
-SERVICE_NAME = "example-06-env-based"
-SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_06_env_based_test"
-METRIC_VALUE = 1
+SERVICE_NAME = ServiceName.EXAMPLE_06.value
+SERVICE_VERSION = ServiceVersion.DEFAULT.value
+METRIC_NAME = MetricName.EXAMPLE_06.value
+METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
 
 
 def main():
@@ -50,9 +59,9 @@ def main():
     attrs = ResourceAttributes(
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION,
-        environment="staging"
+        environment=Environment.STAGING.value
     )
-    attrs.set_attributes(otel_environment=otel_env, test_type="e2e-qa")
+    attrs.set_attributes(otel_environment=otel_env, test_type=TestType.E2E_QA.value)
     
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", environment="staging")')
     print_code(f'attrs.set_attributes(otel_environment="{otel_env}", test_type="e2e-qa")')
@@ -61,7 +70,7 @@ def main():
     initialize_telemetry(
         config=config,
         attributes=attrs,
-        signal_types=['metrics', 'logging', 'tracing']
+        signal_types=SignalTypes.ALL_SIGNALS.value
     )
     print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     

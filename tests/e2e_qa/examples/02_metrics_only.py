@@ -25,19 +25,21 @@ from utils import (
     print_backend_validation,
     flush_telemetry
 )
+from test_data import (
+    ServiceName,
+    ServiceVersion,
+    MetricName,
+    MetricValue,
+    SignalTypes,
+    AutoDetectedAttributes
+)
 
 # Test data constants
-SERVICE_NAME = "example-02-metrics-only"
-SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_02_metrics_test"
-METRIC_VALUE = 1
-
-AUTO_DETECTED_ATTRS = {
-    "os.type": "Darwin/Linux/Windows (auto-detected)",
-    "python.version": "3.x.x (auto-detected)",
-    "client.sdk.version": "0.0.0.devbuild",
-    "schema.version": "0.3.0"
-}
+SERVICE_NAME = ServiceName.EXAMPLE_02.value
+SERVICE_VERSION = ServiceVersion.DEFAULT.value
+METRIC_NAME = MetricName.EXAMPLE_02.value
+METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
+AUTO_DETECTED_ATTRS = AutoDetectedAttributes.STANDARD.value
 
 
 def main():
@@ -64,7 +66,7 @@ def main():
     initialize_telemetry(
         config=config,
         attributes=attrs,
-        signal_types=['metrics']
+        signal_types=SignalTypes.METRICS_ONLY.value
     )
     print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
     
