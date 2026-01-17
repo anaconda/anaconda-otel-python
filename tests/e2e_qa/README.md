@@ -30,8 +30,7 @@ tests/e2e_qa/
 │
 ├── .env                            # Environment configuration (create from env.example)
 ├── env.example                     # Example environment configuration
-├── ENDPOINTS_REFERENCE.md          # Quick reference for all endpoints
-├── environment.yml.template        # Conda environment specification
+├── environment.yml                 # Conda environment specification
 ├── README.md                       # This file
 └── run_all_examples.py             # Main entry point (to be created)
 ```
@@ -195,8 +194,7 @@ See `_docs/` directory for:
 - Documentation index
 
 Key documents:
-- **[ENDPOINTS_REFERENCE.md](ENDPOINTS_REFERENCE.md)** - Quick reference for all endpoints
-- **[07_environment_configuration.md](_docs/07_environment_configuration.md)** - Detailed endpoint configuration guide
+- **[07_environment_configuration.md](_docs/07_environment_configuration.md)** - Environment and endpoint configuration guide
 - **[INDEX.md](_docs/INDEX.md)** - Complete documentation index
 
 ## Development
@@ -239,8 +237,9 @@ pip install python-dotenv
 
 **Conda environment creation fails**
 ```bash
-# Use the correct file name
-conda env create -f environment.yml  # Not environment.yml.template
+# Make sure you're in the correct directory
+cd tests/e2e_qa
+conda env create -f environment.yml
 ```
 
 **"No access to endpoint" warning**

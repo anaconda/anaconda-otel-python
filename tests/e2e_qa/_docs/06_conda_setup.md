@@ -22,7 +22,7 @@ cd tests/e2e_qa
 
 ### Using Environment File
 ```bash
-conda env create -f environment.yml.template
+conda env create -f environment.yml
 conda activate e2e-qa-examples
 ```
 

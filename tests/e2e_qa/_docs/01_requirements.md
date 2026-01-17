@@ -69,25 +69,13 @@ pip is **not documented** as an installation method in the main SDK documentatio
 
 ---
 
-## Installation Commands
+## Installation
 
-### Quick Start (Recommended)
-```bash
-conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
-conda activate e2e-qa-examples
-```
-
-### Minimum Version
-```bash
-conda create -n e2e-qa-examples anaconda-opentelemetry python=3.9
-```
-
-### Using Environment File
-```bash
-conda env create -f environment.yml.template
-```
+For setup instructions, see:
+- **[README.md](../README.md)** - Quick start guide with step-by-step setup
+- **[06_conda_setup.md](06_conda_setup.md)** - Detailed conda setup guide
 
 ---
 
-**Note**: All other documentation files reference this file for requirements.
+**Note**: This file is the authoritative source for requirements. All other documentation files reference this file.
 **Last Updated**: 2026-01-16

@@ -21,7 +21,7 @@ See [README.md](../README.md#project-structure) for complete structure.
 
 ### 1.4 Environment Setup
 - [x] Document conda installation steps (in existing docs)
-- [x] Create conda environment specification (environment.yml.template exists)
+- [x] Create conda environment specification (environment.yml exists)
 - [x] Verify SDK installation via pip install -e .
 - [x] Verify SDK can be imported
 

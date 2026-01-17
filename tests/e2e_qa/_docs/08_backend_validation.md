@@ -525,9 +525,8 @@ Once backend validation is complete:
 ## Related Documentation
 
 - **[03_implementation_plan.md](03_implementation_plan.md)** - Implementation phases and progress
-- **[07_environment_configuration.md](07_environment_configuration.md)** - Environment setup
+- **[07_environment_configuration.md](07_environment_configuration.md)** - Environment setup and endpoint details
 - **[README.md](../README.md)** - Quick start guide
-- **[ENDPOINTS_REFERENCE.md](../ENDPOINTS_REFERENCE.md)** - Endpoint details
 
 ---
 
