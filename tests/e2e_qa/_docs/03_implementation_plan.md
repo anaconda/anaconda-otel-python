@@ -10,22 +10,19 @@
 See [README.md](../README.md#project-structure) for complete structure.
 
 ### 1.2 Configuration Files
-- [ ] Create `requirements.txt`
-- [ ] Create `pyproject.toml`
 - [ ] Create `environment.yml` (conda environment file)
-- [ ] Create `README.md` (already done, may need updates)
+- [ ] Update `README.md` (already exists, may need refinements)
 - [ ] Create `.gitignore` (if needed)
 
 ### 1.3 Base Files
-- [ ] Create `src/__init__.py`
-- [ ] Create `tests/__init__.py`
-- [ ] Create `run_examples.py`
+- [ ] Create `examples/__init__.py`
+- [ ] Create `run_all_examples.py`
 
 ### 1.4 Environment Setup
 - [ ] Document conda installation steps
 - [ ] Create conda environment specification
 - [ ] Verify SDK installation via conda
-- [ ] Test import of SDK modules
+- [ ] Verify SDK can be imported
 
 **Dependencies**: None
 
@@ -33,7 +30,7 @@ See [README.md](../README.md#project-structure) for complete structure.
 
 ## Phase 2: Configuration Examples
 
-### 2.1 Basic Configuration (`src/config_examples.py`)
+### 2.1 Basic Configuration (`examples/config_examples.py`)
 Implement examples for:
 - [ ] Basic endpoint configuration
 - [ ] Console exporter setup
@@ -47,19 +44,13 @@ Implement examples for:
 - [ ] Skip internet check
 - [ ] Cumulative metrics
 
-### 2.3 Configuration Tests (`tests/test_config.py`)
-- [ ] Test basic configuration
-- [ ] Test console exporter
-- [ ] Test signal-specific endpoints
-- [ ] Test configuration validation
-
 **Dependencies**: Phase 1
 
 ---
 
 ## Phase 3: Resource Attributes Examples
 
-### 3.1 Basic Attributes (`src/attributes_examples.py`)
+### 3.1 Basic Attributes (`examples/attributes_examples.py`)
 Implement examples for:
 - [ ] Basic ResourceAttributes creation
 - [ ] Required fields (service_name, service_version)
@@ -73,19 +64,13 @@ Implement examples for:
 - [ ] Environment-specific attributes
 - [ ] Parameters dictionary
 
-### 3.3 Attributes Tests (`tests/test_attributes.py`)
-- [ ] Test basic attributes creation
-- [ ] Test set_attributes method
-- [ ] Test attribute validation
-- [ ] Test readonly fields
-
 **Dependencies**: Phase 2
 
 ---
 
 ## Phase 4: Initialization Examples
 
-### 4.1 Basic Initialization (`src/initialization_examples.py`)
+### 4.1 Basic Initialization (`examples/initialization_examples.py`)
 Implement examples for:
 - [ ] Initialize with all signals
 - [ ] Initialize with specific signals only
@@ -98,19 +83,13 @@ Implement examples for:
 - [ ] Validation of required parameters
 - [ ] Configuration + Attributes combination
 
-### 4.3 Initialization Tests (`tests/test_initialization.py`)
-- [ ] Test successful initialization
-- [ ] Test selective signal initialization
-- [ ] Test error cases (None config, None attributes)
-- [ ] Test idempotent initialization
-
 **Dependencies**: Phase 3
 
 ---
 
 ## Phase 5: Logging Examples
 
-### 5.1 Basic Logging (`src/logging_examples.py`)
+### 5.1 Basic Logging (`examples/logging_examples.py`)
 Implement examples for:
 - [ ] Get telemetry logger handler
 - [ ] Add handler to logger
@@ -124,19 +103,13 @@ Implement examples for:
 - [ ] Multiple loggers
 - [ ] Log attributes
 
-### 5.3 Logging Tests (`tests/test_logging.py`)
-- [ ] Test logger handler retrieval
-- [ ] Test log message export
-- [ ] Test log levels
-- [ ] Test console output
-
 **Dependencies**: Phase 4
 
 ---
 
 ## Phase 6: Metrics Examples
 
-### 6.1 Counter Examples (`src/metrics_examples.py`)
+### 6.1 Counter Examples (`examples/metrics_examples.py`)
 Implement examples for:
 - [ ] Basic counter increment
 - [ ] Counter with attributes
@@ -156,20 +129,13 @@ Implement examples for:
 - [ ] Multiple metrics coordination
 - [ ] Metric types comparison
 
-### 6.4 Metrics Tests (`tests/test_metrics.py`)
-- [ ] Test increment_counter
-- [ ] Test decrement_counter
-- [ ] Test record_histogram
-- [ ] Test metric naming validation
-- [ ] Test console output
-
 **Dependencies**: Phase 4
 
 ---
 
 ## Phase 7: Tracing Examples
 
-### 7.1 Basic Tracing (`src/tracing_examples.py`)
+### 7.1 Basic Tracing (`examples/tracing_examples.py`)
 Implement examples for:
 - [ ] Basic trace context manager
 - [ ] Trace with attributes
@@ -189,21 +155,13 @@ Implement examples for:
 - [ ] Distributed tracing simulation
 - [ ] Parent-child span relationships
 
-### 7.4 Tracing Tests (`tests/test_tracing.py`)
-- [ ] Test basic trace
-- [ ] Test span events
-- [ ] Test span exceptions
-- [ ] Test error status
-- [ ] Test trace propagation
-- [ ] Test console output
-
 **Dependencies**: Phase 4
 
 ---
 
 ## Phase 8: Advanced Examples
 
-### 8.1 Multi-Signal Coordination (`src/advanced_examples.py`)
+### 8.1 Multi-Signal Coordination (`examples/advanced_examples.py`)
 Implement examples for:
 - [ ] Logs + Metrics + Traces together
 - [ ] Correlated telemetry
@@ -221,12 +179,6 @@ Implement examples for:
 - [ ] Custom attribute patterns
 - [ ] Telemetry best practices
 - [ ] Production-ready patterns
-
-### 8.4 Advanced Tests (`tests/test_advanced.py`)
-- [ ] Test multi-signal scenarios
-- [ ] Test real-world patterns
-- [ ] Test error scenarios
-- [ ] Test performance patterns
 
 **Dependencies**: Phases 5, 6, 7
 

@@ -253,16 +253,14 @@ Each example includes setup, execution, and validation. Can run independently.
 ## 🛠️ Next Steps
 
 ### Immediate
-1. Create `src/` directory
-2. Create `tests/` directory
-3. Create `requirements.txt`
-4. Create `pyproject.toml`
+1. Create `examples/` directory
+2. Create `environment.yml` (conda environment file)
+3. Update documentation as needed
 
 ### Short Term
 1. Implement config examples
 2. Implement attributes examples
 3. Implement initialization examples
-4. Add tests
 
 ### Medium Term
 1. Implement logging examples

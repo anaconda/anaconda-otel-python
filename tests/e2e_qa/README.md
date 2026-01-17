@@ -83,7 +83,7 @@ pip install pytest pytest-cov
 
 #### Option 2: Using Existing Conda Environment
 
-1. **Install the SDK in your existing environment**:
+**Install the SDK in your existing environment**:
 ```bash
 # Activate your environment
 conda activate your-env-name
@@ -92,15 +92,7 @@ conda activate your-env-name
 conda install anaconda-opentelemetry
 ```
 
-2. **Install E2E QA dependencies**:
-```bash
-cd tests/e2e_qa
-pip install -r requirements.txt
-```
-
-#### Note on pip
-
-The SDK documentation only covers conda installation. While the package has a `pyproject.toml` and may be pip-installable, **conda is the official and documented installation method**. For pip installation, refer to the main SDK documentation or use conda as documented above.
+**Note**: This hello-world project has no additional dependencies beyond the SDK itself.
 
 ### Running Examples
 
