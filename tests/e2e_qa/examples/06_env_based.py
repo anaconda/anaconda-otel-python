@@ -4,6 +4,26 @@ Example 6: Environment-Based Initialization
 
 Demonstrates initialization based on environment configuration with metric attributes.
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- Your application runs in multiple environments (dev, staging, production)
+- You need to configure telemetry based on environment variables
+- You want to tag telemetry data with environment-specific metadata
+- You need different behavior per environment without code changes
+
+USE CASES:
+- Multi-environment deployments (dev/staging/production)
+- Applications using 12-factor app configuration principles
+- Services that need environment-aware telemetry tagging
+- Deployments where configuration is managed externally (env vars, config files)
+- When you want to track which environment generated specific telemetry data
+
+FEATURES DEMONSTRATED:
+- Loading configuration from environment variables
+- Setting environment-specific resource attributes
+- Adding custom attributes with environment context
+- Metric-level attributes for additional environment tagging
+- Dynamic configuration based on runtime environment
 """
 
 import sys

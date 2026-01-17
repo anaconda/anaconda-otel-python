@@ -4,6 +4,19 @@ Example 2: Initialize Metrics Only
 
 Demonstrates initializing telemetry with only the metrics signal.
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- You only need to track counters, gauges, and histograms
+- You want minimal overhead and resource usage
+- Your application doesn't require logging or tracing capabilities
+- You're monitoring simple metrics like request counts, response times, or resource usage
+
+USE CASES:
+- Batch jobs that only need to report completion metrics
+- Background workers tracking task counts and durations
+- Simple services where metrics alone provide sufficient visibility
+- Performance-sensitive applications minimizing telemetry overhead
+- CLI tools or scripts that only need basic instrumentation
 """
 
 import sys

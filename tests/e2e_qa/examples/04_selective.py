@@ -4,6 +4,24 @@ Example 4: Selective Signals
 
 Demonstrates initializing telemetry with only specific signals (metrics + tracing).
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- You need a specific combination of signals (not all, not just one)
+- You want distributed tracing but don't need structured logging
+- You need to balance observability needs with resource constraints
+- You want to optimize for specific use cases
+
+USE CASES:
+- Microservices that need request tracing and metrics but use external logging
+- Services where you want to trace request flows and measure performance
+- Applications that already have logging infrastructure but need telemetry
+- Scenarios where you need metrics and traces but logging is handled separately
+- Performance optimization: enable only the signals you actively use
+
+EXAMPLE COMBINATIONS:
+- metrics + tracing: Track performance and trace request flows (this example)
+- metrics + logging: Measure and log without distributed tracing
+- logging + tracing: Detailed logs with trace context (no metrics)
 """
 
 import sys

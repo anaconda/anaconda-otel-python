@@ -4,6 +4,22 @@ Example 3: Default Initialization
 
 Demonstrates initializing telemetry with default settings (metrics only).
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- You want the simplest possible initialization with minimal configuration
+- You're getting started and want to use SDK defaults
+- You don't need to explicitly specify signal types (defaults to metrics)
+- You want the most concise code with standard behavior
+
+USE CASES:
+- Quick prototyping or proof-of-concept implementations
+- Simple applications where default behavior is sufficient
+- Learning the SDK basics without complexity
+- When you want metrics but prefer implicit over explicit configuration
+- Scripts or utilities where brevity is preferred
+
+NOTE: This is functionally equivalent to Example 2 (metrics only) but uses
+implicit defaults rather than explicit signal_types parameter.
 """
 
 import sys

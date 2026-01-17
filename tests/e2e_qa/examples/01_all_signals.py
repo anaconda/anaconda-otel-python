@@ -4,6 +4,18 @@ Example 1: Initialize All Signals
 
 Demonstrates initializing telemetry with metrics, logs, and traces.
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- You need comprehensive observability across all signal types
+- Your application requires metrics, structured logging, and distributed tracing
+- You want full visibility into application behavior and performance
+- You're building a production service that needs complete telemetry coverage
+
+USE CASES:
+- Microservices that need end-to-end tracing
+- Applications with complex workflows requiring detailed logging
+- Services where you need to correlate metrics, logs, and traces
+- Production environments requiring full observability
 """
 
 import sys

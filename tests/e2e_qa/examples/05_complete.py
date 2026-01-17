@@ -4,6 +4,27 @@ Example 5: Complete Initialization
 
 Demonstrates comprehensive initialization with all configuration options.
 This is a standalone script to ensure proper initialization.
+
+WHEN TO USE THIS APPROACH:
+- You need fine-grained control over all configuration options
+- You're setting up production-ready telemetry with specific requirements
+- You need to configure export intervals, logging levels, and custom attributes
+- You want to see all available configuration options in one place
+
+USE CASES:
+- Production services requiring specific export intervals and logging levels
+- Applications with custom attributes for environment, platform, or team metadata
+- Services that need to tune telemetry behavior for performance or compliance
+- Reference implementation showing all SDK capabilities
+- When you need to configure multiple aspects: signals, intervals, attributes, logging
+
+CONFIGURATION DEMONSTRATED:
+- All signal types enabled (metrics, logging, tracing)
+- Custom export intervals for metrics
+- Logging level configuration
+- Optional resource attributes (platform, environment)
+- Custom attributes via set_attributes()
+- Complete production-ready setup
 """
 
 import sys
