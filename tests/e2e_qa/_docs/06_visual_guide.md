@@ -2,220 +2,112 @@
 
 ## Project Flow Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    E2E QA Project Overview                       │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-        ┌───────────────────────────────────────────┐
-        │   Install anaconda-opentelemetry SDK      │
-        │   (as external package)                   │
-        └───────────────────────────────────────────┘
-                                │
-                                ▼
-        ┌───────────────────────────────────────────┐
-        │   Run Examples: python run_examples.py    │
-        └───────────────────────────────────────────┘
-                                │
-                ┌───────────────┴───────────────┐
-                ▼                               ▼
-    ┌─────────────────────┐         ┌─────────────────────┐
-    │  Example Modules    │         │   Test Validation   │
-    │  (src/)             │         │   (tests/)          │
-    └─────────────────────┘         └─────────────────────┘
-                │                               │
-                ▼                               ▼
-    ┌─────────────────────┐         ┌─────────────────────┐
-    │  Console Output     │         │   Test Results      │
-    │  (Telemetry Data)   │         │   (Pass/Fail)       │
-    └─────────────────────┘         └─────────────────────┘
+```mermaid
+flowchart TD
+    A[E2E QA Project<br/>Hello-World Examples] --> B[Install anaconda-opentelemetry SDK<br/>as external package via conda]
+    B --> C[Run Examples:<br/>python run_all_examples.py]
+    C --> D[Example Modules<br/>examples/]
+    D --> E[Console Output<br/>Telemetry Data]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style E fill:#fce4ec
 ```
 
 ---
 
 ## Module Dependency Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     Module Dependencies                          │
-└──────────────────────────────────────────────────────────────────┘
-
-    config_examples.py
-           │
-           ├──► Configuration()
-           ├──► set_console_exporter()
-           ├──► set_*_endpoint()
-           └──► set_*_interval_ms()
-                    │
-                    ▼
-    attributes_examples.py
-           │
-           ├──► ResourceAttributes()
-           └──► set_attributes()
-                    │
-                    ▼
-    initialization_examples.py
-           │
-           └──► initialize_telemetry()
-                    │
-        ┌───────────┴───────────┬───────────────┐
-        ▼                       ▼               ▼
-logging_examples.py    metrics_examples.py    tracing_examples.py
-        │                       │               │
-        │                       │               │
-        ▼                       ▼               ▼
-get_telemetry_         increment_counter()    get_trace()
-logger_handler()       decrement_counter()    span.add_event()
-                       record_histogram()     span.add_exception()
-                                             span.set_error_status()
-                                             span.add_attributes()
-                    │
-                    ▼
-        advanced_examples.py
-                    │
-                    └──► Multi-signal coordination
-                         Error handling patterns
-                         Performance monitoring
+```mermaid
+flowchart TD
+    A[config_examples.py] --> B[Configuration<br/>set_console_exporter<br/>set_*_endpoint<br/>set_*_interval_ms]
+    B --> C[attributes_examples.py]
+    C --> D[ResourceAttributes<br/>set_attributes]
+    D --> E[initialization_examples.py]
+    E --> F[initialize_telemetry]
+    F --> G[logging_examples.py]
+    F --> H[metrics_examples.py]
+    F --> I[tracing_examples.py]
+    
+    G --> J[get_telemetry_logger_handler]
+    H --> K[increment_counter<br/>decrement_counter<br/>record_histogram]
+    I --> L[get_trace<br/>span.add_event<br/>span.add_exception<br/>span.set_error_status<br/>span.add_attributes]
+    
+    J --> M[advanced_examples.py]
+    K --> M
+    L --> M
+    M --> N[Multi-signal coordination<br/>Error handling patterns<br/>Performance monitoring]
+    
+    style A fill:#e3f2fd
+    style C fill:#e8f5e9
+    style E fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#fce4ec
+    style I fill:#e0f2f1
+    style M fill:#fff9c4
 ```
 
 ---
 
 ## Signal Type Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Signal Type Processing                         │
-└──────────────────────────────────────────────────────────────────┘
-
-                    initialize_telemetry()
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-   LOGGING              METRICS             TRACING
-        │                   │                   │
-        ▼                   ▼                   ▼
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│ Logger       │   │ Meter        │   │ Tracer       │
-│ Provider     │   │ Provider     │   │ Provider     │
-└──────────────┘   └──────────────┘   └──────────────┘
-        │                   │                   │
-        ▼                   ▼                   ▼
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│ Log Handler  │   │ Counter      │   │ Span         │
-│              │   │ Histogram    │   │              │
-└──────────────┘   └──────────────┘   └──────────────┘
-        │                   │                   │
-        └───────────────────┼───────────────────┘
-                            ▼
-                    ┌──────────────┐
-                    │   Console    │
-                    │   Exporter   │
-                    └──────────────┘
-                            │
-                            ▼
-                    ┌──────────────┐
-                    │   Terminal   │
-                    │   Output     │
-                    └──────────────┘
+```mermaid
+flowchart TD
+    A[initialize_telemetry] --> B[LOGGING]
+    A --> C[METRICS]
+    A --> D[TRACING]
+    
+    B --> E[Logger Provider]
+    C --> F[Meter Provider]
+    D --> G[Tracer Provider]
+    
+    E --> H[Log Handler]
+    F --> I[Counter<br/>Histogram]
+    G --> J[Span]
+    
+    H --> K[Console Exporter]
+    I --> K
+    J --> K
+    
+    K --> L[Terminal Output]
+    
+    style A fill:#e1f5ff
+    style B fill:#ffebee
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style K fill:#fff9c4
+    style L fill:#e0f2f1
 ```
 
 ---
 
 ## Example Execution Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│              Example Execution Pattern                            │
-└──────────────────────────────────────────────────────────────────┘
-
-1. Setup Phase
-   │
-   ├──► Create Configuration
-   │    config = Configuration(default_endpoint='http://localhost:4318')
-   │    config.set_console_exporter(use_console=True)
-   │
-   ├──► Create ResourceAttributes
-   │    attrs = ResourceAttributes("service-name", "1.0.0")
-   │    attrs.set_attributes(environment="test")
-   │
-   └──► Initialize Telemetry
-        initialize_telemetry(config, attrs, signal_types=['metrics'])
-
-2. Execution Phase
-   │
-   ├──► Call SDK Method
-   │    increment_counter("user_login", by=1, attributes={"user_id": "123"})
-   │
-   └──► SDK Processes Request
-        ├──► Validates input
-        ├──► Creates telemetry data
-        └──► Sends to exporter
-
-3. Output Phase
-   │
-   ├──► Console Exporter Receives Data
-   │
-   ├──► Formats as JSON
-   │
-   └──► Prints to Terminal
-        {
-          "scopeMetrics": [...],
-          "name": "user_login",
-          ...
-        }
-
-4. Validation Phase
-   │
-   ├──► Test Checks Output
-   │
-   ├──► Validates Structure
-   │
-   └──► Asserts Success
-        assert result is True
-```
-
----
-
-## Test Validation Flow
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Test Validation Pattern                        │
-└──────────────────────────────────────────────────────────────────┘
-
-    test_*.py (Test File)
-         │
-         ├──► Import Example Module
-         │    from src import metrics_examples
-         │
-         ├──► Call Example Function
-         │    result = metrics_examples.counter_increment_example()
-         │
-         ├──► Validate Result
-         │    assert result is True
-         │    assert isinstance(result, expected_type)
-         │
-         └──► Check Side Effects
-              ├──► Console output present
-              ├──► No exceptions raised
-              └──► Expected data structure
-
-    run_all_examples.py (Main Runner)
-         │
-         ├──► Discovers Examples
-         │    examples/*.py
-         │
-         ├──► Runs Each Example
-         │    ├──► Setup
-         │    ├──► Execute
-         │    ├──► Display Output
-         │    └──► Cleanup
-         │
-         └──► Reports Results
-              ├──► Passed: ✓
-              ├──► Failed: ✗
-              └──► Coverage: %
+```mermaid
+flowchart TD
+    A[1. Setup Phase] --> B[Create Configuration]
+    B --> C[Create ResourceAttributes]
+    C --> D[Initialize Telemetry]
+    
+    D --> E[2. Execution Phase]
+    E --> F[Call SDK Method<br/>e.g., increment_counter]
+    F --> G[SDK Processes Request]
+    
+    G --> H[Validates input]
+    G --> I[Creates telemetry data]
+    G --> J[Sends to exporter]
+    
+    J --> K[3. Output Phase]
+    K --> L[Console Exporter Receives Data]
+    L --> M[Formats as JSON]
+    M --> N[Prints to Terminal]
+    
+    style A fill:#e3f2fd
+    style E fill:#e8f5e9
+    style K fill:#fff3e0
+    style N fill:#fce4ec
 ```
 
 ---
@@ -224,291 +116,203 @@ logger_handler()       decrement_counter()    span.add_event()
 
 See [README.md](../README.md#project-structure) for the complete project structure.
 
-**Visual representation**:
-```
-tests/e2e_qa/
-│
-├── _docs/           📚 Design Documentation
-├── examples/        💻 Demo Scripts
-├── environment.yml  🐍 Conda Environment
-├── README.md        📖 User Guide
-└── run_all_examples.py 🚀 Main Runner
+```mermaid
+graph TD
+    A[tests/e2e_qa/] --> B[📚 _docs/<br/>Design Documentation]
+    A --> C[💻 examples/<br/>Demo Scripts]
+    A --> D[🐍 environment.yml<br/>Conda Environment]
+    A --> E[📖 README.md<br/>User Guide]
+    A --> F[🚀 run_all_examples.py<br/>Main Runner]
+    
+    style A fill:#e1f5ff
+    style B fill:#e3f2fd
+    style C fill:#e8f5e9
+    style D fill:#fff3e0
+    style E fill:#f3e5f5
+    style F fill:#fce4ec
 ```
 
 ---
 
 ## SDK Method Coverage Map
 
+```mermaid
+graph LR
+    A[SDK Methods<br/>23 Total] --> B[Configuration<br/>11 methods]
+    A --> C[ResourceAttributes<br/>2 methods]
+    A --> D[Initialization<br/>1 method]
+    A --> E[Logging<br/>1 method]
+    A --> F[Metrics<br/>3 methods]
+    A --> G[Tracing<br/>5 methods]
+    
+    style A fill:#e1f5ff,stroke:#01579b,stroke-width:3px
+    style B fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style C fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style F fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style G fill:#e0f2f1,stroke:#00796b,stroke-width:2px
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    SDK Method Coverage                            │
-└──────────────────────────────────────────────────────────────────┘
 
-Configuration (11 methods)
-├── Configuration()                 ✓ config_examples.py
-├── set_logging_endpoint()          ✓ config_examples.py
-├── set_tracing_endpoint()          ✓ config_examples.py
-├── set_metrics_endpoint()          ✓ config_examples.py
-├── set_console_exporter()          ✓ config_examples.py
-├── set_logging_level()             ✓ config_examples.py
-├── set_metrics_export_interval_ms()✓ config_examples.py
-├── set_tracing_export_interval_ms()✓ config_examples.py
-├── set_tracing_session_entropy()   ✓ config_examples.py
-├── set_skip_internet_check()       ✓ config_examples.py
-└── set_use_cumulative_metrics()    ✓ config_examples.py
+**Coverage**: 100% of SDK methods (23 total)
 
-ResourceAttributes (2 methods)
-├── ResourceAttributes()            ✓ attributes_examples.py
-└── set_attributes()                ✓ attributes_examples.py
+### Method Details by Category
 
-Initialization (1 method)
-└── initialize_telemetry()          ✓ initialization_examples.py
-
-Logging (1 method)
-└── get_telemetry_logger_handler()  ✓ logging_examples.py
-
-Metrics (3 methods)
-├── increment_counter()             ✓ metrics_examples.py
-├── decrement_counter()             ✓ metrics_examples.py
-└── record_histogram()              ✓ metrics_examples.py
-
-Tracing (5 methods)
-├── get_trace()                     ✓ tracing_examples.py
-├── span.add_event()                ✓ tracing_examples.py
-├── span.add_exception()            ✓ tracing_examples.py
-├── span.set_error_status()         ✓ tracing_examples.py
-└── span.add_attributes()           ✓ tracing_examples.py
-
-Total: 23 methods, 100% coverage planned
-```
+| Category | Methods | File |
+|----------|---------|------|
+| **Configuration** (11) | `Configuration()`, `set_logging_endpoint()`, `set_tracing_endpoint()`, `set_metrics_endpoint()`, `set_console_exporter()`, `set_logging_level()`, `set_metrics_export_interval_ms()`, `set_tracing_export_interval_ms()`, `set_tracing_session_entropy()`, `set_skip_internet_check()`, `set_use_cumulative_metrics()` | `config_examples.py` |
+| **ResourceAttributes** (2) | `ResourceAttributes()`, `set_attributes()` | `attributes_examples.py` |
+| **Initialization** (1) | `initialize_telemetry()` | `initialization_examples.py` |
+| **Logging** (1) | `get_telemetry_logger_handler()` | `logging_examples.py` |
+| **Metrics** (3) | `increment_counter()`, `decrement_counter()`, `record_histogram()` | `metrics_examples.py` |
+| **Tracing** (5) | `get_trace()`, `span.add_event()`, `span.add_exception()`, `span.set_error_status()`, `span.add_attributes()` | `tracing_examples.py` |
 
 ---
 
-## Implementation Timeline Visual
+## Implementation Sequence
 
+```mermaid
+flowchart TD
+    P0[Phase 0: Analysis & Design ✅] --> P1[Phase 1: Project Setup]
+    P1 --> P2[Phase 2: Configuration]
+    P2 --> P3[Phase 3: Attributes]
+    P3 --> P4[Phase 4: Initialization]
+    P4 --> P5[Phase 5: Logging]
+    P4 --> P6[Phase 6: Metrics]
+    P4 --> P7[Phase 7: Tracing]
+    P5 --> P8[Phase 8: Advanced Examples]
+    P6 --> P8
+    P7 --> P8
+    P8 --> P9[Phase 9: Runner & Docs]
+    P9 --> P10[Phase 10: Verification]
+    P10 --> P11[Phase 11: Refinement]
+    
+    style P0 fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    style P1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P2 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P3 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P4 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P5 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P6 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P7 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P8 fill:#fff9c4,stroke:#f57c00,stroke-width:2px
+    style P9 fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style P10 fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style P11 fill:#e1f5ff,stroke:#01579b,stroke-width:2px
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Implementation Timeline                        │
-└──────────────────────────────────────────────────────────────────┘
 
-Phase 0: Analysis & Design [████████] ✅ COMPLETE (8h)
-Phase 1: Project Setup     [        ] ⏳ TODO (1h)
-Phase 2: Configuration     [        ] ⏳ TODO (3h)
-Phase 3: Attributes        [        ] ⏳ TODO (2h)
-Phase 4: Initialization    [        ] ⏳ TODO (2h)
-Phase 5: Logging           [        ] ⏳ TODO (2h)
-Phase 6: Metrics           [        ] ⏳ TODO (3h)
-Phase 7: Tracing           [        ] ⏳ TODO (4h)
-Phase 8: Advanced          [        ] ⏳ TODO (4h)
-Phase 9: Runner & Docs     [        ] ⏳ TODO (2h)
-Phase 10: Testing          [        ] ⏳ TODO (3h)
-Phase 11: Polish           [        ] ⏳ TODO (2h)
+**Phase Status**:
+- ✅ **Phase 0**: Analysis & Design (COMPLETE)
+- ⏳ **Phases 1-11**: Implementation (TODO)
 
-Total: [████░░░░░░░░░░░░░░░░] 22% (8/36 hours)
-```
+**Note**: Phases 5-7 (Logging, Metrics, Tracing) can be done in parallel after Phase 4 (Initialization)
 
 ---
 
-## Test Scenario Coverage Map
+## Example Scenario Coverage
 
+```mermaid
+pie title Example Scenarios (40+ Total)
+    "Configuration" : 6
+    "Attributes" : 3
+    "Initialization" : 3
+    "Logging" : 2
+    "Metrics" : 4
+    "Tracing" : 6
+    "Advanced" : 3
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Test Scenario Coverage                         │
-└──────────────────────────────────────────────────────────────────┘
 
-Configuration Scenarios (6)
-├── 1.1 Basic Configuration            ✓ Planned
-├── 1.2 Console Exporter               ✓ Planned
-├── 1.3 Signal-Specific Endpoints      ✓ Planned
-├── 1.4 Export Intervals               ✓ Planned
-├── 1.5 Session Entropy                ✓ Planned
-└── 1.6 Logging Level                  ✓ Planned
+**Scenario Breakdown**:
 
-Attributes Scenarios (3)
-├── 2.1 Basic Attributes               ✓ Planned
-├── 2.2 Custom Attributes              ✓ Planned
-└── 2.3 Environment Attributes         ✓ Planned
-
-Initialization Scenarios (3)
-├── 3.1 Full Initialization            ✓ Planned
-├── 3.2 Selective Signals              ✓ Planned
-└── 3.3 Default Initialization         ✓ Planned
-
-Logging Scenarios (2)
-├── 4.1 Basic Logging                  ✓ Planned
-└── 4.2 Structured Logging             ✓ Planned
-
-Metrics Scenarios (4)
-├── 5.1 Counter Increment              ✓ Planned
-├── 5.2 Counter Decrement              ✓ Planned
-├── 5.3 Histogram Recording            ✓ Planned
-└── 5.4 Multiple Metrics               ✓ Planned
-
-Tracing Scenarios (6)
-├── 6.1 Basic Trace                    ✓ Planned
-├── 6.2 Span Events                    ✓ Planned
-├── 6.3 Span Exceptions                ✓ Planned
-├── 6.4 Span Attributes                ✓ Planned
-├── 6.5 Nested Traces                  ✓ Planned
-└── 6.6 Trace Propagation              ✓ Planned
-
-Advanced Scenarios (3)
-├── 7.1 Multi-Signal Coordination      ✓ Planned
-├── 7.2 Error Handling                 ✓ Planned
-└── 7.3 Performance Monitoring         ✓ Planned
-
-Total: 27 scenarios + variations = 40+ total
-```
+| Category | Count | Examples |
+|----------|-------|----------|
+| Configuration | 6 | Basic config, console exporter, endpoints, intervals, entropy, logging level |
+| Attributes | 3 | Basic, custom, environment attributes |
+| Initialization | 3 | Full, selective signals, default |
+| Logging | 2 | Basic, structured logging |
+| Metrics | 4 | Counter increment/decrement, histogram, multiple metrics |
+| Tracing | 6 | Basic trace, events, exceptions, attributes, nested, propagation |
+| Advanced | 3 | Multi-signal, error handling, performance monitoring |
 
 ---
 
 ## Data Flow Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Telemetry Data Flow                            │
-└──────────────────────────────────────────────────────────────────┘
-
-User Code
-    │
-    ├──► increment_counter("user_login", by=1)
-    │
-    ▼
-SDK (anaconda-opentelemetry)
-    │
-    ├──► Validate Input
-    │    ├─ Check metric name regex
-    │    ├─ Validate attributes
-    │    └─ Check initialization
-    │
-    ├──► Create Telemetry Data
-    │    ├─ Add resource attributes
-    │    ├─ Add event attributes
-    │    ├─ Add timestamp
-    │    └─ Format as OpenTelemetry structure
-    │
-    ├──► Send to Exporter
-    │    └─ Console Exporter (for E2E QA)
-    │
-    ▼
-Console Output
-    │
-    └──► JSON formatted telemetry
-         {
-           "scopeMetrics": [{
-             "scope": {
-               "name": "hello-world-service",
-               "version": "1.0.0"
-             },
-             "metrics": [{
-               "name": "user_login",
-               "sum": {
-                 "dataPoints": [{
-                   "attributes": [
-                     {"key": "user_id", "value": {"stringValue": "123"}}
-                   ],
-                   "asInt": "1",
-                   "timeUnixNano": "..."
-                 }]
-               }
-             }]
-           }]
-         }
-```
-
----
-
-## Success Metrics Dashboard
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Success Metrics                                │
-└──────────────────────────────────────────────────────────────────┘
-
-Design Phase
-├── Design Documents       [████████] 100% ✅
-├── Architecture Spec      [████████] 100% ✅
-├── Implementation Plan    [████████] 100% ✅
-├── Test Scenarios         [████████] 100% ✅
-└── README                 [████████] 100% ✅
-
-Implementation Phase
-├── Project Setup          [        ]   0% ⏳
-├── Configuration          [        ]   0% ⏳
-├── Attributes             [        ]   0% ⏳
-├── Initialization         [        ]   0% ⏳
-├── Logging                [        ]   0% ⏳
-├── Metrics                [        ]   0% ⏳
-├── Tracing                [        ]   0% ⏳
-└── Advanced               [        ]   0% ⏳
-
-Testing Phase
-├── Unit Tests             [        ]   0% ⏳
-├── Integration Tests      [        ]   0% ⏳
-├── Coverage Report        [        ]   0% ⏳
-└── Validation             [        ]   0% ⏳
-
-Overall Progress           [████░░░░] 22% (Design Complete)
+```mermaid
+sequenceDiagram
+    participant User as User Code
+    participant SDK as anaconda-opentelemetry SDK
+    participant Val as Validation
+    participant Tel as Telemetry Creation
+    participant Exp as Console Exporter
+    participant Out as Terminal Output
+    
+    User->>SDK: increment_counter("user_login", by=1)
+    SDK->>Val: Validate Input
+    Val->>Val: Check metric name regex
+    Val->>Val: Validate attributes
+    Val->>Val: Check initialization
+    Val->>Tel: Input Valid
+    Tel->>Tel: Add resource attributes
+    Tel->>Tel: Add event attributes
+    Tel->>Tel: Add timestamp
+    Tel->>Tel: Format as OpenTelemetry structure
+    Tel->>Exp: Send telemetry data
+    Exp->>Out: Print JSON formatted output
+    Out-->>User: Display telemetry in console
 ```
 
 ---
 
 ## Quick Navigation Map
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    Document Navigation                            │
-└──────────────────────────────────────────────────────────────────┘
-
-Need to understand the project?
-    └──► README.md → 01_project_overview.md
-
-Need to see the architecture?
-    └──► 02_architecture_design.md → 06_visual_guide.md
-
-Need to implement?
-    └──► 03_implementation_plan.md → 04_test_scenarios.md
-
-Need quick lookup?
-    └──► 05_quick_reference.md
-
-Need current status?
-    └──► 00_summary.md
-
-Need visual overview?
-    └──► 06_visual_guide.md (this file)
+```mermaid
+flowchart TD
+    A{What do you need?}
+    A -->|Understand project| B[README.md]
+    A -->|See architecture| C[02_architecture_design.md]
+    A -->|Implement| D[03_implementation_plan.md]
+    A -->|Quick lookup| E[05_quick_reference.md]
+    A -->|Current status| F[00_summary.md]
+    A -->|Visual overview| G[06_visual_guide.md]
+    A -->|Requirements| H[01_requirements.md]
+    A -->|Conda setup| I[07_conda_setup.md]
+    
+    C --> G
+    D --> J[04_test_scenarios.md]
+    
+    style A fill:#e1f5ff
+    style B fill:#e8f5e9
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#fce4ec
+    style F fill:#e0f2f1
+    style G fill:#fff9c4
+    style H fill:#ffebee
+    style I fill:#e3f2fd
 ```
 
 ---
 
 ## Legend
 
-```
-Symbol Key:
-├──  Branch/Child item
-└──  Last branch/child item
-│    Continuation
-▼    Flow direction
-►    Points to
-✓    Complete/Planned
-✅   Complete
-⏳   In progress/Pending
-❌   Not applicable
-█    Progress bar filled
-░    Progress bar empty
+**Status Icons**:
+- ✅ Complete
+- ⏳ In progress/Pending
+- ❌ Not applicable
 
-File Type Icons:
-📚  Documentation
-💻  Source code
-🧪  Tests
-📦  Dependencies
-⚙️   Configuration
-📖  User guide
-🚀  Main entry point
-```
+**File Type Icons**:
+- 📚 Documentation
+- 💻 Source code
+- 🐍 Python/Conda
+- 📦 Dependencies
+- ⚙️ Configuration
+- 📖 User guide
+- 🚀 Main entry point
 
 ---
 
-**Visual Guide Version**: 1.0
-**Last Updated**: 2026-01-16
-**Status**: Design Phase Complete ✅
+**Visual Guide Version**: 2.0  
+**Last Updated**: 2026-01-16  
+**Status**: Design Phase Complete ✅  
+**Format**: Mermaid Diagrams
