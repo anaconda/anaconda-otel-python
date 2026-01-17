@@ -97,16 +97,20 @@ def main():
     increment_counter(METRIC_NAME, by=METRIC_VALUE)
     print_code(f'increment_counter("{METRIC_NAME}", by={METRIC_VALUE})')
     
-    # Print validation info
-    print_validation_info(
-        metric_name=METRIC_NAME,
-        value=METRIC_VALUE,
-        service_name=SERVICE_NAME,
-        resource_attrs={
-            "service.version": SERVICE_VERSION,
-            **AUTO_DETECTED_ATTRS
-        }
-    )
+    # Print backend validation checklist
+    print("\n  ✅ BACKEND VALIDATION CHECKLIST:")
+    print("     Query backend for this service:")
+    print(f"       WHERE service.name = '{SERVICE_NAME}'")
+    print(f"       AND timestamp >= NOW() - INTERVAL '10 minutes'")
+    print("\n     Expected in backend:")
+    print(f"       • Metric Name: {METRIC_NAME}")
+    print(f"       • Metric Value: {METRIC_VALUE}")
+    print(f"       • service.name: {SERVICE_NAME}")
+    print(f"       • service.version: {SERVICE_VERSION}")
+    print(f"       • os.type: {attrs.os_type}")
+    print(f"       • python.version: {attrs.python_version}")
+    print(f"       • client.sdk.version: {attrs.client_sdk_version}")
+    print(f"       • schema.version: {attrs.schema_version}")
     
     # Flush telemetry
     print("\n  Flushing telemetry data...")

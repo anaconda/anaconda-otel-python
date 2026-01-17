@@ -19,6 +19,10 @@ from examples.config_utils import load_environment
 EXAMPLES = [
     "examples/01_all_signals.py",
     "examples/02_metrics_only.py",
+    "examples/03_default.py",
+    "examples/04_selective.py",
+    "examples/05_complete.py",
+    "examples/06_env_based.py",
 ]
 
 def print_header():
@@ -109,6 +113,10 @@ def print_summary(results: dict):
             print("   2. Query by service names:")
             print("      - example-01-all-signals")
             print("      - example-02-metrics-only")
+            print("      - example-03-default")
+            print("      - example-04-selective")
+            print("      - example-05-complete")
+            print("      - example-06-env-based")
             print("   3. Each service should have 1 metric with value=1")
             print("\n   See BACKEND_VALIDATION_GUIDE.md for detailed instructions")
     else:

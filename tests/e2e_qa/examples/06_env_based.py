@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Example 1: Initialize All Signals
+Example 6: Environment-Based Initialization
 
-Demonstrates initializing telemetry with metrics, logs, and traces.
+Demonstrates initialization based on environment configuration with metric attributes.
 This is a standalone script to ensure proper initialization.
 """
 
@@ -15,20 +15,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
 from opentelemetry import metrics, trace
 from anaconda.opentelemetry.signals import _AnacondaLogger
-from config_utils import load_environment, print_code, print_validation_info
+from config_utils import load_environment, print_code
 
 # Test data constants
-SERVICE_NAME = "example-01-all-signals"
+SERVICE_NAME = "example-06-env-based"
 SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_01_initialization_test"
+METRIC_NAME = "example_06_env_based_test"
 METRIC_VALUE = 1
-
-AUTO_DETECTED_ATTRS = {
-    "os.type": "Darwin/Linux/Windows (auto-detected)",
-    "python.version": "3.x.x (auto-detected)",
-    "client.sdk.version": "0.0.0.devbuild",
-    "schema.version": "0.3.0"
-}
 
 
 def flush_telemetry():
@@ -54,13 +47,14 @@ def flush_telemetry():
 
 def main():
     print("\n" + "=" * 70)
-    print("  Example 1: Initialize All Signals")
+    print("  Example 6: Environment-Based Initialization")
     print("=" * 70)
-    print("  Initialize telemetry with metrics, logs, and traces")
+    print("  Initialize based on environment configuration")
     print("-" * 70)
     
     # Load environment
-    _, endpoint, use_console = load_environment()
+    otel_env, endpoint, use_console = load_environment()
+    print(f"  OTEL Environment: {otel_env}")
     print(f"  Endpoint: {endpoint}")
     print(f"  Console Exporter: {use_console}")
     
@@ -69,12 +63,16 @@ def main():
     if use_console:
         config.set_console_exporter(use_console=True)
     
-    # Create attributes
+    # Create attributes with environment info
     attrs = ResourceAttributes(
         service_name=SERVICE_NAME,
-        service_version=SERVICE_VERSION
+        service_version=SERVICE_VERSION,
+        environment="staging"
     )
-    print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}")')
+    attrs.set_attributes(otel_environment=otel_env, test_type="e2e-qa")
+    
+    print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", environment="staging")')
+    print_code(f'attrs.set_attributes(otel_environment="{otel_env}", test_type="e2e-qa")')
     
     # Initialize with all signals
     initialize_telemetry(
@@ -84,8 +82,10 @@ def main():
     )
     print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     
-    print("  ✓ Telemetry initialized with all signals")
-    print("  Enabled: metrics, logs, traces")
+    print("  ✓ Environment-based initialization successful")
+    print(f"  OTEL Environment: {otel_env}")
+    print(f"  Endpoint: {endpoint}")
+    print("  Service Environment: staging")
     
     # Print resource attributes
     print("\n  📋 Resource Attributes (sent with every metric):")
@@ -96,17 +96,17 @@ def main():
     print(f"     • python.version: {attrs.python_version}")
     print(f"     • hostname: {attrs.hostname}")
     print(f"     • platform: {attrs.platform if attrs.platform else '(empty)'}")
-    print(f"     • environment: {attrs.environment if attrs.environment else '(empty)'}")
+    print(f"     • environment: {attrs.environment}")
     print(f"     • client.sdk.version: {attrs.client_sdk_version}")
     print(f"     • schema.version: {attrs.schema_version}")
     print(f"     • session.id: (auto-generated, visible with console exporter)")
-    if attrs.parameters:
-        print(f"     • parameters: {attrs.parameters}")
+    print(f"     • parameters: {attrs.parameters}")
     
-    # Send a test metric
+    # Send a test metric with metric-level attribute
     print("\n  📊 Sending Metric:")
-    increment_counter(METRIC_NAME, by=METRIC_VALUE)
-    print_code(f'increment_counter("{METRIC_NAME}", by={METRIC_VALUE})')
+    metric_attrs = {"environment": otel_env}
+    increment_counter(METRIC_NAME, by=METRIC_VALUE, attributes=metric_attrs)
+    print_code(f'increment_counter("{METRIC_NAME}", by={METRIC_VALUE}, attributes={metric_attrs})')
     
     # Print backend validation checklist
     print("\n  ✅ BACKEND VALIDATION CHECKLIST:")
@@ -116,19 +116,18 @@ def main():
     print("\n     Expected in backend:")
     print(f"       • Metric Name: {METRIC_NAME}")
     print(f"       • Metric Value: {METRIC_VALUE}")
+    print(f"       • Metric Attributes: {metric_attrs}")
     print(f"       • service.name: {SERVICE_NAME}")
     print(f"       • service.version: {SERVICE_VERSION}")
-    print(f"       • os.type: {attrs.os_type}")
-    print(f"       • python.version: {attrs.python_version}")
-    print(f"       • client.sdk.version: {attrs.client_sdk_version}")
-    print(f"       • schema.version: {attrs.schema_version}")
+    print(f"       • environment (resource): staging")
+    print(f"       • parameters: {attrs.parameters}")
     
     # Flush telemetry
     print("\n  Flushing telemetry data...")
     flush_telemetry()
     
     print("\n" + "=" * 70)
-    print("  ✓ Example 1 completed successfully!")
+    print("  ✓ Example 6 completed successfully!")
     print("=" * 70 + "\n")
 
 

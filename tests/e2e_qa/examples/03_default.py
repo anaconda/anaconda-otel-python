@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Example 1: Initialize All Signals
+Example 3: Default Initialization
 
-Demonstrates initializing telemetry with metrics, logs, and traces.
+Demonstrates initializing telemetry with default settings (metrics only).
 This is a standalone script to ensure proper initialization.
 """
 
@@ -13,22 +13,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
-from opentelemetry import metrics, trace
-from anaconda.opentelemetry.signals import _AnacondaLogger
-from config_utils import load_environment, print_code, print_validation_info
+from opentelemetry import metrics
+from config_utils import load_environment, print_code
 
 # Test data constants
-SERVICE_NAME = "example-01-all-signals"
+SERVICE_NAME = "example-03-default"
 SERVICE_VERSION = "1.0.0"
-METRIC_NAME = "example_01_initialization_test"
+METRIC_NAME = "example_03_default_test"
 METRIC_VALUE = 1
-
-AUTO_DETECTED_ATTRS = {
-    "os.type": "Darwin/Linux/Windows (auto-detected)",
-    "python.version": "3.x.x (auto-detected)",
-    "client.sdk.version": "0.0.0.devbuild",
-    "schema.version": "0.3.0"
-}
 
 
 def flush_telemetry():
@@ -37,16 +29,6 @@ def flush_telemetry():
         meter_provider = metrics.get_meter_provider()
         if hasattr(meter_provider, 'force_flush'):
             meter_provider.force_flush(timeout_millis=5000)
-        
-        tracer_provider = trace.get_tracer_provider()
-        if hasattr(tracer_provider, 'force_flush'):
-            tracer_provider.force_flush(timeout_millis=5000)
-        
-        if _AnacondaLogger._instance:
-            logger_instance = _AnacondaLogger._instance
-            if hasattr(logger_instance, '_provider') and logger_instance._provider:
-                logger_instance._provider.force_flush(timeout_millis=5000)
-        
         print("  ✓ Telemetry flushed to backend")
     except Exception as e:
         print(f"  ⚠️  Warning: Error during flush: {e}")
@@ -54,9 +36,9 @@ def flush_telemetry():
 
 def main():
     print("\n" + "=" * 70)
-    print("  Example 1: Initialize All Signals")
+    print("  Example 3: Default Initialization")
     print("=" * 70)
-    print("  Initialize telemetry with metrics, logs, and traces")
+    print("  Initialize with default settings (no signals parameter)")
     print("-" * 70)
     
     # Load environment
@@ -76,16 +58,15 @@ def main():
     )
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}")')
     
-    # Initialize with all signals
+    # Initialize with default (metrics only)
     initialize_telemetry(
         config=config,
-        attributes=attrs,
-        signal_types=['metrics', 'logging', 'tracing']
+        attributes=attrs
     )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
+    print_code("initialize_telemetry(config, attrs)  # No signal_types = defaults to metrics")
     
-    print("  ✓ Telemetry initialized with all signals")
-    print("  Enabled: metrics, logs, traces")
+    print("  ✓ Telemetry initialized with defaults")
+    print("  Default behavior: metrics signal enabled")
     
     # Print resource attributes
     print("\n  📋 Resource Attributes (sent with every metric):")
@@ -128,7 +109,7 @@ def main():
     flush_telemetry()
     
     print("\n" + "=" * 70)
-    print("  ✓ Example 1 completed successfully!")
+    print("  ✓ Example 3 completed successfully!")
     print("=" * 70 + "\n")
 
 
