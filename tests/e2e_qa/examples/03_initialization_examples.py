@@ -27,6 +27,39 @@ from config_utils import (
     validate_environment
 )
 
+# Import OpenTelemetry providers for flushing
+from opentelemetry import metrics, trace
+from anaconda.opentelemetry.signals import _AnacondaLogger
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def flush_telemetry():
+    """
+    Force flush all telemetry data to ensure it's sent to the backend.
+    This is critical for short-lived programs to ensure data is exported.
+    """
+    try:
+        # Flush metrics
+        meter_provider = metrics.get_meter_provider()
+        if hasattr(meter_provider, 'force_flush'):
+            meter_provider.force_flush(timeout_millis=5000)
+        
+        # Flush traces
+        tracer_provider = trace.get_tracer_provider()
+        if hasattr(tracer_provider, 'force_flush'):
+            tracer_provider.force_flush(timeout_millis=5000)
+        
+        # Flush logs
+        if _AnacondaLogger._instance:
+            logger_instance = _AnacondaLogger._instance
+            if hasattr(logger_instance, '_provider') and logger_instance._provider:
+                logger_instance._provider.force_flush(timeout_millis=5000)
+    except Exception as e:
+        print(f"  ⚠️  Warning: Error during flush: {e}")
+
 
 # ============================================================================
 # Test Data Constants
@@ -459,13 +492,32 @@ def run_all_examples():
     
     print("\n" + "=" * 70)
     print_success("All initialization examples completed!")
+    
+    # CRITICAL: Flush all telemetry data to backend
+    print_info("Flushing all telemetry data to backend...")
+    flush_telemetry()
+    print_success("✓ All telemetry data flushed to backend")
     print_info("Note: Check console output above for telemetry data")
     print("\n" + "=" * 70)
     print("📋 BACKEND VALIDATION SUMMARY")
     print("=" * 70)
+    
+    # Check if console exporter is enabled
+    _, _, use_console = load_environment()
+    if use_console:
+        print("\n⚠️  CRITICAL WARNING:")
+        print("   OTEL_CONSOLE_EXPORTER=true in .env")
+        print("   Data is ONLY printed to console, NOT sent to backend!")
+        print("   To validate in backend: Set OTEL_CONSOLE_EXPORTER=false")
+        print("=" * 70)
+    
     print("\n🔑 Session ID:")
     print("   All metrics in this test run share the same session ID.")
-    print("   Look for 'session.id' in the console JSON output below.")
+    if use_console:
+        print("   Look for 'session.id' in the console JSON output below.")
+    else:
+        print("   Session ID is generated but not visible without console exporter.")
+        print("   Query backend for metrics by service name or time range.")
     print("   Use this session ID to query the backend for all 6 test metrics.")
     print("\n📊 Metrics Sent:")
     print(f"   1. {EXAMPLE_01_METRIC_NAME} (service: {EXAMPLE_01_SERVICE_NAME})")
