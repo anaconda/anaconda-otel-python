@@ -5,8 +5,9 @@
 ### 1.1 Directory Structure
 - [x] Create `tests/e2e_qa/` directory
 - [x] Create `_docs/` subdirectory
-- [ ] Create `src/` subdirectory
-- [ ] Create `tests/` subdirectory
+- [ ] Create `examples/` subdirectory
+
+See [README.md](../README.md#project-structure) for complete structure.
 
 ### 1.2 Configuration Files
 - [ ] Create `requirements.txt`

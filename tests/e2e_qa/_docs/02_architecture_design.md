@@ -2,40 +2,9 @@
 
 ## Project Structure
 
-```
-tests/e2e_qa/
-├── _docs/                          # Design and specification documents
-│   ├── 01_project_overview.md
-│   ├── 02_architecture_design.md
-│   ├── 03_implementation_plan.md
-│   └── 04_test_scenarios.md
-│
-├── src/                            # Source code for examples
-│   ├── __init__.py
-│   ├── config_examples.py          # Configuration demonstrations
-│   ├── attributes_examples.py      # ResourceAttributes demonstrations
-│   ├── initialization_examples.py  # Initialization demonstrations
-│   ├── logging_examples.py         # Logging signal demonstrations
-│   ├── metrics_examples.py         # Metrics signal demonstrations
-│   ├── tracing_examples.py         # Tracing signal demonstrations
-│   └── advanced_examples.py        # Advanced usage patterns
-│
-├── tests/                          # Automated validation tests
-│   ├── __init__.py
-│   ├── test_config.py
-│   ├── test_attributes.py
-│   ├── test_initialization.py
-│   ├── test_logging.py
-│   ├── test_metrics.py
-│   ├── test_tracing.py
-│   └── test_advanced.py
-│
-├── requirements.txt                # Project dependencies
-├── pyproject.toml                  # Project configuration
-├── README.md                       # Project documentation
-└── run_examples.py                 # Main entry point to run all examples
+See [README.md](../README.md#project-structure) for the complete project structure.
 
-```
+This document focuses on the **architecture and design principles** rather than the file structure.
 
 ## Design Principles
 

@@ -37,16 +37,13 @@ A hello-world style Python project demonstrating **all methods** of the `anacond
 
 ## 📁 Project Structure
 
-```
-tests/e2e_qa/
-├── _docs/              ✅ Design specs (COMPLETE)
-├── src/                ⏳ Examples (TO DO)
-├── tests/              ⏳ Tests (TO DO)
-├── requirements.txt    ⏳ Dependencies (TO DO)
-├── pyproject.toml      ⏳ Config (TO DO)
-├── README.md           ✅ User guide (COMPLETE)
-└── run_examples.py     ⏳ Main runner (TO DO)
-```
+See [README.md](../README.md#project-structure) for the complete project structure.
+
+**Key directories**:
+- `_docs/` - Design specifications ✅
+- `examples/` - Demo scripts ⏳
+- `environment.yml.template` - Conda environment ✅
+- `README.md` - User guide ✅
 
 ---
 

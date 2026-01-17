@@ -222,42 +222,17 @@ logger_handler()       decrement_counter()    span.add_event()
 
 ## Directory Structure Visual
 
+See [README.md](../README.md#project-structure) for the complete project structure.
+
+**Visual representation**:
 ```
 tests/e2e_qa/
 │
-├── _docs/                          📚 Documentation
-│   ├── 00_summary.md              ├─► Executive summary
-│   ├── 01_project_overview.md     ├─► Project goals
-│   ├── 02_architecture_design.md  ├─► Architecture
-│   ├── 03_implementation_plan.md  ├─► Implementation
-│   ├── 04_test_scenarios.md       ├─► Test scenarios
-│   ├── 05_quick_reference.md      ├─► Quick reference
-│   └── 06_visual_guide.md         └─► This file
-│
-├── src/                            💻 Example Code
-│   ├── __init__.py                ├─► Package init
-│   ├── config_examples.py         ├─► Configuration
-│   ├── attributes_examples.py     ├─► Attributes
-│   ├── initialization_examples.py ├─► Initialization
-│   ├── logging_examples.py        ├─► Logging
-│   ├── metrics_examples.py        ├─► Metrics
-│   ├── tracing_examples.py        ├─► Tracing
-│   └── advanced_examples.py       └─► Advanced
-│
-├── tests/                          🧪 Test Validation
-│   ├── __init__.py                ├─► Package init
-│   ├── test_config.py             ├─► Config tests
-│   ├── test_attributes.py         ├─► Attributes tests
-│   ├── test_initialization.py     ├─► Init tests
-│   ├── test_logging.py            ├─► Logging tests
-│   ├── test_metrics.py            ├─► Metrics tests
-│   ├── test_tracing.py            ├─► Tracing tests
-│   └── test_advanced.py           └─► Advanced tests
-│
-├── requirements.txt                📦 Dependencies
-├── pyproject.toml                  ⚙️  Configuration
-├── README.md                       📖 User Guide
-└── run_examples.py                 🚀 Main Runner
+├── _docs/           📚 Design Documentation
+├── examples/        💻 Demo Scripts
+├── environment.yml  🐍 Conda Environment
+├── README.md        📖 User Guide
+└── run_all_examples.py 🚀 Main Runner
 ```
 
 ---
