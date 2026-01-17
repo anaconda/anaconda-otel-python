@@ -16,8 +16,10 @@ from anaconda.opentelemetry import Configuration, ResourceAttributes
 
 
 # Environment to endpoint mapping
+# Note: Use WARP endpoints when connected to WARP VPN
 ENDPOINTS = {
-    'staging-internal': 'https://metrics.stage.internal.anacondaconnect.com/v1/metrics',
+    'staging-internal': 'https://metrics.stage.anacondaconnect.com/v1/metrics',  # Behind WARP
+    'staging-internal-gha': 'https://metrics.stage.internal.anacondaconnect.com/v1/metrics',  # GitHub Actions
     'staging-public': 'https://metrics.stage-oauth.anacondaconnect.com/v1/metrics',
     'production-external': 'https://metrics.anaconda.com/v1/metrics',
     'production-internal': 'https://metrics.internal.anaconda.com/v1/metrics',
