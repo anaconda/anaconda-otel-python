@@ -2,101 +2,39 @@
 
 ## Overview
 
-This guide provides detailed instructions for setting up the E2E QA project using **conda**, which is the **recommended installation method** for the `anaconda-opentelemetry` SDK.
-
----
+Setup guide for the E2E QA project using conda (recommended for `anaconda-opentelemetry` SDK).
 
 ## Why Conda?
 
-### Advantages
-- ✅ **Official Distribution**: SDK is distributed via Anaconda
-- ✅ **Dependency Management**: Conda handles all dependencies
-- ✅ **Environment Isolation**: Clean, reproducible environments
-- ✅ **Version Control**: Easy to manage SDK versions
-- ✅ **Cross-Platform**: Works on Windows, macOS, Linux
+- Official SDK distribution method
+- Handles dependencies automatically
+- Environment isolation
+- Cross-platform support
 
-### Recommended For
-- Production use
-- Development and testing
-- CI/CD pipelines
-- Team collaboration
-- Reproducible environments
+## Installation
 
----
-
-## Installation Methods
-
-### Method 1: Quick Start (Recommended)
-
-Create a new conda environment with the SDK in one command:
-
+### Quick Start
 ```bash
-# Create environment with SDK and Python 3.10
 conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
-
-# Activate the environment
 conda activate e2e-qa-examples
-
-# Navigate to project directory
 cd tests/e2e_qa
-
-# Verify installation
-python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
 ```
 
----
-
-### Method 2: Using Environment File
-
-Create a conda environment from a specification file:
-
-**Step 1**: Create `environment.yml` file:
-
-```yaml
-name: e2e-qa-examples
-dependencies:
-  - python=3.10
-  - anaconda-opentelemetry
-```
-
-**Step 2**: Create environment from file:
-
+### Using Environment File
 ```bash
-# Create environment
-conda env create -f environment.yml
-
-# Activate environment
+conda env create -f environment.yml.template
 conda activate e2e-qa-examples
-
-# Verify installation
-python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
 ```
 
----
-
-### Method 3: Add to Existing Environment
-
-Add the SDK to an existing conda environment:
-
+### Add to Existing Environment
 ```bash
-# Activate your existing environment
-conda activate your-existing-env
-
-# Install the SDK
+conda activate your-env
 conda install anaconda-opentelemetry
-
-# Verify installation
-python -c "from anaconda.opentelemetry import initialize_telemetry; print('✓ SDK installed successfully')"
 ```
-
----
 
 ## Environment Specification
 
-### Simple Environment (Recommended)
-
-For running hello-world examples:
-
+Minimal setup:
 ```yaml
 name: e2e-qa-examples
 dependencies:
@@ -104,372 +42,59 @@ dependencies:
   - anaconda-opentelemetry
 ```
 
-**That's it!** No additional dependencies needed for hello-world examples.
-
-### With Optional Development Tools
-
-If you want code formatting and linting:
-
-```yaml
-name: e2e-qa-examples
-dependencies:
-  - python=3.10
-  - anaconda-opentelemetry
-  - black   # Optional: code formatting
-  - flake8  # Optional: linting
-```
-
----
-
-## Verification Steps
-
-### 1. Verify Conda Installation
+## Verification
 
 ```bash
-# Check conda version
-conda --version
-
-# Should output: conda 4.x.x or higher
-```
-
-### 2. Verify Environment Creation
-
-```bash
-# List all conda environments
-conda env list
-
-# Should show e2e-qa-examples in the list
-```
-
-### 3. Verify SDK Installation
-
-```bash
-# Activate environment
 conda activate e2e-qa-examples
-
-# Check installed packages
 conda list anaconda-opentelemetry
-
-# Should show package version
+python -c "from anaconda.opentelemetry import initialize_telemetry; print('OK')"
 ```
-
-### 4. Verify SDK Import
-
-```bash
-# Test import
-python -c "from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry; print('✓ All imports successful')"
-```
-
-### 5. Verify All SDK Components
-
-```python
-# Create test script: verify_sdk.py
-from anaconda.opentelemetry import (
-    Configuration,
-    ResourceAttributes,
-    initialize_telemetry,
-    increment_counter,
-    decrement_counter,
-    record_histogram,
-    get_trace,
-    get_telemetry_logger_handler
-)
-
-print("✓ Configuration imported")
-print("✓ ResourceAttributes imported")
-print("✓ initialize_telemetry imported")
-print("✓ increment_counter imported")
-print("✓ decrement_counter imported")
-print("✓ record_histogram imported")
-print("✓ get_trace imported")
-print("✓ get_telemetry_logger_handler imported")
-print("\n✅ All SDK components verified successfully!")
-```
-
-Run verification:
-```bash
-python verify_sdk.py
-```
-
----
-
-## Running Examples with Conda
-
-### Basic Example Run
-
-```bash
-# Activate environment
-conda activate e2e-qa-examples
-
-# Navigate to project
-cd tests/e2e_qa
-
-# Run all examples
-python run_examples.py
-
-# Run specific example
-python -m src.metrics_examples
-```
-
-### Running Tests
-
-```bash
-# Activate environment
-conda activate e2e-qa-examples
-
-# Navigate to project
-cd tests/e2e_qa
-
-# Run all examples
-python run_all_examples.py
-
-# Run specific example
-python examples/01_configuration.py
-
-# Run with verbose output
-python run_all_examples.py --verbose
-```
-
----
 
 ## Environment Management
 
-### List Environments
-
 ```bash
-# Show all conda environments
+# List environments
 conda env list
-```
 
-### Activate/Deactivate
-
-```bash
-# Activate environment
+# Activate/deactivate
 conda activate e2e-qa-examples
-
-# Deactivate environment
 conda deactivate
-```
 
-### Update Environment
-
-```bash
-# Activate environment
-conda activate e2e-qa-examples
-
-# Update SDK to latest version
+# Update SDK
 conda update anaconda-opentelemetry
-
-# Update all packages
-conda update --all
-```
-
-### Export Environment
-
-```bash
-# Export current environment
-conda env export > environment.yml
-
-# Export without builds (more portable)
-conda env export --no-builds > environment.yml
-
-# Export only explicit packages
-conda env export --from-history > environment.yml
-```
-
-### Clone Environment
-
-```bash
-# Clone existing environment
-conda create --name e2e-qa-examples-clone --clone e2e-qa-examples
-```
-
-### Remove Environment
-
-```bash
-# Deactivate if active
-conda deactivate
 
 # Remove environment
 conda env remove -n e2e-qa-examples
 ```
 
----
-
 ## Troubleshooting
 
-### Issue: SDK Not Found
-
+**SDK not found**: 
 ```bash
-# Problem: ImportError: No module named 'anaconda.opentelemetry'
-
-# Solution 1: Verify environment is activated
 conda activate e2e-qa-examples
-
-# Solution 2: Reinstall SDK
 conda install --force-reinstall anaconda-opentelemetry
-
-# Solution 3: Check conda channels
-conda config --show channels
 ```
 
-### Issue: Wrong Python Version
-
+**Wrong Python version**:
 ```bash
-# Problem: Python version incompatible
-
-# Solution: Create new environment with correct Python
 conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
 ```
 
-### Issue: Dependency Conflicts
-
+**Environment not activating**:
 ```bash
-# Problem: Conda cannot resolve dependencies
-
-# Solution 1: Update conda
-conda update conda
-
-# Solution 2: Create fresh environment
-conda create -n e2e-qa-examples-new anaconda-opentelemetry python=3.10
-```
-
-### Issue: Environment Not Activating
-
-```bash
-# Problem: conda activate not working
-
-# Solution 1: Initialize conda for your shell
 conda init bash  # or zsh, fish, etc.
-
-# Solution 2: Use source activate (older conda)
-source activate e2e-qa-examples
-
-# Solution 3: Restart shell
-exec $SHELL
 ```
-
----
-
-## CI/CD Integration
-
-### GitHub Actions Example
-
-```yaml
-name: E2E QA Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: 3.10
-          
-      - name: Install SDK
-        run: |
-          conda install anaconda-opentelemetry
-          
-      - name: Run examples
-        run: |
-          cd tests/e2e_qa
-          python run_all_examples.py
-```
-
-### GitLab CI Example
-
-```yaml
-test:
-  image: continuumio/miniconda3
-  script:
-    - conda install anaconda-opentelemetry
-    - cd tests/e2e_qa
-    - python run_all_examples.py
-```
-
----
-
-## Best Practices
-
-### 1. Use Environment Files
-- ✅ Create `environment.yml` for reproducibility
-- ✅ Commit to version control
-- ✅ Update when dependencies change
-
-### 2. Pin Versions
-```yaml
-dependencies:
-  - python=3.10.8
-  - anaconda-opentelemetry=1.2.3
-```
-
-### 3. Separate Environments
-- Development: `e2e-qa-dev`
-- Testing: `e2e-qa-examples`
-- Production: `e2e-qa-prod`
-
-### 4. Regular Updates
-```bash
-# Update SDK regularly
-conda update anaconda-opentelemetry
-```
-
-### 5. Clean Unused Environments
-```bash
-# Remove unused environments
-conda env remove -n old-env-name
-
-# Clean package cache
-conda clean --all
-```
-
----
 
 ## Quick Reference
 
-### Essential Commands
-
 ```bash
-# Create environment
+# Create and activate
 conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
-
-# Activate environment
 conda activate e2e-qa-examples
 
-# Verify installation
+# Verify
 python -c "from anaconda.opentelemetry import initialize_telemetry; print('OK')"
 
-# Run examples
-python run_examples.py
-
-# Run examples
+# Run
 python run_all_examples.py
-
-# Deactivate
-conda deactivate
 ```
-
----
-
-## Additional Resources
-
-### Documentation
-- [Conda User Guide](https://docs.conda.io/projects/conda/en/latest/user-guide/)
-- [Anaconda OpenTelemetry Docs](../../docs/source/getting_started.md)
-- [E2E QA README](../README.md)
-
-### Support
-- Conda issues: https://github.com/conda/conda/issues
-- SDK issues: Project repository issues
-
----
-
-**Last Updated**: 2026-01-16
-**Conda Version**: 4.x or higher recommended
-**Python Version**: See [01_requirements.md](01_requirements.md) for version details

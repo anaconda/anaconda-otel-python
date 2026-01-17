@@ -1,10 +1,8 @@
 # E2E QA Project - Architecture Design
 
-## Project Structure
+## Architecture Overview
 
-See [README.md](../README.md#project-structure) for the complete project structure.
-
-This document focuses on the **architecture and design principles** rather than the file structure.
+This document describes the technical architecture and design principles.
 
 ## Design Principles
 
@@ -28,27 +26,7 @@ Each example function:
 - Can be run independently
 
 ### 4. External Package Integration
-```bash
-# Install SDK as external package (conda recommended)
-conda install anaconda-opentelemetry
-
-# Or using pip
-pip install anaconda-opentelemetry
-```
-
-```python
-# Import as external consumer
-from anaconda.opentelemetry import (
-    Configuration,
-    ResourceAttributes,
-    initialize_telemetry,
-    record_histogram,
-    increment_counter,
-    decrement_counter,
-    get_trace,
-    get_telemetry_logger_handler
-)
-```
+Install SDK via conda and import as external package.
 
 ## Module Breakdown
 
@@ -170,35 +148,8 @@ Executing: increment_counter("user_login", by=1, attributes={"user_id": "123"})
 
 ## Dependencies
 
-### Core Dependencies
-
-**Primary Installation Method (Recommended)**:
-```bash
-# Using conda
-conda install anaconda-opentelemetry
-```
-
-**Alternative Installation Method**:
-```bash
-# Using pip
-pip install anaconda-opentelemetry>=1.0.0
-```
-
-### Optional Dependencies
-```
-# None - keeping it minimal for hello-world demonstrations
-```
-
-### Environment Setup
-
-**Recommended Approach**:
-```bash
-# Create conda environment with SDK
-conda create -n e2e-qa-examples anaconda-opentelemetry python=3.10
-
-# Activate environment
-conda activate e2e-qa-examples
-```
+**Core**: `anaconda-opentelemetry` (installed via conda)
+**Optional**: None - minimal hello-world setup
 
 ## Error Handling Strategy
 

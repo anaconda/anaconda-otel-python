@@ -272,7 +272,7 @@ flowchart TD
     A -->|Understand project| B[README.md]
     A -->|See architecture| C[02_architecture_design.md]
     A -->|Implement| D[03_implementation_plan.md]
-    A -->|Quick lookup| E[05_quick_reference.md]
+    A -->|Documentation index| E[INDEX.md]
     A -->|Current status| F[00_summary.md]
     A -->|Visual overview| G[06_visual_guide.md]
     A -->|Requirements| H[01_requirements.md]
