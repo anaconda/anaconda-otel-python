@@ -34,11 +34,11 @@ class ServiceVersion(str, Enum):
 
 class Environment(str, Enum):
     """Environment values"""
+    EMPTY = ''
+    TEST = 'test'
     DEVELOPMENT = 'development'
     STAGING = 'staging'
     PRODUCTION = 'production'
-    TEST = 'test'
-    EMPTY = ''
 
 
 class Platform(str, Enum):
