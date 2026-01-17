@@ -23,6 +23,7 @@ from config_utils import (
     print_info,
     print_code,
     print_validation_info,
+    get_session_id,
     validate_environment
 )
 
@@ -113,6 +114,11 @@ def example_01_initialize_all_signals():
     print_success("Telemetry initialized with all signals")
     print_info("Enabled: metrics, logs, traces")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric to verify initialization
     increment_counter(EXAMPLE_01_METRIC_NAME, by=EXAMPLE_01_METRIC_VALUE)
     print_code(f'increment_counter("{EXAMPLE_01_METRIC_NAME}", by={EXAMPLE_01_METRIC_VALUE})')
@@ -123,7 +129,8 @@ def example_01_initialize_all_signals():
         resource_attrs={
             "service.version": EXAMPLE_01_SERVICE_VERSION,
             **AUTO_DETECTED_ATTRS
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -155,6 +162,11 @@ def example_02_initialize_metrics_only():
     print_success("Telemetry initialized with metrics only")
     print_info("Enabled: metrics")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric
     increment_counter(EXAMPLE_02_METRIC_NAME, by=EXAMPLE_02_METRIC_VALUE)
     print_code(f'increment_counter("{EXAMPLE_02_METRIC_NAME}", by={EXAMPLE_02_METRIC_VALUE})')
@@ -164,7 +176,8 @@ def example_02_initialize_metrics_only():
         service_name=EXAMPLE_02_SERVICE_NAME,
         resource_attrs={
             "service.version": EXAMPLE_02_SERVICE_VERSION
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -192,6 +205,11 @@ def example_03_initialize_default():
     print_success("Telemetry initialized with defaults")
     print_info("Default behavior: metrics signal enabled")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric
     increment_counter(EXAMPLE_03_METRIC_NAME, by=EXAMPLE_03_METRIC_VALUE)
     print_code(f'increment_counter("{EXAMPLE_03_METRIC_NAME}", by={EXAMPLE_03_METRIC_VALUE})')
@@ -201,7 +219,8 @@ def example_03_initialize_default():
         service_name=EXAMPLE_03_SERVICE_NAME,
         resource_attrs={
             "service.version": EXAMPLE_03_SERVICE_VERSION
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -234,6 +253,11 @@ def example_04_initialize_selective_signals():
     print_info("Enabled: metrics, traces")
     print_info("Disabled: logs")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric
     increment_counter(EXAMPLE_04_METRIC_NAME, by=EXAMPLE_04_METRIC_VALUE)
     print_code(f'increment_counter("{EXAMPLE_04_METRIC_NAME}", by={EXAMPLE_04_METRIC_VALUE})')
@@ -243,7 +267,8 @@ def example_04_initialize_selective_signals():
         service_name=EXAMPLE_04_SERVICE_NAME,
         resource_attrs={
             "service.version": EXAMPLE_04_SERVICE_VERSION
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -299,6 +324,11 @@ def example_05_complete_initialization():
     print_info("Signals:")
     print_info("  ✓ Metrics, Logs, Traces")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric
     increment_counter(EXAMPLE_05_METRIC_NAME, by=EXAMPLE_05_METRIC_VALUE)
     print_code(f'increment_counter("{EXAMPLE_05_METRIC_NAME}", by={EXAMPLE_05_METRIC_VALUE})')
@@ -314,7 +344,8 @@ def example_05_complete_initialization():
             "platform": EXAMPLE_05_PLATFORM,
             "environment": EXAMPLE_05_ENVIRONMENT,
             "parameters": params_json
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -367,6 +398,11 @@ def example_06_environment_based_initialization():
     print_info(f"Endpoint: {endpoint}")
     print_info(f"Service Environment: {environment}")
     
+    # Get session ID
+    session_id = get_session_id(attrs)
+    if session_id:
+        print_info(f"Session ID: {session_id}")
+    
     # Send a test metric
     metric_attrs = {"environment": env_name}
     increment_counter(EXAMPLE_06_METRIC_NAME, by=EXAMPLE_06_METRIC_VALUE, attributes=metric_attrs)
@@ -383,7 +419,8 @@ def example_06_environment_based_initialization():
             "service.version": EXAMPLE_06_SERVICE_VERSION,
             "environment": environment,
             "parameters": params_json
-        }
+        },
+        session_id=session_id
     )
 
 
@@ -398,7 +435,9 @@ def run_all_examples():
     validate_environment()
     
     print("\n⚠️  Note: Each example initializes telemetry independently.")
-    print("    In a real application, you would only initialize once.\n")
+    print("    In a real application, you would only initialize once.")
+    print("\n📋 Session ID: Will be shown in console JSON output at the end.")
+    print("    Look for 'session.id' in the resource attributes.\n")
     
     # Run examples
     example_01_initialize_all_signals()
@@ -421,7 +460,29 @@ def run_all_examples():
     print("\n" + "=" * 70)
     print_success("All initialization examples completed!")
     print_info("Note: Check console output above for telemetry data")
+    print("\n" + "=" * 70)
+    print("📋 BACKEND VALIDATION SUMMARY")
+    print("=" * 70)
+    print("\n🔑 Session ID:")
+    print("   All metrics in this test run share the same session ID.")
+    print("   Look for 'session.id' in the console JSON output below.")
+    print("   Use this session ID to query the backend for all 6 test metrics.")
+    print("\n📊 Metrics Sent:")
+    print(f"   1. {EXAMPLE_01_METRIC_NAME} (service: {EXAMPLE_01_SERVICE_NAME})")
+    print(f"   2. {EXAMPLE_02_METRIC_NAME} (service: {EXAMPLE_02_SERVICE_NAME})")
+    print(f"   3. {EXAMPLE_03_METRIC_NAME} (service: {EXAMPLE_03_SERVICE_NAME})")
+    print(f"   4. {EXAMPLE_04_METRIC_NAME} (service: {EXAMPLE_04_SERVICE_NAME})")
+    print(f"   5. {EXAMPLE_05_METRIC_NAME} (service: {EXAMPLE_05_SERVICE_NAME})")
+    print(f"   6. {EXAMPLE_06_METRIC_NAME} (service: {EXAMPLE_06_SERVICE_NAME})")
+    print("\n💡 To validate in backend:")
+    print("   1. Extract session.id from JSON output below")
+    print("   2. Query backend: SELECT * FROM metrics WHERE session_id = '<session.id>'")
+    print("   3. Verify all 6 metrics are present with correct values")
     print("=" * 70 + "\n")
+    
+    # Add a small delay to ensure console exporter output appears
+    import time
+    time.sleep(1)
 
 
 if __name__ == "__main__":

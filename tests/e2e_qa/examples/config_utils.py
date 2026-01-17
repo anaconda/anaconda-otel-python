@@ -152,7 +152,7 @@ def print_code(code: str):
     print(f"  📝 {code}")
 
 
-def print_validation_info(metric_name: str, value: any, attributes: dict = None, service_name: str = None, resource_attrs: dict = None):
+def print_validation_info(metric_name: str, value: any, attributes: dict = None, service_name: str = None, resource_attrs: dict = None, session_id: str = None):
     """
     Print information needed for backend validation.
     
@@ -162,29 +162,78 @@ def print_validation_info(metric_name: str, value: any, attributes: dict = None,
         attributes: Optional metric attributes
         service_name: Service name from ResourceAttributes
         resource_attrs: Additional resource attributes to validate
+        session_id: Session ID for backend correlation
     """
     print(f"\n  ⚠️  TODO - VALIDATE BACKEND DATA:")
-    print(f"     ┌─ Metric Information")
+    
+    # Session ID section (if provided)
+    if session_id:
+        print(f"     ┌─ Session Information")
+        print(f"     │  • Session ID: {session_id}")
+        print(f"     │  • Use this to query backend for this specific test run")
+        print(f"     │")
+        print(f"     ├─ Metric Information")
+    else:
+        print(f"     ┌─ Session Information")
+        print(f"     │  • Session ID: See console JSON output or summary at end")
+        print(f"     │  • All metrics in this run share the same session ID")
+        print(f"     │")
+        print(f"     ├─ Metric Information")
     print(f"     │  • Metric Name: {metric_name}")
     print(f"     │  • Expected Value: {value}")
     if attributes:
         print(f"     │  • Metric Attributes: {attributes}")
     
+    # Resource Attributes section
     if service_name:
+        print(f"     │")
         print(f"     ├─ Resource Attributes")
         print(f"     │  • service.name: {service_name}")
         if resource_attrs:
             for key, val in resource_attrs.items():
                 print(f"     │  • {key}: {val}")
     
+    # Verification Steps section
+    print(f"     │")
     print(f"     └─ Verification Steps")
     print(f"        1. Check metric appears in backend within some delay")
-    print(f"        2. Verify metric name matches exactly")
-    print(f"        3. Verify value is correct")
-    if attributes:
-        print(f"        4. Verify metric attributes are present")
-    if service_name:
-        print(f"        5. Verify resource attributes match")
+    if session_id:
+        print(f"        2. Query backend using session ID above")
+        print(f"        3. Verify metric name matches exactly")
+        print(f"        4. Verify value is correct")
+        if attributes:
+            print(f"        5. Verify metric attributes are present")
+        if service_name:
+            print(f"        6. Verify resource attributes match")
+    else:
+        print(f"        2. Verify metric name matches exactly")
+        print(f"        3. Verify value is correct")
+        if attributes:
+            print(f"        4. Verify metric attributes are present")
+        if service_name:
+            print(f"        5. Verify resource attributes match")
+
+
+def get_session_id(attrs):
+    """
+    Get the session ID from ResourceAttributes.
+    
+    Args:
+        attrs: ResourceAttributes object
+    
+    Returns:
+        str: Session ID or None if not available
+    """
+    try:
+        # Try to get session_id attribute if it exists
+        if hasattr(attrs, 'session_id'):
+            return attrs.session_id
+        # Try to get from parameters dict
+        if hasattr(attrs, 'parameters') and isinstance(attrs.parameters, dict):
+            return attrs.parameters.get('session_id')
+    except:
+        pass
+    return None
 
 
 def validate_environment():
