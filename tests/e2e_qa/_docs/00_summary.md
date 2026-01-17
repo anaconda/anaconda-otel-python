@@ -2,21 +2,28 @@
 
 ## Project Goal
 
-Create a **hello-world style, low-complexity Python project** that demonstrates **all methods** of the `anaconda-opentelemetry` SDK as an **external consumer**, serving as both a validation suite and comprehensive usage guide.
+Create a **hello-world style, low-complexity Python project** that demonstrates **all methods** of the `anaconda-opentelemetry` SDK as an **external consumer**, providing simple, runnable examples for learning and integration.
 
 ## Key Characteristics
 
 ### 🎯 Purpose
 - **Demonstrate**: Show working examples of every SDK method
-- **Validate**: Ensure SDK works correctly from external consumer perspective
+- **Illustrate**: Simple, clear code showing how to use the SDK
 - **Document**: Provide living documentation through executable code
 - **Educate**: Help developers learn and integrate the SDK
+
+### ⚠️ NOT a Test Suite
+- This is **NOT** for automated testing or QA validation
+- This is **NOT** a pytest-based test framework
+- This **IS** a collection of simple, runnable demonstration examples
+- Focus is on **clarity and simplicity**, not test coverage
 
 ### 🎨 Design Philosophy
 - **Hello-World Simplicity**: Each example is straightforward and focused
 - **Low Complexity**: Minimal dependencies, clear code structure
 - **External Integration**: Uses SDK as external package (not from source)
 - **Comprehensive Coverage**: 100% of public SDK methods demonstrated
+- **Runnable Examples**: Each example can be executed independently
 
 ## What's Been Created
 
@@ -86,32 +93,22 @@ tests/e2e_qa/
 │   ├── 01_project_overview.md     # ✅ Project goals
 │   ├── 02_architecture_design.md  # ✅ Architecture
 │   ├── 03_implementation_plan.md  # ✅ Implementation plan
-│   └── 04_test_scenarios.md       # ✅ Test scenarios
+│   ├── 04_test_scenarios.md       # ✅ Example scenarios
+│   └── REQUIREMENTS.md            # ✅ Requirements
 │
-├── src/                            # ⏳ To be implemented
+├── examples/                       # ⏳ To be implemented
 │   ├── __init__.py
-│   ├── config_examples.py
-│   ├── attributes_examples.py
-│   ├── initialization_examples.py
-│   ├── logging_examples.py
-│   ├── metrics_examples.py
-│   ├── tracing_examples.py
-│   └── advanced_examples.py
+│   ├── 01_config_examples.py
+│   ├── 02_attributes_examples.py
+│   ├── 03_initialization_examples.py
+│   ├── 04_logging_examples.py
+│   ├── 05_metrics_examples.py
+│   ├── 06_tracing_examples.py
+│   └── 07_advanced_examples.py
 │
-├── tests/                          # ⏳ To be implemented
-│   ├── __init__.py
-│   ├── test_config.py
-│   ├── test_attributes.py
-│   ├── test_initialization.py
-│   ├── test_logging.py
-│   ├── test_metrics.py
-│   ├── test_tracing.py
-│   └── test_advanced.py
-│
-├── requirements.txt                # ⏳ To be created
-├── pyproject.toml                  # ⏳ To be created
+├── environment.yml.template        # ✅ COMPLETE
 ├── README.md                       # ✅ COMPLETE
-└── run_examples.py                 # ⏳ To be implemented
+└── run_all_examples.py             # ⏳ To be implemented
 ```
 
 ## SDK Coverage

@@ -1,49 +1,51 @@
-# E2E QA Project - Anaconda OpenTelemetry Python SDK
+# Hello-World Examples - Anaconda OpenTelemetry Python SDK
 
 ## Overview
 
-This E2E QA project is a **comprehensive demonstration suite** for the `anaconda-opentelemetry` Python SDK. It provides working examples of all SDK methods and serves as both a validation tool and a learning resource.
+This project provides **simple, runnable examples** demonstrating all methods of the `anaconda-opentelemetry` Python SDK. It's designed as a **hello-world style learning resource** for developers integrating the SDK.
 
 ### Key Features
 
 - ✅ **Complete SDK Coverage**: Demonstrates all public SDK methods
 - ✅ **Hello-World Simplicity**: Easy-to-understand, self-contained examples
-- ✅ **External Integration**: Tests SDK as an external package (real-world usage)
-- ✅ **Automated Validation**: Test suite ensures all examples work correctly
-- ✅ **Living Documentation**: Executable examples that stay in sync with SDK
+- ✅ **External Integration**: Uses SDK as an external package (real-world usage)
+- ✅ **Runnable Examples**: Each example can be executed independently
+- ✅ **Living Documentation**: Executable code that shows how to use the SDK
+
+### What This Is NOT
+
+- ❌ **Not a Test Suite**: This is not for automated testing or QA validation
+- ❌ **Not pytest-based**: No test framework, just simple Python scripts
+- ✅ **Just Examples**: Simple demonstrations of SDK functionality
 
 ## Project Structure
 
 ```
 tests/e2e_qa/
 ├── _docs/                          # Design specifications
+│   ├── 00_summary.md              # Project summary
 │   ├── 01_project_overview.md      # Project purpose and goals
 │   ├── 02_architecture_design.md   # Technical architecture
 │   ├── 03_implementation_plan.md   # Development phases
-│   └── 04_test_scenarios.md        # Detailed test scenarios
+│   ├── 04_test_scenarios.md        # Example scenarios
+│   ├── 05_quick_reference.md       # Quick reference
+│   ├── 06_visual_guide.md          # Visual diagrams
+│   ├── 07_conda_setup.md           # Conda setup guide
+│   ├── REQUIREMENTS.md             # Requirements (authoritative)
+│   └── INDEX.md                    # Documentation index
 │
-├── src/                            # Example implementations
-│   ├── config_examples.py          # Configuration examples
-│   ├── attributes_examples.py      # ResourceAttributes examples
-│   ├── initialization_examples.py  # Initialization examples
-│   ├── logging_examples.py         # Logging signal examples
-│   ├── metrics_examples.py         # Metrics signal examples
-│   ├── tracing_examples.py         # Tracing signal examples
-│   └── advanced_examples.py        # Advanced usage patterns
+├── examples/                       # Example implementations (to be created)
+│   ├── 01_config_examples.py       # Configuration examples
+│   ├── 02_attributes_examples.py   # ResourceAttributes examples
+│   ├── 03_initialization_examples.py # Initialization examples
+│   ├── 04_logging_examples.py      # Logging signal examples
+│   ├── 05_metrics_examples.py      # Metrics signal examples
+│   ├── 06_tracing_examples.py      # Tracing signal examples
+│   └── 07_advanced_examples.py     # Advanced usage patterns
 │
-├── tests/                          # Automated validation
-│   ├── test_config.py
-│   ├── test_attributes.py
-│   ├── test_initialization.py
-│   ├── test_logging.py
-│   ├── test_metrics.py
-│   ├── test_tracing.py
-│   └── test_advanced.py
-│
-├── requirements.txt                # Project dependencies
-├── pyproject.toml                  # Project configuration
+├── environment.yml.template        # Conda environment specification
 ├── README.md                       # This file
-└── run_examples.py                 # Main entry point
+└── run_all_examples.py             # Main entry point (to be created)
 ```
 
 ## Quick Start
@@ -105,28 +107,24 @@ The SDK documentation only covers conda installation. While the package has a `p
 
 **Run all examples**:
 ```bash
-python run_examples.py
+python run_all_examples.py
 ```
 
 **Run specific example module**:
 ```bash
-python -m src.metrics_examples
-python -m src.tracing_examples
+python examples/05_metrics_examples.py
+python examples/06_tracing_examples.py
 ```
 
-**Run automated tests**:
+**Run individual examples**:
 ```bash
-pytest tests/
-```
-
-**Run with coverage**:
-```bash
-pytest --cov=src tests/
+# Each example file can be run directly
+python examples/01_config_examples.py
 ```
 
 ## What's Demonstrated
 
-### 1. Configuration (`src/config_examples.py`)
+### 1. Configuration (`examples/01_config_examples.py`)
 - Basic endpoint configuration
 - Console exporter setup
 - Signal-specific endpoints
@@ -134,34 +132,34 @@ pytest --cov=src tests/
 - Session entropy
 - Logging levels
 
-### 2. Resource Attributes (`src/attributes_examples.py`)
+### 2. Resource Attributes (`examples/02_attributes_examples.py`)
 - Basic attribute creation
 - Required vs optional fields
 - Custom attributes with `set_attributes()`
 - Environment-specific attributes
 - Dynamic parameters
 
-### 3. Initialization (`src/initialization_examples.py`)
+### 3. Initialization (`examples/03_initialization_examples.py`)
 - Full initialization (all signals)
 - Selective signal initialization
 - Default initialization (metrics only)
 - Error handling patterns
 
-### 4. Logging (`src/logging_examples.py`)
+### 4. Logging (`examples/04_logging_examples.py`)
 - Getting logger handler
 - Adding handler to logger
 - Different log levels
 - Structured logging
 - Logger integration
 
-### 5. Metrics (`src/metrics_examples.py`)
+### 5. Metrics (`examples/05_metrics_examples.py`)
 - Counter increment
 - Counter decrement (up/down counters)
 - Histogram recording
 - Metric attributes
 - Multiple metrics coordination
 
-### 6. Tracing (`src/tracing_examples.py`)
+### 6. Tracing (`examples/06_tracing_examples.py`)
 - Basic trace context manager
 - Adding events to spans
 - Exception handling in spans
@@ -170,7 +168,7 @@ pytest --cov=src tests/
 - Nested traces
 - Trace propagation with carrier
 
-### 7. Advanced Patterns (`src/advanced_examples.py`)
+### 7. Advanced Patterns (`examples/07_advanced_examples.py`)
 - Multi-signal coordination
 - Error handling across signals
 - Performance monitoring
@@ -256,35 +254,30 @@ def new_feature_example():
     initialize_telemetry(config, attrs, signal_types=['metrics'])
     
     # Demonstrate feature
+    print("=== New Feature Example ===")
     # ... your code here ...
-    
-    return True
+    print("✓ Example completed\n")
 ```
 
-2. **Add test** in corresponding test file:
+2. **Make it runnable**:
 ```python
-def test_new_feature():
-    """Validate new feature example"""
-    result = new_feature_example()
-    assert result is True
+if __name__ == "__main__":
+    new_feature_example()
 ```
 
 3. **Update documentation** if needed
 
-### Running Tests
+### Running Examples
 
 ```bash
-# Run all tests
-pytest tests/
+# Run all examples
+python run_all_examples.py
 
-# Run specific test file
-pytest tests/test_metrics.py
+# Run specific example file
+python examples/05_metrics_examples.py
 
 # Run with verbose output
-pytest -v tests/
-
-# Run with coverage
-pytest --cov=src --cov-report=html tests/
+python examples/05_metrics_examples.py --verbose
 ```
 
 ## SDK Method Coverage
@@ -302,29 +295,29 @@ This project demonstrates **100% of public SDK methods**:
 
 ## Use Cases
 
-### For SDK Developers
-- Validate SDK functionality
-- Catch regressions
-- Test as external package
-- Verify API usability
+### For New Users
+- Learn SDK through simple examples
+- Understand signal types (logging, metrics, tracing)
+- See configuration options
+- Get started quickly with copy-paste examples
 
 ### For Integration Engineers
 - See real-world usage patterns
 - Understand SDK capabilities
-- Copy-paste working examples
+- Copy working examples into your project
 - Learn best practices
 
-### For New Users
-- Learn SDK through examples
-- Understand signal types
-- See configuration options
-- Get started quickly
+### For SDK Developers
+- Demonstrate SDK functionality
+- Show external package integration
+- Provide reference implementations
+- Verify API usability
 
-### For QA Engineers
-- Automated validation
-- Regression testing
-- Integration testing
-- Coverage verification
+### For Documentation
+- Living code examples
+- Always up-to-date with SDK
+- Executable documentation
+- Clear usage patterns
 
 ## Troubleshooting
 
