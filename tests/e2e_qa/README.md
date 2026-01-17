@@ -24,14 +24,13 @@ This project provides **simple, runnable examples** demonstrating all methods of
 tests/e2e_qa/
 ├── _docs/                          # Design specifications
 │   ├── 00_summary.md              # Project summary
-│   ├── 01_project_overview.md      # Project purpose and goals
+│   ├── 01_requirements.md          # Requirements (authoritative)
 │   ├── 02_architecture_design.md   # Technical architecture
 │   ├── 03_implementation_plan.md   # Development phases
 │   ├── 04_test_scenarios.md        # Example scenarios
 │   ├── 05_quick_reference.md       # Quick reference
 │   ├── 06_visual_guide.md          # Visual diagrams
 │   ├── 07_conda_setup.md           # Conda setup guide
-│   ├── REQUIREMENTS.md             # Requirements (authoritative)
 │   └── INDEX.md                    # Documentation index
 │
 ├── examples/                       # Example implementations (to be created)
@@ -52,7 +51,7 @@ tests/e2e_qa/
 
 ### Prerequisites
 
-- **Python 3.9+** (minimum), **Python 3.10** (recommended) - See [_docs/REQUIREMENTS.md](_docs/REQUIREMENTS.md)
+- **Python 3.9+** (minimum), **Python 3.10** (recommended) - See [_docs/01_requirements.md](_docs/01_requirements.md)
 - **conda** package manager (required - official SDK installation method)
 
 ### Installation

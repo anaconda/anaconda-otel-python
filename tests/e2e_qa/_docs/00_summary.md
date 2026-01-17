@@ -29,14 +29,15 @@ Create a **hello-world style, low-complexity Python project** that demonstrates 
 
 ### 📚 Design Documentation (in `_docs/`)
 
-1. **[REQUIREMENTS.md](REQUIREMENTS.md)** ⭐
+
+1. **[00_summary.md](00_summary.md)** (this file)
+   - Executive overview
+   - Quick reference
+
+2. **[01_requirements.md](01_requirements.md)** ⭐
    - **Python version requirements** (authoritative source)
    - Package manager recommendations
    - Dependencies
-
-2. **[00_summary.md](00_summary.md)** (this file)
-   - Executive overview
-   - Quick reference
 
 3. **[02_architecture_design.md](02_architecture_design.md)**
    - Project structure

@@ -507,4 +507,4 @@ conda deactivate
 
 **Last Updated**: 2026-01-16
 **Conda Version**: 4.x or higher recommended
-**Python Version**: See [REQUIREMENTS.md](REQUIREMENTS.md) for version details
+**Python Version**: See [01_requirements.md](01_requirements.md) for version details

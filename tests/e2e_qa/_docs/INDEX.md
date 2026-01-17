@@ -10,8 +10,8 @@ This directory contains comprehensive design and specification documents for the
 
 ### For First-Time Readers
 1. **[README.md](../README.md)** - User guide and quick start
-2. **[REQUIREMENTS.md](REQUIREMENTS.md)** - **Python versions & dependencies** (authoritative source)
-3. **[00_summary.md](00_summary.md)** - Executive summary and project goals
+2. **[00_summary.md](00_summary.md)** - Executive summary and project goals
+3. **[01_requirements.md](01_requirements.md)** - **Python versions & dependencies** (authoritative source)
 
 ### For Developers
 1. **[02_architecture_design.md](02_architecture_design.md)** - Technical architecture
@@ -56,6 +56,17 @@ This directory contains comprehensive design and specification documents for the
 
 ---
 
+### [01_requirements.md](01_requirements.md)
+**Purpose**: Authoritative source for all project requirements
+**Contents**:
+- Python version requirements (minimum, recommended, supported)
+- Package manager requirements (conda)
+- Dependencies (core, optional)
+- Installation commands
+
+**Read this if**: You want to know Python versions, dependencies, or installation requirements
+
+---
 
 ### [02_architecture_design.md](02_architecture_design.md)
 **Purpose**: Technical architecture and design principles
@@ -153,18 +164,6 @@ This directory contains comprehensive design and specification documents for the
 
 ---
 
-### [REQUIREMENTS.md](REQUIREMENTS.md)
-**Purpose**: Authoritative source for all project requirements
-**Contents**:
-- Python version requirements (minimum, recommended, supported)
-- Package manager recommendations
-- Dependencies (core, test, optional)
-- Installation commands
-
-**Read this if**: You need to know Python versions or dependencies
-
----
-
 ### [INDEX.md](INDEX.md)
 **Purpose**: This file - documentation index
 **Contents**:
@@ -230,31 +229,6 @@ This directory contains comprehensive design and specification documents for the
 **...how to use**
 → [README.md](../README.md)
 
----
-
-## 📝 Document Relationships
-
-```
-README.md (User Guide)
-    │
-    ├──► REQUIREMENTS.md (Requirements)
-    │
-    ├──► 00_summary.md (Summary & Goals)
-    │       │
-    │       └──► 05_quick_reference.md (Quick Lookup)
-    │
-    ├──► 02_architecture_design.md (Architecture)
-    │       │
-    │       └──► 06_visual_guide.md (Visuals)
-    │
-    ├──► 03_implementation_plan.md (Plan)
-    │       │
-    │       └──► 04_test_scenarios.md (Scenarios)
-    │
-    ├──► 07_conda_setup.md (Conda Guide)
-    │
-    └──► INDEX.md (This file)
-```
 
 ---
 

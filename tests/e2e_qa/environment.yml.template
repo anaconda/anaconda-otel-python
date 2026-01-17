@@ -41,5 +41,5 @@ dependencies:
 # Notes:
 # 1. The SDK (anaconda-opentelemetry) is installed via conda (recommended)
 # 2. Test dependencies are installed via pip
-# 3. Python 3.10 is recommended (see _docs/REQUIREMENTS.md for version details)
+# 3. Python 3.10 is recommended (see _docs/01_requirements.md for version details)
 # 4. Uncomment optional dependencies as needed for development
