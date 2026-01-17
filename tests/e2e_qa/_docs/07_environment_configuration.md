@@ -18,7 +18,13 @@ Configuration is managed through a `.env` file located in `tests/e2e_qa/.env`. T
 
 2. Edit `.env` to set your desired environment:
    ```bash
-   # Choose your environment (staging-internal, staging-public, production-external, production-internal)
+   # Choose your environment based on your access method:
+   # - staging-internal: Behind WARP VPN (default for local development)
+   # - staging-internal-gha: From GitHub Actions or internal services (no WARP)
+   # - staging-public: OAuth testing (behind WARP)
+   # - production-external: Real production data with API key
+   # - production-internal: Real production data from internal services
+   
    OTEL_ENVIRONMENT=staging-internal
    
    # Endpoint will be automatically selected based on OTEL_ENVIRONMENT
