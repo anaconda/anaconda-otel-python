@@ -23,6 +23,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
+    print_sdk_commands_summary,
     flush_telemetry
 )
 from test_data import ServiceName, ServiceVersion, MetricName, MetricValue
@@ -63,6 +64,14 @@ def main():
     
     print_info("✓ Telemetry initialized with defaults")
     print_info("Default behavior: metrics signal enabled")
+    
+    # Print SDK commands summary
+    print_sdk_commands_summary([
+        'config = Configuration(default_endpoint=...)',
+        'attrs = ResourceAttributes(service_name="...", service_version="...")',
+        'initialize_telemetry(config, attrs)  # No signal_types = defaults to metrics',
+        'increment_counter("example_03_default_test", by=1)',
+    ])
     
     # Print resource attributes
     print_resource_attributes(attrs)

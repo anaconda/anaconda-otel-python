@@ -174,6 +174,24 @@ def print_backend_validation(service_name: str, metric_name: str, metric_value: 
         print(f"       • parameters: {attrs.parameters}")
 
 
+def print_sdk_commands_summary(commands: list):
+    """
+    Print a concise summary of SDK commands called.
+    
+    Args:
+        commands: List of command strings or tuples (command, description)
+    """
+    print("\n  📝 SDK COMMANDS CALLED:")
+    for i, cmd in enumerate(commands, 1):
+        if isinstance(cmd, tuple):
+            command, description = cmd
+            print(f"     {i}. {command}")
+            if description:
+                print(f"        → {description}")
+        else:
+            print(f"     {i}. {cmd}")
+
+
 def print_flush_status(success: bool = True, error: Exception = None):
     """
     Print telemetry flush status.

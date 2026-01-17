@@ -23,6 +23,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
+    print_sdk_commands_summary,
     flush_telemetry
 )
 from test_data import (
@@ -72,6 +73,14 @@ def main():
     
     print_info("✓ Telemetry initialized with all signals")
     print_info("Enabled: metrics, logs, traces")
+    
+    # Print SDK commands summary
+    print_sdk_commands_summary([
+        'config = Configuration(default_endpoint=...)',
+        'attrs = ResourceAttributes(service_name="...", service_version="...")',
+        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
+        'increment_counter("example_01_initialization_test", by=1)',
+    ])
     
     # Print resource attributes
     print_resource_attributes(attrs)

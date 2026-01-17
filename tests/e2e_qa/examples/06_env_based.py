@@ -23,6 +23,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
+    print_sdk_commands_summary,
     flush_telemetry
 )
 from test_data import (
@@ -78,6 +79,15 @@ def main():
     print_info(f"OTEL Environment: {otel_env}")
     print_info(f"Endpoint: {endpoint}")
     print_info("Service Environment: staging")
+    
+    # Print SDK commands summary
+    print_sdk_commands_summary([
+        'config = Configuration(default_endpoint=...)',
+        'attrs = ResourceAttributes(service_name="...", service_version="...", environment="staging")',
+        'attrs.set_attributes(otel_environment="staging-internal", test_type="e2e-qa")',
+        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
+        'increment_counter("example_06_env_based_test", by=1, attributes={"environment": "staging-internal"})',
+    ])
     
     # Print resource attributes
     print_resource_attributes(attrs)

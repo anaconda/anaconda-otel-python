@@ -23,6 +23,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
+    print_sdk_commands_summary,
     flush_telemetry
 )
 from test_data import (
@@ -98,6 +99,17 @@ def main():
     print_info("  ✓ Environment: development")
     print_info("Signals:")
     print_info("  ✓ Metrics, Logs, Traces")
+    
+    # Print SDK commands summary
+    print_sdk_commands_summary([
+        'config = Configuration(default_endpoint=...)',
+        'config.set_metrics_export_interval_ms(30000)',
+        'config.set_logging_level("info")',
+        'attrs = ResourceAttributes(service_name="...", service_version="...", platform="conda", environment="development")',
+        'attrs.set_attributes(example="complete_initialization", test_type="e2e-qa")',
+        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
+        'increment_counter("example_05_complete_test", by=1)',
+    ])
     
     # Print resource attributes
     print_resource_attributes(attrs)
