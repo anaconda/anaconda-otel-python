@@ -38,47 +38,42 @@ Create a **hello-world style, low-complexity Python project** that demonstrates 
    - Executive overview
    - Quick reference
 
-3. **[01_project_overview.md](01_project_overview.md)**
-   - Project purpose and goals
-   - Target audience
-   - Success criteria
-
-4. **[02_architecture_design.md](02_architecture_design.md)**
+3. **[02_architecture_design.md](02_architecture_design.md)**
    - Project structure
    - Design principles
    - Module breakdown
    - Test strategy
 
-5. **[03_implementation_plan.md](03_implementation_plan.md)**
+4. **[03_implementation_plan.md](03_implementation_plan.md)**
    - 11-phase implementation plan
    - Time estimates (28 hours total)
    - Priority ordering
    - Risk mitigation
 
-6. **[04_test_scenarios.md](04_test_scenarios.md)**
+5. **[04_test_scenarios.md](04_test_scenarios.md)**
    - 40+ detailed test scenarios
    - Code examples for each
    - Validation criteria
    - Coverage matrix
 
-7. **[05_quick_reference.md](05_quick_reference.md)**
+6. **[05_quick_reference.md](05_quick_reference.md)**
    - Quick lookup guide
    - Essential commands
    - Finding information
 
-8. **[06_visual_guide.md](06_visual_guide.md)**
+7. **[06_visual_guide.md](06_visual_guide.md)**
    - Visual diagrams
    - Flow charts
    - Coverage maps
 
-9. **[07_conda_setup.md](07_conda_setup.md)**
+8. **[07_conda_setup.md](07_conda_setup.md)**
    - Conda installation guide
    - Environment management
    - Troubleshooting
 
 ### 📖 Project Documentation
 
-10. **[README.md](../README.md)**
+9. **[README.md](../README.md)**
    - Quick start guide
    - Installation instructions (conda + pip)
    - Usage examples

@@ -11,8 +11,7 @@ This directory contains comprehensive design and specification documents for the
 ### For First-Time Readers
 1. **[README.md](../README.md)** - User guide and quick start
 2. **[REQUIREMENTS.md](REQUIREMENTS.md)** - **Python versions & dependencies** (authoritative source)
-3. **[00_summary.md](00_summary.md)** - Executive summary
-4. **[01_project_overview.md](01_project_overview.md)** - Project goals and purpose
+3. **[00_summary.md](00_summary.md)** - Executive summary and project goals
 
 ### For Developers
 1. **[02_architecture_design.md](02_architecture_design.md)** - Technical architecture
@@ -59,20 +58,6 @@ This directory contains comprehensive design and specification documents for the
 
 ---
 
-### [01_project_overview.md](01_project_overview.md)
-**Purpose**: Project purpose, goals, and success criteria
-**Size**: 85 lines (2.7 KB)
-**Contents**:
-- Project purpose
-- Key characteristics (low complexity, hello-world style)
-- Comprehensive coverage
-- External project approach
-- Target audience
-- Success criteria
-
-**Read this if**: You want to understand WHY this project exists
-
----
 
 ### [02_architecture_design.md](02_architecture_design.md)
 **Purpose**: Technical architecture and design principles
@@ -218,10 +203,10 @@ This directory contains comprehensive design and specification documents for the
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 11 files |
-| **Total Lines** | ~4,100 lines |
-| **Total Size** | ~135 KB |
-| **Design Docs** | 8 files |
+| **Total Documents** | 10 files |
+| **Total Lines** | ~4,000 lines |
+| **Total Size** | ~132 KB |
+| **Design Docs** | 7 files |
 | **Requirements** | 1 file (REQUIREMENTS.md) |
 | **User Docs** | 1 file (README) |
 | **Historical** | 1 file |
@@ -236,12 +221,12 @@ This directory contains comprehensive design and specification documents for the
 2. [00_summary.md](00_summary.md) - 5 min
 3. [05_quick_reference.md](05_quick_reference.md) - 5 min
 
-### Path 2: Comprehensive Understanding (45 minutes)
+### Path 2: Comprehensive Understanding (40 minutes)
 1. [README.md](../README.md) - 5 min
-2. [01_project_overview.md](01_project_overview.md) - 5 min
+2. [00_summary.md](00_summary.md) - 5 min
 3. [02_architecture_design.md](02_architecture_design.md) - 10 min
 4. [03_implementation_plan.md](03_implementation_plan.md) - 10 min
-5. [04_test_scenarios.md](04_test_scenarios.md) - 15 min
+5. [04_test_scenarios.md](04_test_scenarios.md) - 10 min
 
 ### Path 3: Implementation Focus (60 minutes)
 1. [02_architecture_design.md](02_architecture_design.md) - 15 min
@@ -259,7 +244,7 @@ This directory contains comprehensive design and specification documents for the
 ### "I want to know about..."
 
 **...project goals**
-→ [01_project_overview.md](01_project_overview.md)
+→ [00_summary.md](00_summary.md)
 
 **...architecture**
 → [02_architecture_design.md](02_architecture_design.md)
@@ -289,9 +274,9 @@ This directory contains comprehensive design and specification documents for the
 ```
 README.md (User Guide)
     │
-    ├──► 00_summary.md (Overview)
-    │       │
-    │       ├──► 01_project_overview.md (Goals)
+    ├──► REQUIREMENTS.md (Requirements)
+    │
+    ├──► 00_summary.md (Summary & Goals)
     │       │
     │       └──► 05_quick_reference.md (Quick Lookup)
     │
@@ -302,6 +287,8 @@ README.md (User Guide)
     ├──► 03_implementation_plan.md (Plan)
     │       │
     │       └──► 04_test_scenarios.md (Scenarios)
+    │
+    ├──► 07_conda_setup.md (Conda Guide)
     │
     └──► INDEX.md (This file)
 ```
