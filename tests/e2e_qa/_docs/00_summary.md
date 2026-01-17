@@ -18,8 +18,8 @@ Create a **hello-world style, low-complexity Python project** that demonstrates 
 - **02_architecture_design.md** - Technical architecture
 - **03_implementation_plan.md** - Implementation phases
 - **04_test_scenarios.md** - Test scenarios with code
-- **06_visual_guide.md** - Visual diagrams
-- **07_conda_setup.md** - Conda setup guide
+- **05_visual_guide.md** - Visual diagrams
+- **06_conda_setup.md** - Conda setup guide
 - **INDEX.md** - Documentation index
 - **README.md** - User guide
 

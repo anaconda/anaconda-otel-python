@@ -274,9 +274,9 @@ flowchart TD
     A -->|Implement| D[03_implementation_plan.md]
     A -->|Documentation index| E[INDEX.md]
     A -->|Current status| F[00_summary.md]
-    A -->|Visual overview| G[06_visual_guide.md]
+    A -->|Visual overview| G[05_visual_guide.md]
     A -->|Requirements| H[01_requirements.md]
-    A -->|Conda setup| I[07_conda_setup.md]
+    A -->|Conda setup| I[06_conda_setup.md]
     
     C --> G
     D --> J[04_test_scenarios.md]

@@ -13,11 +13,11 @@
 - **[04_test_scenarios.md](04_test_scenarios.md)** - Test scenarios
 
 ### Reference
-- **[06_visual_guide.md](06_visual_guide.md)** - Visual diagrams
-- **[07_conda_setup.md](07_conda_setup.md)** - Conda setup
+- **[05_visual_guide.md](05_visual_guide.md)** - Visual diagrams
+- **[06_conda_setup.md](06_conda_setup.md)** - Conda setup
 
 ## Reading Paths
 
 **Quick Start**: README → 00_summary
 **Implementation**: 02_architecture → 03_implementation_plan → 04_test_scenarios
-**Visual**: 06_visual_guide
+**Visual**: 05_visual_guide

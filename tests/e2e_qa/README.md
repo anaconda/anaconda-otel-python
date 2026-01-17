@@ -14,8 +14,8 @@ tests/e2e_qa/
 │   ├── 02_architecture_design.md   # Technical architecture
 │   ├── 03_implementation_plan.md   # Development phases
 │   ├── 04_test_scenarios.md        # Example scenarios
-│   ├── 06_visual_guide.md          # Visual diagrams
-│   ├── 07_conda_setup.md           # Conda setup guide
+│   ├── 05_visual_guide.md          # Visual diagrams
+│   ├── 06_conda_setup.md           # Conda setup guide
 │   └── INDEX.md                    # Documentation index
 │
 ├── examples/                       # Example implementations (to be created)
@@ -205,7 +205,7 @@ conda install anaconda-opentelemetry
 
 **No output**: Ensure `config.set_console_exporter(use_console=True)`
 
-**Conda issues**: See `_docs/07_conda_setup.md`
+**Conda issues**: See `_docs/06_conda_setup.md`
 
 ## Contributing
 
