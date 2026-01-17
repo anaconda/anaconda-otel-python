@@ -19,14 +19,15 @@ tests/e2e_qa/
 │   ├── 07_environment_configuration.md  # Environment & endpoint config
 │   └── INDEX.md                    # Documentation index
 │
-├── examples/                       # Example implementations (to be created)
+├── examples/                       # Example implementations
 │   ├── 01_config_examples.py       # Configuration examples
 │   ├── 02_attributes_examples.py   # ResourceAttributes examples
-│   ├── 03_initialization_examples.py # Initialization examples
-│   ├── 04_logging_examples.py      # Logging signal examples
-│   ├── 05_metrics_examples.py      # Metrics signal examples
-│   ├── 06_tracing_examples.py      # Tracing signal examples
-│   └── 07_advanced_examples.py     # Advanced usage patterns
+│   ├── 01_all_signals.py           # Init: All signals
+│   ├── 02_metrics_only.py          # Init: Metrics only
+│   ├── 03_default.py               # Init: Default config
+│   ├── 04_selective.py             # Init: Selective signals
+│   ├── 05_complete.py              # Init: Complete setup
+│   └── 06_env_based.py             # Init: Environment-based
 │
 ├── .env                            # Environment configuration (create from env.example)
 ├── env.example                     # Example environment configuration
@@ -58,13 +59,27 @@ tests/e2e_qa/
    pip install -e .
    ```
 
-3. **Configure environment** (optional)
+3. **Configure environment**
    ```bash
    cd tests/e2e_qa
    cp env.example .env
-   # Edit .env to change settings (defaults to staging-internal)
+   ```
+   
+   **For Backend Validation**:
+   ```bash
+   # Edit .env - CRITICAL: Set console exporter to false
+   OTEL_CONSOLE_EXPORTER=false  # Data goes to backend
+   OTEL_ENVIRONMENT=staging-internal
+   ```
+   
+   **For Local Debugging**:
+   ```bash
+   # Edit .env - Console output only (no backend)
+   OTEL_CONSOLE_EXPORTER=true  # Data printed to console only
    ```
 
+   ⚠️ **Critical**: Console exporter and backend are mutually exclusive! Set to `false` for backend validation.
+   
    ⚠️ **Important**: Only send test data to staging environments. See [07_environment_configuration.md](_docs/07_environment_configuration.md) for details.
 
 4. **Verify installation**
@@ -74,16 +89,30 @@ tests/e2e_qa/
 
 ### Running Examples
 
-```bash
-# Run all examples
-python run_all_examples.py
+#### 🚀 Recommended Usage
 
-# Run individual examples
-cd examples
-python 01_config_examples.py
-python 02_attributes_examples.py
-python 03_initialization_examples.py
+**For backend validation** (sends data to backend):
+```bash
+# Run all 6 initialization examples (each in separate process)
+python run_initialization_examples.py
 ```
+
+**For full SDK demonstration** (config + attributes + initialization):
+```bash
+# Run all example categories
+python run_all_examples.py
+```
+
+**For single example**:
+```bash
+# Run one initialization example
+python examples/01_all_signals.py
+
+# Or run config/attributes examples (no backend data)
+python examples/01_config_examples.py
+python examples/02_attributes_examples.py
+```
+
 
 ## What's Demonstrated
 
@@ -102,11 +131,21 @@ python 03_initialization_examples.py
 - Environment-specific attributes
 - Dynamic parameters
 
-### 3. Initialization (`examples/03_initialization_examples.py`)
-- Full initialization (all signals)
-- Selective signal initialization
-- Default initialization (metrics only)
-- Error handling patterns
+### 3. Initialization (Individual Scripts)
+
+**Note**: Each example runs in a separate process to ensure proper initialization.
+
+Run all 6 examples: `python run_initialization_examples.py`
+
+Individual examples:
+- **`examples/01_all_signals.py`**: Initialize with metrics, logs, and traces
+- **`examples/02_metrics_only.py`**: Initialize with metrics only
+- **`examples/03_default.py`**: Default initialization (metrics only)
+- **`examples/04_selective.py`**: Selective signals (metrics + tracing)
+- **`examples/05_complete.py`**: Complete configuration with all options
+- **`examples/06_env_based.py`**: Environment-based initialization
+
+**Critical**: Each example force flushes to ensure data reaches backend.
 
 ### 4. Logging (`examples/04_logging_examples.py`)
 - Getting logger handler
@@ -140,75 +179,16 @@ python 03_initialization_examples.py
 
 ## Example Output
 
-When you run the examples, you'll see output like this:
+When you run the examples, you'll see clear output showing:
+- SDK method calls being executed
+- Success indicators
+- Flush confirmation messages
 
-```
---- Example 1: Initialize All Signals ---
-  Initialize telemetry with metrics, logs, and traces
-  📝 attrs = ResourceAttributes(service_name="example-01-all-signals", service_version="1.0.0")
-  📝 initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])
-✓ Telemetry initialized with all signals
-  Enabled: metrics, logs, traces
-  📝 increment_counter("example_01_initialization_test", by=1)
-
-  ⚠️  TODO - VALIDATE BACKEND DATA:
-     ┌─ Metric Information
-     │  • Metric Name: example_01_initialization_test
-     │  • Expected Value: 1
-     ├─ Resource Attributes
-     │  • service.name: example-01-all-signals
-     │  • service.version: 1.0.0
-     │  • os.type: Darwin/Linux/Windows (auto-detected)
-     │  • python.version: 3.x.x (auto-detected)
-     │  • client.sdk.version: 0.0.0.devbuild
-     │  • schema.version: 0.3.0
-     └─ Verification Steps
-        1. Check metric appears in backend within 60 seconds
-        2. Verify metric name matches exactly
-        3. Verify value is correct
-        5. Verify resource attributes match
-
-[Console Exporter Output]
-{
-  "resource_metrics": [
-    {
-      "resource": {
-        "attributes": {
-          "service.name": "example-01-all-signals",
-          "service.version": "1.0.0",
-          ...
-        }
-      },
-      "scope_metrics": [
-        {
-          "metrics": [
-            {
-              "name": "example_01_initialization_test",
-              "data": {
-                "data_points": [
-                  {
-                    "value": 1
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-✓ Example completed successfully
-```
-
-**Key Output Features:**
-- 📝 Shows actual SDK method calls for reference
-- ⚠️ **TODO sections** with complete backend validation checklists
-- ✓ Clear success indicators
-- Complete list of metric and resource attributes to verify
-- Step-by-step verification instructions
-- Detailed console exporter output when enabled
+**For backend validation**: See **[08_backend_validation.md](_docs/08_backend_validation.md)** for complete step-by-step validation guide including:
+- Expected metrics in backend
+- SQL queries for verification
+- Resource attributes validation
+- Troubleshooting steps
 
 ## Documentation
 
@@ -221,6 +201,7 @@ See `_docs/` directory for:
 
 Key documents:
 - **[07_environment_configuration.md](_docs/07_environment_configuration.md)** - Environment and endpoint configuration guide
+- **[08_backend_validation.md](_docs/08_backend_validation.md)** - Backend validation and verification guide
 - **[INDEX.md](_docs/INDEX.md)** - Complete documentation index
 
 ## Development
@@ -277,6 +258,14 @@ OTEL_SKIP_INTERNET_CHECK=true
 
 **No console output**
 Ensure `config.set_console_exporter(use_console=True)` in your code.
+
+**Data not appearing in backend**
+
+See **[08_backend_validation.md](_docs/08_backend_validation.md)** for complete troubleshooting guide including:
+- Console exporter configuration (must be disabled for backend)
+- Flush requirements
+- WARP/VPN connection
+- Backend query examples
 
 **Update environment after dependency changes**
 ```bash

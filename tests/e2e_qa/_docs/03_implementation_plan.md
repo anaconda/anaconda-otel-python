@@ -78,7 +78,7 @@ Implement examples for:
 
 ## Phase 4: Initialization Examples
 
-### 4.1 Basic Initialization (`examples/03_initialization_examples.py`)
+### 4.1 Basic Initialization (Individual Scripts + `run_initialization_examples.py`)
 Implement examples for:
 - [x] Initialize with all signals
 - [x] Initialize with specific signals only
@@ -95,6 +95,45 @@ Implement examples for:
 **Dependencies**: Phase 3
 
 **Status**: ✅ COMPLETED (6 examples implemented)
+
+### 4.3 Running Initialization Examples
+
+**Scripts Available**:
+
+| Script | Purpose | Backend Records |
+|--------|---------|-----------------|
+| `run_all_examples.py` | Complete demo (config, attributes, init) | 6 records |
+| `run_initialization_examples.py` | Backend validation only | 6 records |
+| Individual scripts (e.g., `examples/01_all_signals.py`) | Single example testing | 1 record |
+
+**Quick Reference**:
+
+```bash
+# Run all initialization examples for backend validation
+python run_initialization_examples.py
+
+# Run single initialization example
+python examples/01_all_signals.py
+
+# Run complete demo (all categories)
+python run_all_examples.py
+```
+
+**Expected Backend Results**:
+
+After running initialization examples, expect 6 services in backend:
+- `example-01-all-signals`
+- `example-02-metrics-only`
+- `example-03-default`
+- `example-04-selective`
+- `example-05-complete`
+- `example-06-env-based`
+
+**Configuration**:
+
+All scripts respect `.env` file settings:
+- `OTEL_CONSOLE_EXPORTER=false` → Data goes to backend
+- `OTEL_CONSOLE_EXPORTER=true` → Data printed to console only
 
 ---
 
