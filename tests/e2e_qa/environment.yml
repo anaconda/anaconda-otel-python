@@ -1,0 +1,35 @@
+# Conda Environment for E2E QA Examples
+# 
+# This file defines the conda environment for running the anaconda-opentelemetry
+# E2E QA demonstration examples.
+#
+# Usage:
+#   conda env create -f environment.yml
+#   conda activate e2e-qa-examples
+#
+# To update an existing environment:
+#   conda env update -f environment.yml --prune
+
+name: e2e-qa-examples
+
+dependencies:
+  # Python version (3.10 recommended, 3.9+ required)
+  - python=3.10
+  
+  # Required dependencies
+  - pip
+  
+  # Install via pip (since anaconda-opentelemetry may not be in conda yet)
+  - pip:
+    - python-dotenv>=1.0.0
+    - PyYAML>=6.0.2
+    - opentelemetry-api==1.38.0
+    - opentelemetry-sdk==1.38.0
+    - opentelemetry-exporter-otlp-proto-grpc==1.38.0
+    - opentelemetry-exporter-otlp-proto-http==1.38.0
+    - grpcio>=1.71.0
+
+# Notes:
+# 1. For development: After activating, run `pip install -e .` from the repo root
+# 2. For production: Replace pip dependencies with `anaconda-opentelemetry` when available in conda
+# 3. See _docs/01_requirements.md for Python version details
