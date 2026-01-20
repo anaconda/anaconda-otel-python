@@ -41,7 +41,8 @@ tests/e2e_qa/
 │   ├── 03_default.py               # Init: Default config
 │   ├── 04_selective.py             # Init: Selective signals
 │   ├── 05_complete.py              # Init: Complete setup
-│   └── 06_env_based.py             # Init: Environment-based
+│   ├── 06_env_based.py             # Init: Environment-based
+│   └── 07_flush_test.py            # Init: Explicit flush test
 │
 ├── .env                            # Environment configuration (create from env.example)
 ├── env.example                     # Example environment configuration
@@ -133,6 +134,7 @@ python 03_default.py
 python 04_selective.py
 python 05_complete.py
 python 06_env_based.py
+python 07_flush_test.py
 
 # Run configuration or attributes examples (demonstration only, no backend data)
 python 01_config_examples.py
@@ -143,7 +145,7 @@ python 02_attributes_examples.py
 
 **From the e2e_qa directory**:
 ```bash
-# Run all 6 initialization examples (each in separate process)
+# Run all 7 initialization examples (each in separate process)
 python run_initialization_examples.py
 
 # Or run all example categories (config + attributes + initialization)
@@ -174,7 +176,7 @@ python run_all_examples.py
 
 **Note**: Each example runs in a separate process to ensure proper initialization.
 
-Run all 6 examples: `python run_initialization_examples.py`
+Run all 7 examples: `python run_initialization_examples.py`
 
 #### Example Types: Atomic vs. Complex
 
@@ -226,6 +228,11 @@ These examples follow a **progressive learning approach** with two types:
   - **Best for**: Multi-environment deployments using 12-factor configuration
   - **Copy this if**: You need environment-aware telemetry with dynamic configuration
 
+- **`examples/07_flush_test.py`** - Explicit flush test
+  - **Use when**: You need to verify flush functionality doesn't break telemetry flow
+  - **Best for**: Short-lived processes, CLI tools, Lambda functions, testing scenarios
+  - **Copy this if**: You need guaranteed delivery before shutdown or immediate export
+
 #### Quick Selection Guide
 
 | Your Need | Start With | Why |
@@ -236,8 +243,9 @@ These examples follow a **progressive learning approach** with two types:
 | "Metrics + tracing only" | `04_selective.py` | Specific signal combination |
 | "Production config" | `05_complete.py` | All configuration options |
 | "Multi-environment" | `06_env_based.py` | Environment-aware setup |
+| "Test flush functionality" | `07_flush_test.py` | Explicit flush verification |
 
-**Critical**: Each example force flushes to ensure data reaches backend.
+**Note**: Examples 01-05 rely on automatic flushing when the process ends (Python SDK default behavior). Example 07 demonstrate explicit flush calls, to illustrate that flush call does not break flow.
 
 ### 4. Logging (`examples/04_logging_examples.py`)
 - Getting logger handler
@@ -289,6 +297,7 @@ After running examples with `OTEL_CONSOLE_EXPORTER=false`:
    - `example-04-selective`
    - `example-05-complete`
    - `example-06-env-based`
+   - `example-07-flush-test`
 3. Each service should have sent at least one metric with value=1
 
 Contact your organization's telemetry team for backend access and query instructions.

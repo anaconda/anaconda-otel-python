@@ -20,6 +20,7 @@ class ServiceName(str, Enum):
     EXAMPLE_04 = 'example-04-selective'
     EXAMPLE_05 = 'example-05-complete'
     EXAMPLE_06 = 'example-06-env-based'
+    EXAMPLE_07 = 'example-07-flush-test'
     CONFIG_EXAMPLES = 'config-examples-service'
     ATTRIBUTES_EXAMPLES = 'attributes-examples-service'
 

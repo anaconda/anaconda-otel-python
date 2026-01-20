@@ -29,8 +29,7 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
-    print_sdk_commands_summary,
-    flush_telemetry
+    print_sdk_commands_summary
 )
 from test_data import (
     ServiceName,
@@ -97,9 +96,6 @@ def main():
     
     # Print backend validation checklist
     print_backend_validation(SERVICE_NAME, METRIC_NAME, METRIC_VALUE, attrs)
-    
-    # Flush telemetry
-    flush_telemetry()
     
     print_footer("✓ Example 1 completed successfully!")
 

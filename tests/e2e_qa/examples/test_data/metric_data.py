@@ -20,6 +20,7 @@ class MetricName(str, Enum):
     EXAMPLE_04 = 'example_04_selective_test'
     EXAMPLE_05 = 'example_05_complete_test'
     EXAMPLE_06 = 'example_06_env_based_test'
+    EXAMPLE_07 = 'example_07_flush_test'
 
 
 class MetricValue(int, Enum):

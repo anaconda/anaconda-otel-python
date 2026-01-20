@@ -28,6 +28,7 @@ EXAMPLES = [
     "examples/04_selective.py",
     "examples/05_complete.py",
     "examples/06_env_based.py",
+    "examples/07_flush_test.py",
 ]
 
 def print_header():
@@ -122,6 +123,7 @@ def print_summary(results: dict):
             print("      - example-04-selective")
             print("      - example-05-complete")
             print("      - example-06-env-based")
+            print("      - example-07-flush-test")
             print("   3. Each service should have 1 metric with value=1")
             print("\n   See BACKEND_VALIDATION_GUIDE.md for detailed instructions")
     else:

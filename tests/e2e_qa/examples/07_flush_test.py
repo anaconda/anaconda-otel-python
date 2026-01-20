@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """
-Example 2: Initialize Metrics Only
+Example 7: Explicit Flush Test
 
-Demonstrates initializing telemetry with only the metrics signal.
-This is a standalone script to ensure proper initialization.
+Demonstrates explicit flush functionality to ensure it doesn't break the telemetry flow.
+This is a standalone script to ensure proper initialization with flush.
 
 WHEN TO USE THIS APPROACH:
-- You only need to track counters, gauges, and histograms
-- You want minimal overhead and resource usage
-- Your application doesn't require logging or tracing capabilities
-- You're monitoring simple metrics like request counts, response times, or resource usage
+- You need to ensure telemetry data is sent before the application exits
+- You're running short-lived processes or scripts
+- You want to force immediate export of pending telemetry data
+- You need to verify telemetry was sent before proceeding
 
 USE CASES:
-- Batch jobs that only need to report completion metrics
-- Background workers tracking task counts and durations
-- Simple services where metrics alone provide sufficient visibility
-- Performance-sensitive applications minimizing telemetry overhead
-- CLI tools or scripts that only need basic instrumentation
+- Short-lived CLI tools or batch jobs
+- Lambda functions or serverless applications
+- Testing and validation scenarios
+- Applications where you need guaranteed delivery before shutdown
+- Scripts that need to confirm telemetry export completed
+
+NOTE: For Python, the OpenTelemetry SDK automatically handles flushing when
+the process ends. Explicit flush is typically not necessary but is supported
+for cases where you need immediate export or want to ensure data is sent
+before continuing execution.
 """
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
@@ -30,7 +35,8 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
-    print_sdk_commands_summary
+    print_sdk_commands_summary,
+    flush_telemetry
 )
 from test_data import (
     ServiceName,
@@ -42,16 +48,16 @@ from test_data import (
 )
 
 # Test data constants
-SERVICE_NAME = ServiceName.EXAMPLE_02.value
+SERVICE_NAME = ServiceName.EXAMPLE_07.value
 SERVICE_VERSION = ServiceVersion.DEFAULT.value
-METRIC_NAME = MetricName.EXAMPLE_02.value
+METRIC_NAME = MetricName.EXAMPLE_07.value
 METRIC_VALUE = MetricValue.INCREMENT_BY_ONE.value
 AUTO_DETECTED_ATTRS = AutoDetectedAttributes.STANDARD.value
 
 
 def main():
-    print_header("Example 2: Initialize Metrics Only",
-                 "Initialize telemetry with only metrics signal")
+    print_header("Example 7: Explicit Flush Test", 
+                 "Verify flush functionality doesn't break telemetry flow")
     
     # Load environment
     _, endpoint, use_console = load_environment()
@@ -69,23 +75,24 @@ def main():
     )
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}")')
     
-    # Initialize with metrics only
+    # Initialize with all signals
     initialize_telemetry(
         config=config,
         attributes=attrs,
-        signal_types=SignalTypes.METRICS_ONLY.value
+        signal_types=SignalTypes.ALL_SIGNALS.value
     )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
+    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
     
-    print_info("✓ Telemetry initialized with metrics only")
-    print_info("Enabled: metrics")
+    print_info("✓ Telemetry initialized with all signals")
+    print_info("Enabled: metrics, logs, traces")
     
     # Print SDK commands summary
     print_sdk_commands_summary([
         'config = Configuration(default_endpoint=...)',
         'attrs = ResourceAttributes(service_name="...", service_version="...")',
-        "initialize_telemetry(config, attrs, signal_types=['metrics'])",
-        'increment_counter("example_02_metrics_test", by=1)',
+        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
+        'increment_counter("example_07_flush_test", by=1)',
+        'flush_telemetry()  # Explicitly flush telemetry data',
     ])
     
     # Print resource attributes
@@ -98,7 +105,12 @@ def main():
     # Print backend validation checklist
     print_backend_validation(SERVICE_NAME, METRIC_NAME, METRIC_VALUE, attrs)
     
-    print_footer("✓ Example 2 completed successfully!")
+    # Explicitly flush telemetry
+    print_info("Flushing telemetry data...")
+    flush_telemetry()
+    print_info("✓ Flush completed successfully")
+    
+    print_footer("✓ Example 7 completed successfully!")
 
 
 if __name__ == "__main__":
