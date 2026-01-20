@@ -88,10 +88,13 @@ def main():
         platform=Platform.CONDA.value,
         environment=Environment.DEVELOPMENT.value
     )
-    attrs.set_attributes(**CustomAttributes.EXAMPLE_COMPLETE.value)
-    
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", platform="conda", environment="development")')
-    print_code('attrs.set_attributes(example="complete_initialization", test_type="e2e-qa")')
+    
+    # Add custom attributes for this example
+    custom_attrs = CustomAttributes.EXAMPLE_COMPLETE.value
+    attrs.set_attributes(**custom_attrs)
+    print_code(f'attrs.set_attributes({", ".join(f"{k}=\"{v}\"" for k, v in custom_attrs.items())})')
+    print_info(f"✓ Custom attributes added: {custom_attrs}")
     
     # Initialize with all signals
     initialize_telemetry(
@@ -119,10 +122,10 @@ def main():
         'config = Configuration(default_endpoint=...)',
         'config.set_metrics_export_interval_ms(30000)',
         'config.set_logging_level("info")',
-        'attrs = ResourceAttributes(service_name="...", service_version="...", platform="conda", environment="development")',
-        'attrs.set_attributes(example="complete_initialization", test_type="e2e-qa")',
+        'attrs = ResourceAttributes(service_name="...", service_version="...", platform="...", environment="...")',
+        'attrs.set_attributes(key1="value1", key2="value2")',
         "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
-        'increment_counter("example_05_complete_test", by=1)',
+        'increment_counter("metric_name", by=1)',
     ])
     
     # Print resource attributes

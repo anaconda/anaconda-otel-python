@@ -75,10 +75,13 @@ def main():
         service_version=SERVICE_VERSION,
         environment=Environment.STAGING.value
     )
-    attrs.set_attributes(otel_environment=otel_env, test_type=TestType.E2E_QA.value)
-    
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", environment="staging")')
-    print_code(f'attrs.set_attributes(otel_environment="{otel_env}", test_type="e2e-qa")')
+    
+    # Add custom attributes for this example
+    custom_attrs = {"otel_environment": otel_env, "test_type": TestType.E2E_QA.value}
+    attrs.set_attributes(**custom_attrs)
+    print_code(f'attrs.set_attributes(otel_environment="{otel_env}", test_type="{TestType.E2E_QA.value}")')
+    print_info(f"✓ Custom attributes added: {custom_attrs}")
     
     # Initialize with all signals
     initialize_telemetry(
@@ -96,10 +99,10 @@ def main():
     # Print SDK commands summary
     print_sdk_commands_summary([
         'config = Configuration(default_endpoint=...)',
-        'attrs = ResourceAttributes(service_name="...", service_version="...", environment="staging")',
-        'attrs.set_attributes(otel_environment="staging-internal", test_type="e2e-qa")',
+        'attrs = ResourceAttributes(service_name="...", service_version="...", environment="...")',
+        'attrs.set_attributes(key1="value1", key2="value2")',
         "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
-        'increment_counter("example_06_env_based_test", by=1, attributes={"environment": "staging-internal"})',
+        'increment_counter("metric_name", by=1, attributes={"key": "value"})',
     ])
     
     # Print resource attributes

@@ -35,7 +35,7 @@ from utils import (
     print_backend_validation,
     print_sdk_commands_summary
 )
-from test_data import ServiceName, ServiceVersion, MetricName, MetricValue
+from test_data import ServiceName, ServiceVersion, MetricName, MetricValue, CustomAttributes
 
 # Test data constants
 SERVICE_NAME = ServiceName.EXAMPLE_03.value
@@ -64,6 +64,12 @@ def main():
     )
     print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}")')
     
+    # Add custom attributes for this example
+    custom_attrs = CustomAttributes.EXAMPLE_03.value
+    attrs.set_attributes(**custom_attrs)
+    print_code(f'attrs.set_attributes({", ".join(f"{k}=\"{v}\"" for k, v in custom_attrs.items())})')
+    print_info(f"✓ Custom attributes added: {custom_attrs}")
+    
     # Initialize with default (metrics only)
     initialize_telemetry(
         config=config,
@@ -78,8 +84,9 @@ def main():
     print_sdk_commands_summary([
         'config = Configuration(default_endpoint=...)',
         'attrs = ResourceAttributes(service_name="...", service_version="...")',
+        'attrs.set_attributes(key1="value1", key2="value2")',
         'initialize_telemetry(config, attrs)  # No signal_types = defaults to metrics',
-        'increment_counter("example_03_default_test", by=1)',
+        'increment_counter("metric_name", by=1)',
     ])
     
     # Print resource attributes

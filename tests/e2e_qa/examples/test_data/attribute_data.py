@@ -14,11 +14,31 @@ from enum import Enum
 
 class CustomAttributes(Enum):
     """Custom attributes for examples"""
+    EXAMPLE_01 = {
+        'example': 'all_signals',
+        'test_type': 'e2e-qa',
+    }
+    EXAMPLE_02 = {
+        'example': 'metrics_only',
+        'test_type': 'e2e-qa',
+    }
+    EXAMPLE_03 = {
+        'example': 'default_initialization',
+        'test_type': 'e2e-qa',
+    }
+    EXAMPLE_04 = {
+        'example': 'selective_signals',
+        'test_type': 'e2e-qa',
+    }
     EXAMPLE_COMPLETE = {
         'example': 'complete_initialization',
         'test_type': 'e2e-qa',
     }
     EXAMPLE_ENV_BASED = {
+        'test_type': 'e2e-qa',
+    }
+    EXAMPLE_07 = {
+        'example': 'flush_test',
         'test_type': 'e2e-qa',
     }
     TEAM_PROJECT = {
