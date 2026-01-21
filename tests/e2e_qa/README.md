@@ -28,28 +28,6 @@ This collection uses a **progressive disclosure approach** with two complementar
 
 This dual approach ensures the SDK is accessible to beginners while providing depth for advanced use cases.
 
-## Project Structure
-
-```
-tests/e2e_qa/
-│
-├── examples/                       # Example implementations
-│   ├── 01_config_examples.py       # Configuration examples
-│   ├── 02_attributes_examples.py   # ResourceAttributes examples
-│   ├── 01_all_signals.py           # Init: All signals
-│   ├── 02_metrics_only.py          # Init: Metrics only
-│   ├── 03_default.py               # Init: Default config
-│   ├── 04_selective.py             # Init: Selective signals
-│   ├── 05_complete.py              # Init: Complete setup
-│   ├── 06_env_based.py             # Init: Environment-based
-│   └── 07_flush_test.py            # Init: Explicit flush test
-│
-├── .env                            # Environment configuration (create from env.example)
-├── env.example                     # Example environment configuration
-├── environment.yml                 # Conda environment specification
-├── README.md                       # This file
-└── run_all_examples.py             # Main entry point
-```
 
 ## Quick Start
 
