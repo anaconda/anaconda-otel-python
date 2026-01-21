@@ -77,6 +77,9 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    # Optional: Enable console output for local debugging
    OTEL_CONSOLE_EXPORTER=false  # Set to true for console-only output
    
+   # Optional: Enable detailed logging for E2E examples
+   USE_DETAILED_LOG=false  # Set to true to see telemetry data and timing
+   
    # Optional: API key if your endpoint requires authentication
    # OTEL_API_KEY=your-api-key-here
    ```
@@ -84,6 +87,7 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    **Important Notes**:
    - ⚠️ When `OTEL_CONSOLE_EXPORTER=true`, data is printed to console only (not sent to backend)
    - ⚠️ When `OTEL_CONSOLE_EXPORTER=false`, data is sent to the backend endpoint
+   - 💡 When `USE_DETAILED_LOG=true`, examples show detailed output (names, values, attributes, endpoints, timing, status)
    - Contact your organization's telemetry team for endpoint URLs and credentials
 
 5. **Verify installation**
@@ -185,6 +189,28 @@ When you run the examples, you'll see clear output showing:
 - Success indicators
 - Flush confirmation messages
 
+### Detailed Logging
+
+Enable `USE_DETAILED_LOG=true` in your `.env` file to see additional `[DETAILED]` output:
+- Metric/trace/log names and values being sent
+- Attributes (key-value pairs) attached to telemetry data
+- Target endpoints for each signal type
+- Operation timing and duration
+- Success/failure status for each operation
+
+This is useful for:
+- **Debugging**: Verify what data is being sent to the backend
+- **Learning**: Understand the telemetry data structure
+- **Troubleshooting**: Identify issues with data delivery
+
+```bash
+# Enable detailed logging for a single run
+USE_DETAILED_LOG=true python examples/14_metrics_counters.py
+
+# Or set it in your .env file for all runs
+echo "USE_DETAILED_LOG=true" >> .env
+```
+
 ### Verifying Data Delivery
 
 After running examples with `OTEL_CONSOLE_EXPORTER=false`:
@@ -282,13 +308,17 @@ Edit your `.env` file and set the `OTEL_ENDPOINT` variable to your OpenTelemetry
 **No console output**
 Set `OTEL_CONSOLE_EXPORTER=true` in your `.env` file to see telemetry data in the console.
 
+**Want to see what data is being sent?**
+Set `USE_DETAILED_LOG=true` in your `.env` file to see detailed information about telemetry data, including metric names, values, attributes, and timing.
+
 **Data not appearing in backend**
 1. Verify `OTEL_CONSOLE_EXPORTER=false` in your `.env` file
 2. Check that `OTEL_ENDPOINT` is correctly set
-3. Verify network connectivity to the endpoint
-4. Ensure examples completed successfully (check for error messages)
-5. Wait 1-5 minutes for backend processing
-6. Contact your telemetry team for backend access and troubleshooting
+3. Enable `USE_DETAILED_LOG=true` to see what data is being sent
+4. Verify network connectivity to the endpoint
+5. Ensure examples completed successfully (check for error messages)
+6. Wait 1-5 minutes for backend processing
+7. Contact your telemetry team for backend access and troubleshooting
 
 ## Contributing
 
