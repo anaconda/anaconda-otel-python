@@ -28,6 +28,7 @@ FEATURES DEMONSTRATED:
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
 from utils import (
+    EndpointType,
     load_environment,
     print_header,
     print_footer,
@@ -37,7 +38,8 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
-    print_sdk_commands_summary
+    print_sdk_commands_summary,
+    apply_signal_specific_endpoints
 )
 from test_data import (
     ServiceName,
@@ -61,11 +63,12 @@ def main():
                  "Initialize based on environment configuration")
     
     # Load environment
-    otel_env, endpoint, use_console = load_environment()
+    otel_env, endpoint, use_console, endpoints = load_environment()
     print_environment_config(endpoint, use_console, otel_env)
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     if use_console:
         config.set_console_exporter(use_console=True)
     

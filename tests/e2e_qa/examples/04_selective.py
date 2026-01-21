@@ -26,6 +26,7 @@ EXAMPLE COMBINATIONS:
 
 from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
 from utils import (
+    EndpointType,
     load_environment,
     print_header,
     print_footer,
@@ -35,7 +36,8 @@ from utils import (
     print_resource_attributes,
     print_metric_info,
     print_backend_validation,
-    print_sdk_commands_summary
+    print_sdk_commands_summary,
+    apply_signal_specific_endpoints
 )
 from test_data import ServiceName, ServiceVersion, MetricName, MetricValue, SignalTypes, CustomAttributes
 
@@ -51,11 +53,12 @@ def main():
                  "Initialize with only specific signals (metrics + tracing)")
     
     # Load environment
-    _, endpoint, use_console = load_environment()
+    _, endpoint, use_console, endpoints = load_environment()
     print_environment_config(endpoint, use_console)
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     if use_console:
         config.set_console_exporter(use_console=True)
     

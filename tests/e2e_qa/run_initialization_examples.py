@@ -13,12 +13,18 @@ single script would cause only the first initialization to succeed.
 import subprocess
 import sys
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 # Add examples directory to sys.path for utils imports
 examples_dir = Path(__file__).parent / "examples"
 sys.path.insert(0, str(examples_dir))
 
 from utils import load_environment
+from utils.print_utils import (
+    run_example_subprocess,
+    print_examples_summary,
+    print_error_highlights
+)
 
 # Example scripts to run (in order)
 EXAMPLES = [
@@ -31,6 +37,12 @@ EXAMPLES = [
     "examples/07_flush_test.py",
 ]
 
+# Configuration/demonstration examples (run without subprocess)
+CONFIG_EXAMPLES = [
+    "examples/01_config_examples.py",
+    "examples/02_attributes_examples.py",
+]
+
 def print_header():
     """Print script header"""
     print("\n" + "=" * 70)
@@ -40,7 +52,7 @@ def print_header():
     print("-" * 70)
     
     # Show environment
-    env, endpoint, use_console = load_environment()
+    env, endpoint, use_console, endpoints = load_environment()
     print(f"  Environment: {env}")
     print(f"  Endpoint: {endpoint}")
     print(f"  Console Exporter: {use_console}")
@@ -55,7 +67,7 @@ def print_header():
     print("=" * 70 + "\n")
 
 
-def run_example(script_path: str) -> bool:
+def run_example(script_path: str) -> Tuple[bool, List[str]]:
     """
     Run a single example script as a subprocess.
     
@@ -63,34 +75,24 @@ def run_example(script_path: str) -> bool:
         script_path: Path to the example script
         
     Returns:
-        True if successful, False otherwise
+        Tuple of (success: bool, errors: List[str])
     """
-    try:
-        result = subprocess.run(
-            [sys.executable, script_path],
-            check=True,
-            capture_output=False,  # Show output in real-time
-            text=True
-        )
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"\n❌ Example failed: {script_path}")
-        print(f"   Exit code: {e.returncode}")
-        return False
-    except Exception as e:
-        print(f"\n❌ Error running example: {script_path}")
-        print(f"   Error: {e}")
-        return False
+    return run_example_subprocess(script_path)
 
 
-def print_summary(results: dict):
-    """Print summary of all examples"""
+def print_summary(results: Dict[str, Tuple[bool, List[str]]], 
+                  config_results: Dict[str, Tuple[bool, List[str]]] = None):
+    """Print summary of all examples with error highlights"""
     print("\n" + "=" * 70)
-    print("📋 BACKEND VALIDATION SUMMARY")
+    print("📋 SUMMARY")
     print("=" * 70)
     
+    # Collect all errors
+    all_errors = []
+    all_error_by_example = {}
+    
     # Check if console exporter is enabled
-    _, _, use_console = load_environment()
+    _, _, use_console, _ = load_environment()
     if use_console:
         print("\n⚠️  CRITICAL WARNING:")
         print("   OTEL_CONSOLE_EXPORTER=true in .env")
@@ -98,20 +100,42 @@ def print_summary(results: dict):
         print("   To validate in backend: Set OTEL_CONSOLE_EXPORTER=false")
         print("=" * 70)
     
-    print("\n📊 Examples Run:")
-    success_count = 0
-    total_count = len(results)
+    # Configuration examples summary
+    config_success = 0
+    if config_results:
+        config_success, _, error_by_example = print_examples_summary(
+            config_results, 
+            title="Configuration Examples",
+            emoji="📚"
+        )
+        all_error_by_example.update(error_by_example)
+        for errors in error_by_example.values():
+            all_errors.extend(errors)
     
-    for script, success in results.items():
-        status = "✓" if success else "❌"
-        print(f"   {status} {script}")
-        if success:
-            success_count += 1
+    # Initialization examples summary
+    success_count, total_count, error_by_example = print_examples_summary(
+        results,
+        title="Initialization Examples",
+        emoji="🚀"
+    )
+    all_error_by_example.update(error_by_example)
+    for errors in error_by_example.values():
+        all_errors.extend(errors)
     
-    print(f"\n   Total: {success_count}/{total_count} successful")
+    # Overall summary
+    total_all = total_count + (len(config_results) if config_results else 0)
+    success_all = success_count + config_success
     
-    if success_count == total_count:
+    # Print error highlights
+    print_error_highlights(all_errors, all_error_by_example)
+    
+    # Final status
+    if success_all == total_all:
         print("\n✅ All examples completed successfully!")
+        
+        if all_errors:
+            print("   ⚠️  However, some HTTP errors were detected during execution")
+            print("   ⚠️  See error details above")
         
         if not use_console:
             print("\n💡 To validate in backend:")
@@ -125,44 +149,86 @@ def print_summary(results: dict):
             print("      - example-06-env-based")
             print("      - example-07-flush-test")
             print("   3. Each service should have 1 metric with value=1")
-            print("\n   See BACKEND_VALIDATION_GUIDE.md for detailed instructions")
     else:
         print("\n❌ Some examples failed - check output above for errors")
     
     print("=" * 70 + "\n")
 
 
+def run_config_example(script_path: str) -> Tuple[bool, List[str]]:
+    """
+    Run a configuration example script (doesn't initialize telemetry).
+    
+    Args:
+        script_path: Path to the example script
+        
+    Returns:
+        Tuple of (success: bool, errors: List[str])
+    """
+    return run_example_subprocess(script_path)
+
+
 def main():
     """Main execution function"""
     print_header()
     
-    # Track results
-    results = {}
+    # Track results (now includes errors)
+    config_results = {}
+    init_results = {}
     
-    # Run each example
-    for example in EXAMPLES:
+    # Run configuration examples first (they don't initialize telemetry)
+    print("\n" + "=" * 70)
+    print("📚 CONFIGURATION EXAMPLES")
+    print("=" * 70)
+    print("These examples demonstrate configuration without initializing telemetry\n")
+    
+    for example in CONFIG_EXAMPLES:
         script_path = Path(__file__).parent / example
         
         if not script_path.exists():
             print(f"\n❌ Example not found: {example}")
-            results[example] = False
+            config_results[example] = (False, [f"File not found: {example}"])
             continue
         
         print(f"\n{'─' * 70}")
         print(f"Running: {example}")
         print(f"{'─' * 70}")
         
-        success = run_example(str(script_path))
-        results[example] = success
+        success, errors = run_config_example(str(script_path))
+        config_results[example] = (success, errors)
+        
+        if not success:
+            print(f"\n⚠️  Example failed, but continuing with remaining examples...")
+    
+    # Run initialization examples (each in separate process)
+    print("\n" + "=" * 70)
+    print("🚀 INITIALIZATION EXAMPLES")
+    print("=" * 70)
+    print("Each example runs in a separate process for proper initialization\n")
+    
+    for example in EXAMPLES:
+        script_path = Path(__file__).parent / example
+        
+        if not script_path.exists():
+            print(f"\n❌ Example not found: {example}")
+            init_results[example] = (False, [f"File not found: {example}"])
+            continue
+        
+        print(f"\n{'─' * 70}")
+        print(f"Running: {example}")
+        print(f"{'─' * 70}")
+        
+        success, errors = run_example(str(script_path))
+        init_results[example] = (success, errors)
         
         if not success:
             print(f"\n⚠️  Example failed, but continuing with remaining examples...")
     
     # Print summary
-    print_summary(results)
+    print_summary(init_results, config_results)
     
     # Exit with error if any failed
-    if not all(results.values()):
+    if not all(s for s, _ in config_results.values()) or not all(s for s, _ in init_results.values()):
         sys.exit(1)
 
 

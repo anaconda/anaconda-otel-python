@@ -37,6 +37,24 @@ from .config_data import (
     SignalTypes
 )
 
+from .logging_data import (
+    LogLevel,
+    LogMessage,
+    LogAttributes,
+    LoggerName,
+    ServiceNameLogging
+)
+
+from .metrics_examples_data import (
+    ServiceNameMetrics,
+    CounterName,
+    UpDownCounterName,
+    HistogramName,
+    MetricAttributes,
+    MetricValues,
+    MetricDescriptions
+)
+
 __all__ = [
     # Service data
     'ServiceName',
@@ -60,4 +78,20 @@ __all__ = [
     'ExportInterval',
     'LoggingLevel',
     'SignalTypes',
+    
+    # Logging data
+    'LogLevel',
+    'LogMessage',
+    'LogAttributes',
+    'LoggerName',
+    'ServiceNameLogging',
+    
+    # Metrics examples data
+    'ServiceNameMetrics',
+    'CounterName',
+    'UpDownCounterName',
+    'HistogramName',
+    'MetricAttributes',
+    'MetricValues',
+    'MetricDescriptions',
 ]

@@ -9,6 +9,11 @@ This module provides standardized print utilities for consistent output
 formatting across all E2E QA examples.
 """
 
+import re
+import sys
+import subprocess
+from typing import List, Dict, Tuple
+
 
 def print_header(title: str, description: str = ""):
     """
@@ -308,3 +313,246 @@ def print_example_section(section_name: str):
         section_name: Name of the section
     """
     print_section(section_name)
+
+
+# ============================================================================
+# Error Detection and Reporting Utilities
+# ============================================================================
+
+
+def extract_http_errors(output: str) -> List[str]:
+    """
+    Extract HTTP error messages from output.
+    
+    Args:
+        output: Command output text
+        
+    Returns:
+        List of error messages found
+    """
+    errors = []
+    
+    # Pattern for HTTP error codes
+    http_error_patterns = [
+        # OpenTelemetry export failures (e.g., "Failed to export logs batch code: 404")
+        r'Failed to export.*?code:\s*(\d{3})',
+        # Generic HTTP errors
+        r'(HTTP\s+)?(\d{3})\s+(Error|Not Found|Forbidden|Unauthorized|Bad Request|Internal Server Error)',
+        r'status[_\s]code[:\s]+(\d{3})',
+        r'(\d{3})\s+Client Error',
+        r'(\d{3})\s+Server Error',
+        r'Failed to send.*?(\d{3})',
+        # Connection errors
+        r'Connection.*?failed',
+        r'Connection.*?refused',
+        r'Connection.*?reset',
+        # Timeout errors
+        r'Timeout.*?error',
+        r'Request.*?timeout',
+        # DNS errors
+        r'Name or service not known',
+        r'nodename nor servname provided',
+        r'Temporary failure in name resolution',
+    ]
+    
+    for pattern in http_error_patterns:
+        matches = re.finditer(pattern, output, re.IGNORECASE)
+        for match in matches:
+            # Extract the full line containing the error
+            line_start = output.rfind('\n', 0, match.start()) + 1
+            line_end = output.find('\n', match.end())
+            if line_end == -1:
+                line_end = len(output)
+            error_line = output[line_start:line_end].strip()
+            if error_line and error_line not in errors:
+                errors.append(error_line)
+    
+    return errors
+
+
+def process_subprocess_output(result_stdout: str, result_stderr: str) -> List[str]:
+    """
+    Process subprocess output and extract errors.
+    
+    Args:
+        result_stdout: Standard output from subprocess
+        result_stderr: Standard error from subprocess
+        
+    Returns:
+        List of extracted errors
+    """
+    errors = []
+    
+    # Print stdout
+    if result_stdout:
+        print(result_stdout, end='')
+        errors.extend(extract_http_errors(result_stdout))
+    
+    # Print stderr and extract errors
+    if result_stderr:
+        print(result_stderr, end='', file=sys.stderr)
+        errors.extend(extract_http_errors(result_stderr))
+    
+    return errors
+
+
+def run_example_subprocess(script_path: str, python_executable: str = None) -> Tuple[bool, List[str]]:
+    """
+    Run an example script as a subprocess with error tracking.
+    
+    This is a generalized function for running example scripts that:
+    - Executes the script in a separate process
+    - Captures and displays output in real-time
+    - Extracts and tracks HTTP/connection errors
+    - Returns success status and detected errors
+    
+    Args:
+        script_path: Path to the example script to run
+        python_executable: Python executable to use (defaults to sys.executable)
+        
+    Returns:
+        Tuple of (success: bool, errors: List[str])
+        
+    Example:
+        success, errors = run_example_subprocess("examples/01_test.py")
+        if not success:
+            print(f"Script failed with {len(errors)} errors")
+    """
+    if python_executable is None:
+        python_executable = sys.executable
+    
+    errors = []
+    try:
+        result = subprocess.run(
+            [python_executable, script_path],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        # Process output and extract errors
+        errors.extend(process_subprocess_output(result.stdout, result.stderr))
+        return True, errors
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Example failed: {script_path}")
+        print(f"   Exit code: {e.returncode}")
+        # Process output and extract errors
+        errors.extend(process_subprocess_output(e.stdout, e.stderr))
+        return False, errors
+    except Exception as e:
+        print(f"\n❌ Error running example: {script_path}")
+        print(f"   Error: {e}")
+        errors.append(f"Exception: {str(e)}")
+        return False, errors
+
+
+def print_examples_summary(results: Dict[str, Tuple[bool, List[str]]], 
+                          title: str = "Examples",
+                          emoji: str = "🚀") -> Tuple[int, int, Dict[str, List[str]]]:
+    """
+    Print summary of examples with error indicators.
+    
+    Args:
+        results: Dict mapping example names to (success, errors) tuples
+        title: Title for the summary section
+        emoji: Emoji to use in the title
+        
+    Returns:
+        Tuple of (success_count, total_count, error_by_example)
+    """
+    print(f"\n{emoji} {title}:")
+    success_count = 0
+    error_by_example = {}
+    
+    for script, (success, errors) in results.items():
+        status = "✓" if success else "❌"
+        error_indicator = " ⚠️" if errors else ""
+        print(f"   {status} {script}{error_indicator}")
+        if success:
+            success_count += 1
+        if errors:
+            error_by_example[script] = errors
+    
+    total_count = len(results)
+    print(f"   Total: {success_count}/{total_count} successful")
+    
+    return success_count, total_count, error_by_example
+
+
+def print_error_highlights(all_errors: List[str], error_by_example: Dict[str, List[str]]):
+    """
+    Print detailed error highlights section with categorization.
+    
+    Args:
+        all_errors: List of all errors detected
+        error_by_example: Dict mapping example names to their errors
+    """
+    if not all_errors:
+        return
+    
+    print("\n" + "=" * 70)
+    print("⚠️  ERRORS DETECTED")
+    print("=" * 70)
+    
+    # Categorize errors
+    http_404_errors = [e for e in all_errors if '404' in e]
+    http_other_errors = [e for e in all_errors if re.search(r'\b(4\d{2}|5\d{2})\b', e) and '404' not in e]
+    connection_errors = [e for e in all_errors if 'connection' in e.lower() or 'timeout' in e.lower()]
+    other_errors = [e for e in all_errors if e not in http_404_errors + http_other_errors + connection_errors]
+    
+    # Print categorized errors
+    if http_404_errors:
+        print("\n🔴 HTTP 404 Errors (Not Found):")
+        unique_404s = list(dict.fromkeys(http_404_errors))  # Remove duplicates while preserving order
+        for error in unique_404s[:5]:  # Show first 5
+            print(f"   • {error}")
+        if len(unique_404s) > 5:
+            print(f"   ... and {len(unique_404s) - 5} more")
+    
+    if http_other_errors:
+        print("\n🔴 Other HTTP Errors:")
+        unique_others = list(dict.fromkeys(http_other_errors))
+        for error in unique_others[:5]:
+            print(f"   • {error}")
+        if len(unique_others) > 5:
+            print(f"   ... and {len(unique_others) - 5} more")
+    
+    if connection_errors:
+        print("\n🔴 Connection/Timeout Errors:")
+        unique_conn = list(dict.fromkeys(connection_errors))
+        for error in unique_conn[:5]:
+            print(f"   • {error}")
+        if len(unique_conn) > 5:
+            print(f"   ... and {len(unique_conn) - 5} more")
+    
+    if other_errors:
+        print("\n🔴 Other Errors:")
+        unique_other = list(dict.fromkeys(other_errors))
+        for error in unique_other[:5]:
+            print(f"   • {error}")
+        if len(unique_other) > 5:
+            print(f"   ... and {len(unique_other) - 5} more")
+    
+    # Show which examples had errors
+    print("\n📍 Examples with Errors:")
+    for example, errors in error_by_example.items():
+        print(f"   • {example} ({len(errors)} error(s))")
+    
+    # Troubleshooting guidance
+    print("\n💡 Troubleshooting:")
+    if http_404_errors:
+        print("   • 404 errors may indicate incorrect endpoint configuration")
+        print("   • Verify OTEL_ENDPOINT in .env file")
+        print("   • Check that the backend service is running and accessible")
+    if connection_errors:
+        # Check for DNS-specific errors
+        dns_errors = [e for e in connection_errors if 'failed to resolve' in e.lower() or 'nameresolutionerror' in e.lower()]
+        if dns_errors:
+            print("   • DNS resolution errors detected - check endpoint URL for typos")
+            print("   • Verify OTEL_ENDPOINT in .env file (check spelling)")
+            print("   • Ensure the hostname is correct and accessible")
+        else:
+            print("   • Connection errors may indicate network issues")
+            print("   • Verify internet connectivity")
+            print("   • Check firewall settings")
+    
+    print("=" * 70)

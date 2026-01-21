@@ -13,8 +13,13 @@ This package provides shared utilities for E2E QA examples including:
 
 # Import from config_utils
 from .config_utils import (
+    # Enums
+    EndpointType,
+    EndpointEnvVar,
+    # Functions
     setup_python_path,
     load_environment,
+    apply_signal_specific_endpoints,
     create_basic_config,
     create_basic_attributes,
     get_session_id,
@@ -43,6 +48,12 @@ from .print_utils import (
     # Backward compatibility aliases
     print_example_header,
     print_example_section,
+    # Error detection and reporting
+    extract_http_errors,
+    process_subprocess_output,
+    run_example_subprocess,
+    print_examples_summary,
+    print_error_highlights,
 )
 
 # Import from telemetry_utils
@@ -54,9 +65,13 @@ from .telemetry_utils import (
 )
 
 __all__ = [
-    # Config utils
+    # Config utils - Enums
+    'EndpointType',
+    'EndpointEnvVar',
+    # Config utils - Functions
     'setup_python_path',
     'load_environment',
+    'apply_signal_specific_endpoints',
     'create_basic_config',
     'create_basic_attributes',
     'get_session_id',
@@ -81,6 +96,12 @@ __all__ = [
     # Print utils - Backward compatibility
     'print_example_header',
     'print_example_section',
+    # Print utils - Error detection and reporting
+    'extract_http_errors',
+    'process_subprocess_output',
+    'run_example_subprocess',
+    'print_examples_summary',
+    'print_error_highlights',
     # Telemetry utils
     'flush_telemetry',
     'flush_metrics',

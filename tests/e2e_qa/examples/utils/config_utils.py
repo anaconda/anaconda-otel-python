@@ -11,9 +11,26 @@ and setting up telemetry across all examples.
 
 import os
 import sys
+from enum import Enum
 from pathlib import Path
 from dotenv import load_dotenv
 from anaconda.opentelemetry import Configuration, ResourceAttributes
+
+
+class EndpointType(Enum):
+    """Enum for OpenTelemetry signal endpoint types."""
+    DEFAULT = 'default'
+    LOGGING = 'logging'
+    METRICS = 'metrics'
+    TRACING = 'tracing'
+
+
+class EndpointEnvVar(Enum):
+    """Environment variable names for OpenTelemetry endpoints."""
+    DEFAULT = 'OTEL_ENDPOINT'
+    LOGGING = 'OTEL_LOGGING_ENDPOINT'
+    METRICS = 'OTEL_METRICS_ENDPOINT'
+    TRACING = 'OTEL_TRACING_ENDPOINT'
 
 
 def setup_python_path():
@@ -58,7 +75,19 @@ def load_environment():
     Load environment variables from .env file.
     
     Returns:
-        tuple: (environment_name, endpoint_url, use_console_exporter)
+        tuple: (environment_name, endpoint_url, use_console_exporter, endpoints_dict)
+        
+        endpoints_dict contains:
+            - 'default': default endpoint (required)
+            - 'logging': logging-specific endpoint (optional)
+            - 'metrics': metrics-specific endpoint (optional)
+            - 'tracing': tracing-specific endpoint (optional)
+    
+    Environment variables loaded from .env:
+        - OTEL_ENVIRONMENT: Environment name (staging, production, etc.)
+        - OTEL_ENDPOINT: Default endpoint URL
+        - OTEL_CONSOLE_EXPORTER: Enable console output (true/false)
+        - OTEL_*_ENDPOINT: Signal-specific endpoints (optional)
     """
     # Find and load .env file from e2e_qa directory
     # Path: examples/utils/config_utils.py -> examples/utils -> examples -> e2e_qa
@@ -66,28 +95,60 @@ def load_environment():
     env_file = e2e_qa_dir / '.env'
     
     if env_file.exists():
-        load_dotenv(env_file)
+        load_dotenv(env_file, override=True)
     else:
         print(f"⚠️  Warning: .env file not found at {env_file}")
         print("   Using default values.")
     
     # Get configuration from environment
     environment = os.getenv('OTEL_ENVIRONMENT', 'staging')
-    endpoint = os.getenv('OTEL_ENDPOINT')
+    endpoint = os.getenv(EndpointEnvVar.DEFAULT.value)
     use_console = os.getenv('OTEL_CONSOLE_EXPORTER', 'true').lower() in ['true', 'yes', '1']
     
     if not endpoint:
         raise ValueError(
-            "OTEL_ENDPOINT is required. Please set it in your .env file.\n"
+            f"{EndpointEnvVar.DEFAULT.value} is required. Please set it in your .env file.\n"
             "See env.example for reference."
         )
     
-    return environment, endpoint, use_console
+    # Load signal-specific endpoints (optional)
+    endpoints = {
+        EndpointType.DEFAULT.value: endpoint,
+        EndpointType.LOGGING.value: os.getenv(EndpointEnvVar.LOGGING.value),
+        EndpointType.METRICS.value: os.getenv(EndpointEnvVar.METRICS.value),
+        EndpointType.TRACING.value: os.getenv(EndpointEnvVar.TRACING.value),
+    }
+    
+    return environment, endpoint, use_console, endpoints
+
+
+def apply_signal_specific_endpoints(config: 'Configuration', endpoints: dict) -> None:
+    """
+    Apply signal-specific endpoints to a Configuration object if they are provided.
+    
+    This is a utility function to reduce code duplication when setting up
+    signal-specific endpoints (logging, metrics, tracing).
+    
+    Args:
+        config: Configuration object to update
+        endpoints: Dictionary with endpoint values (from load_environment())
+    
+    Example:
+        >>> _, endpoint, _, endpoints = load_environment()
+        >>> config = Configuration(default_endpoint=endpoint)
+        >>> apply_signal_specific_endpoints(config, endpoints)
+    """
+    if endpoints.get(EndpointType.LOGGING.value):
+        config.set_logging_endpoint(endpoints[EndpointType.LOGGING.value])
+    if endpoints.get(EndpointType.METRICS.value):
+        config.set_metrics_endpoint(endpoints[EndpointType.METRICS.value])
+    if endpoints.get(EndpointType.TRACING.value):
+        config.set_tracing_endpoint(endpoints[EndpointType.TRACING.value])
 
 
 def create_basic_config(endpoint: str = None, use_console: bool = True):
     """
-    Create a basic Configuration object.
+    Create a basic Configuration object with signal-specific endpoints.
     
     Args:
         endpoint: Optional endpoint URL. If not provided, loads from environment.
@@ -97,9 +158,24 @@ def create_basic_config(endpoint: str = None, use_console: bool = True):
         Configuration: Configured Configuration object
     """
     if endpoint is None:
-        _, endpoint, use_console = load_environment()
+        _, endpoint, use_console, endpoints = load_environment()
+    else:
+        endpoints = {EndpointType.DEFAULT.value: endpoint}
     
-    config = Configuration(default_endpoint=endpoint)
+    config = Configuration(default_endpoint=endpoints[EndpointType.DEFAULT.value])
+    
+    # Set signal-specific endpoints if provided
+    logging_endpoint = endpoints.get(EndpointType.LOGGING.value)
+    if logging_endpoint:
+        config.set_logging_endpoint(logging_endpoint)
+    
+    metrics_endpoint = endpoints.get(EndpointType.METRICS.value)
+    if metrics_endpoint:
+        config.set_metrics_endpoint(metrics_endpoint)
+    
+    tracing_endpoint = endpoints.get(EndpointType.TRACING.value)
+    if tracing_endpoint:
+        config.set_tracing_endpoint(tracing_endpoint)
     
     if use_console:
         config.set_console_exporter(use_console=True)
@@ -127,7 +203,7 @@ def create_basic_attributes(service_name: str = "e2e-qa-examples",
     )
     
     # Add environment information
-    env_name, _, _ = load_environment()
+    env_name, _, _, _ = load_environment()
     
     attrs.set_attributes(
         otel_environment=env_name,  # Store environment name as custom attribute
@@ -171,7 +247,7 @@ def validate_environment():
     Returns:
         str: The environment name
     """
-    environment, endpoint, _ = load_environment()
+    environment, endpoint, _, _ = load_environment()
     
     print_info(f"Environment: {environment}")
     print_info(f"Endpoint: {endpoint}")
@@ -189,12 +265,17 @@ def validate_environment():
 
 # Export all utilities for convenience
 __all__ = [
+    # Enums
+    'EndpointType',
+    'EndpointEnvVar',
+    # Functions
     'setup_python_path',
     'load_environment',
     'create_basic_config',
     'create_basic_attributes',
     'get_session_id',
     'validate_environment',
+    # Print utilities
     'print_example_header',
     'print_example_section',
     'print_success',

@@ -11,7 +11,9 @@ for the Anaconda OpenTelemetry SDK.
 
 from anaconda.opentelemetry import Configuration
 from utils import (
+    EndpointType,
     load_environment,
+    apply_signal_specific_endpoints,
     print_example_header,
     print_example_section,
     print_success,
@@ -27,10 +29,11 @@ def example_01_basic_configuration():
     print_info("Create a Configuration with a default endpoint")
     
     # Get endpoint from environment
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create basic configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Configuration created successfully")
     print_info(f"Default endpoint: {endpoint}")
@@ -43,10 +46,11 @@ def example_02_console_exporter():
     print_example_section("Example 2: Console Exporter")
     print_info("Enable console output to see telemetry data in the terminal")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration and enable console exporter
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     config.set_console_exporter(use_console=True)
     
     print_success("Console exporter enabled")
@@ -60,7 +64,7 @@ def example_03_signal_specific_endpoints():
     print_example_section("Example 3: Signal-Specific Endpoints")
     print_info("Configure separate endpoints for metrics, logs, and traces")
     
-    _, default_endpoint, _ = load_environment()
+    _, default_endpoint, _, _ = load_environment()
     
     # Create configuration with default endpoint
     config = Configuration(default_endpoint=default_endpoint)
@@ -83,10 +87,11 @@ def example_04_export_intervals():
     print_example_section("Example 4: Export Intervals")
     print_info("Set how often telemetry data is sent to the collector")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Set export intervals (in milliseconds)
     config.set_metrics_export_interval_ms(ExportInterval.METRICS_30S.value)  # 30 seconds
@@ -104,10 +109,11 @@ def example_05_logging_level():
     print_example_section("Example 5: Logging Level")
     print_info("Configure which log levels are sent to the collector")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Set logging level (only logs at this level or higher will be sent)
     config.set_logging_level(LoggingLevel.INFO.value)
@@ -123,10 +129,11 @@ def example_06_session_entropy():
     print_example_section("Example 6: Session Entropy")
     print_info("Set custom entropy value for generating unique session IDs")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Set session entropy (any value that makes sessions unique)
     import time
@@ -144,10 +151,11 @@ def example_07_skip_internet_check():
     print_example_section("Example 7: Skip Internet Check")
     print_info("Disable internet connectivity check for offline environments")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Skip internet check (useful for testing or offline environments)
     config.set_skip_internet_check(True)
@@ -163,10 +171,11 @@ def example_08_cumulative_metrics():
     print_example_section("Example 8: Cumulative Metrics")
     print_info("Enable cumulative aggregation for metrics (vs delta)")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Enable cumulative metrics
     config.set_use_cumulative_metrics(True)
@@ -182,10 +191,11 @@ def example_09_complete_configuration():
     print_example_section("Example 9: Complete Configuration")
     print_info("Combine multiple configuration options")
     
-    _, endpoint, _ = load_environment()
+    _, endpoint, _, endpoints = load_environment()
     
     # Create comprehensive configuration
     config = Configuration(default_endpoint=endpoint)
+    apply_signal_specific_endpoints(config, endpoints)
     
     # Enable console for debugging
     config.set_console_exporter(use_console=True)
