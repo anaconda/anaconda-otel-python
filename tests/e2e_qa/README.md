@@ -81,7 +81,8 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    USE_DETAILED_LOG=false  # Set to true to see telemetry data and timing
    
    # Optional: API key if your endpoint requires authentication
-   # OTEL_API_KEY=your-api-key-here
+   # Note: Use ATEL_DEFAULT_AUTH_TOKEN (Anaconda Telemetry prefix)
+   # ATEL_DEFAULT_AUTH_TOKEN=your-api-key-here
    ```
    
    **Important Notes**:
