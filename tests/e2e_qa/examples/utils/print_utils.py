@@ -9,6 +9,7 @@ This module provides standardized print utilities for consistent output
 formatting across all E2E QA examples.
 """
 
+import os
 import re
 import sys
 import subprocess
@@ -82,6 +83,25 @@ def print_code(code: str):
         code: Code snippet text
     """
     print(f"  📝 {code}")
+
+
+def log_detailed(message: str):
+    """
+    Log detailed information if USE_DETAILED_LOG environment variable is enabled.
+    
+    This function provides optional verbose logging for debugging and development.
+    Enable by setting: USE_DETAILED_LOG=true
+    
+    Args:
+        message: Detailed log message text
+        
+    Example:
+        log_detailed("Sending counter: api_requests_total")
+        log_detailed(f"  → Value: {value}, Attributes: {attrs}")
+        log_detailed("✓ Counter queued successfully")
+    """
+    if os.getenv('USE_DETAILED_LOG', 'false').lower() == 'true':
+        print_info(f"[DETAILED] {message}")
 
 
 def print_environment_config(endpoint: str, use_console: bool, otel_env: str = None):
@@ -346,9 +366,12 @@ def extract_http_errors(output: str) -> List[str]:
         r'Connection.*?failed',
         r'Connection.*?refused',
         r'Connection.*?reset',
-        # Timeout errors
-        r'Timeout.*?error',
-        r'Request.*?timeout',
+        # Timeout errors - more specific patterns to avoid matching documentation text
+        r'TimeoutError:',                      # Python exception
+        r'timed out after \d+',                # Actual timeout message
+        r'Export.*?timeout',                   # Export timeout
+        r'Connection.*?timeout',               # Connection timeout
+        r'Request timeout after \d+',          # Request timeout with duration
         # DNS errors
         r'Name or service not known',
         r'nodename nor servname provided',

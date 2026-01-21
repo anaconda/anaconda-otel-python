@@ -27,24 +27,16 @@ KEY CONCEPTS:
 - Support alerting and dashboards
 """
 
-from anaconda.opentelemetry import (
-    Configuration, 
-    ResourceAttributes, 
-    initialize_telemetry,
-    increment_counter,
-    record_histogram,
-    decrement_counter
-)
+from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
-    EndpointType,
     load_environment,
     print_header,
     print_footer,
     print_info,
-    print_code,
     print_section,
     print_environment_config,
-    apply_signal_specific_endpoints
+    apply_signal_specific_endpoints,
+    SdkOperations,
 )
 from test_data import (
     ServiceVersion,
@@ -56,93 +48,36 @@ SERVICE_NAME = ServiceNameMetrics.METRICS_PATTERNS.value
 SERVICE_VERSION = ServiceVersion.DEFAULT.value
 
 
-def track_request(endpoint: str, method: str, duration_ms: float, status_code: int):
+def track_request(sdk: SdkOperations, endpoint: str, method: str, duration_ms: float, status_code: int):
     """
     Track a complete HTTP request with multiple metrics.
     This is the Request/Response pattern.
     """
-    # Count total requests
-    increment_counter(
-        "http_requests_total",
-        by=1,
-        attributes={"endpoint": endpoint, "method": method}
-    )
+    sdk.increment_counter("http_requests_total", by=1, attributes={"endpoint": endpoint, "method": method})
+    sdk.record_histogram("http_request_duration_ms", duration_ms, attributes={"endpoint": endpoint, "method": method})
+    sdk.increment_counter("http_responses_total", by=1, attributes={"endpoint": endpoint, "method": method, "status_code": status_code})
     
-    # Track request duration
-    record_histogram(
-        "http_request_duration_ms",
-        duration_ms,
-        attributes={"endpoint": endpoint, "method": method}
-    )
-    
-    # Track status codes
-    increment_counter(
-        "http_responses_total",
-        by=1,
-        attributes={"endpoint": endpoint, "method": method, "status_code": status_code}
-    )
-    
-    # Track errors separately
     if status_code >= 400:
-        increment_counter(
-            "http_requests_errors_total",
-            by=1,
-            attributes={"endpoint": endpoint, "method": method, "status_code": status_code}
-        )
+        sdk.increment_counter("http_requests_errors_total", by=1, attributes={"endpoint": endpoint, "method": method, "status_code": status_code})
 
 
-def track_database_operation(operation: str, table: str, duration_ms: float, success: bool):
-    """
-    Track database operations with multiple metrics.
-    """
-    # Count operations
-    increment_counter(
-        "db_operations_total",
-        by=1,
-        attributes={"operation": operation, "table": table}
-    )
+def track_database_operation(sdk: SdkOperations, operation: str, table: str, duration_ms: float, success: bool):
+    """Track database operations with multiple metrics."""
+    sdk.increment_counter("db_operations_total", by=1, attributes={"operation": operation, "table": table})
+    sdk.record_histogram("db_operation_duration_ms", duration_ms, attributes={"operation": operation, "table": table})
     
-    # Track duration
-    record_histogram(
-        "db_operation_duration_ms",
-        duration_ms,
-        attributes={"operation": operation, "table": table}
-    )
-    
-    # Track errors
     if not success:
-        increment_counter(
-            "db_operations_errors_total",
-            by=1,
-            attributes={"operation": operation, "table": table}
-        )
+        sdk.increment_counter("db_operations_errors_total", by=1, attributes={"operation": operation, "table": table})
 
 
-def track_business_transaction(transaction_type: str, amount_usd: float, success: bool):
-    """
-    Track business transactions with multiple metrics.
-    """
-    # Count transactions
-    increment_counter(
-        "transactions_total",
-        by=1,
-        attributes={"type": transaction_type, "status": "success" if success else "failed"}
-    )
+def track_business_transaction(sdk: SdkOperations, transaction_type: str, amount_usd: float, success: bool):
+    """Track business transactions with multiple metrics."""
+    sdk.increment_counter("transactions_total", by=1, attributes={"type": transaction_type, "status": "success" if success else "failed"})
     
-    # Track transaction amounts
     if success:
-        record_histogram(
-            "transaction_amount_usd",
-            amount_usd,
-            attributes={"type": transaction_type}
-        )
-        
-        # Track revenue
-        increment_counter(
-            "revenue_total_usd",
-            by=int(amount_usd * 100),  # Store as cents
-            attributes={"type": transaction_type}
-        )
+        sdk.record_histogram("transaction_amount_usd", amount_usd, attributes={"type": transaction_type})
+        # Store revenue in cents, using round() to avoid floating point precision issues
+        sdk.increment_counter("revenue_total_usd", by=round(amount_usd * 100), attributes={"type": transaction_type})
 
 
 def main():
@@ -165,126 +100,103 @@ def main():
         service_version=SERVICE_VERSION
     )
     
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
+    )
+    
     # Initialize with metrics enabled
     print_section("1. Initialize Telemetry")
-    initialize_telemetry(
-        config=config,
-        attributes=attrs,
-        signal_types=['metrics']
-    )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
-    print_info("✓ Telemetry initialized")
+    sdk.initialize(config, attrs, signal_types=['metrics'])
     
     # Pattern 1: RED Metrics (Rate, Errors, Duration)
     print_section("2. Pattern: RED Metrics")
-    print_info("\n  RED metrics for comprehensive service monitoring:")
-    print_info("    • Rate: Requests per second")
-    print_info("    • Errors: Error rate")
-    print_info("    • Duration: Response time distribution")
+    print_info("RED metrics for comprehensive service monitoring:")
+    print_info("  • Rate: Requests per second")
+    print_info("  • Errors: Error rate")
+    print_info("  • Duration: Response time distribution")
     
-    print_info("\n  Tracking successful requests:")
+    print_info("Tracking successful requests:")
     for _ in range(10):
-        track_request("/api/users", "GET", 45.0, 200)
-    print_code('track_request("/api/users", "GET", 45.0, 200)  # 10 times')
-    print_info("    → 10 successful requests, avg 45ms")
+        track_request(sdk, "/api/users", "GET", 45.0, 200)
+    print_info("→ 10 successful requests, avg 45ms")
     
-    print_info("\n  Tracking some errors:")
+    print_info("Tracking some errors:")
     for _ in range(2):
-        track_request("/api/users", "GET", 125.0, 500)
-    print_code('track_request("/api/users", "GET", 125.0, 500)  # 2 times')
-    print_info("    → 2 error requests")
+        track_request(sdk, "/api/users", "GET", 125.0, 500)
+    print_info("→ 2 error requests")
     
-    print_info("\n  RED metrics calculated:")
-    print_info("    • Rate: 12 requests")
-    print_info("    • Errors: 2 errors (16.7% error rate)")
-    print_info("    • Duration: p50, p95, p99 from histogram")
+    print_info("RED metrics calculated:")
+    print_info("  • Rate: 12 requests")
+    print_info("  • Errors: 2 errors (16.7% error rate)")
+    print_info("  • Duration: p50, p95, p99 from histogram")
     
     # Pattern 2: Database monitoring
     print_section("3. Pattern: Database Monitoring")
-    print_info("\n  Track database operations comprehensively:")
+    print_info("Track database operations comprehensively:")
+    track_database_operation(sdk, "SELECT", "users", 15.0, True)
+    track_database_operation(sdk, "SELECT", "users", 18.0, True)
+    track_database_operation(sdk, "INSERT", "orders", 45.0, True)
+    print_info("→ Successful operations tracked")
     
-    # Successful operations
-    track_database_operation("SELECT", "users", 15.0, True)
-    track_database_operation("SELECT", "users", 18.0, True)
-    track_database_operation("INSERT", "orders", 45.0, True)
-    print_code('track_database_operation("SELECT", "users", 15.0, True)')
-    print_info("    → Successful operations tracked")
+    track_database_operation(sdk, "UPDATE", "products", 3000.0, False)
+    print_info("→ Failed operation tracked (timeout)")
     
-    # Failed operation
-    track_database_operation("UPDATE", "products", 3000.0, False)
-    print_code('track_database_operation("UPDATE", "products", 3000.0, False)')
-    print_info("    → Failed operation tracked (timeout)")
-    
-    print_info("\n  Database insights:")
-    print_info("    • Operation count by type")
-    print_info("    • Performance by table")
-    print_info("    • Error rate by operation")
-    print_info("    • Slow query detection (p95 > threshold)")
+    print_info("Database insights:")
+    print_info("  • Operation count by type")
+    print_info("  • Performance by table")
+    print_info("  • Error rate by operation")
+    print_info("  • Slow query detection (p95 > threshold)")
     
     # Pattern 3: Business metrics
     print_section("4. Pattern: Business Metrics")
-    print_info("\n  Track business KPIs alongside technical metrics:")
+    print_info("Track business KPIs alongside technical metrics:")
+    track_business_transaction(sdk, "purchase", 49.99, True)
+    track_business_transaction(sdk, "purchase", 99.99, True)
+    track_business_transaction(sdk, "subscription", 19.99, True)
+    print_info("→ Successful transactions: $169.97 revenue")
     
-    # Successful transactions
-    track_business_transaction("purchase", 49.99, True)
-    track_business_transaction("purchase", 99.99, True)
-    track_business_transaction("subscription", 19.99, True)
-    print_code('track_business_transaction("purchase", 49.99, True)')
-    print_info("    → Successful transactions: $169.97 revenue")
+    track_business_transaction(sdk, "purchase", 199.99, False)
+    print_info("→ Failed transaction tracked")
     
-    # Failed transaction
-    track_business_transaction("purchase", 199.99, False)
-    print_code('track_business_transaction("purchase", 199.99, False)')
-    print_info("    → Failed transaction tracked")
-    
-    print_info("\n  Business insights:")
-    print_info("    • Total revenue: $169.97")
-    print_info("    • Transaction count: 4 (3 success, 1 failed)")
-    print_info("    • Success rate: 75%")
-    print_info("    • Average transaction value: $56.66")
+    print_info("Business insights:")
+    print_info("  • Total revenue: $169.97")
+    print_info("  • Transaction count: 4 (3 success, 1 failed)")
+    print_info("  • Success rate: 75%")
+    print_info("  • Average transaction value: $56.66")
     
     # Pattern 4: Resource utilization
     print_section("5. Pattern: Resource Utilization")
-    print_info("\n  Track resource usage over time:")
+    print_info("Track resource usage over time:")
+    sdk.increment_counter("active_connections", by=10)
+    sdk.increment_counter("memory_usage_mb", by=512)
+    sdk.record_histogram_batch("cpu_usage_percent", [45.5, 52.0, 48.5])
     
-    # Simulate resource usage changes
-    increment_counter("active_connections", by=10)
-    print_code('increment_counter("active_connections", by=10)')
-    
-    increment_counter("memory_usage_mb", by=512)
-    print_code('increment_counter("memory_usage_mb", by=512)')
-    
-    record_histogram("cpu_usage_percent", 45.5)
-    record_histogram("cpu_usage_percent", 52.0)
-    record_histogram("cpu_usage_percent", 48.5)
-    print_code('record_histogram("cpu_usage_percent", value)  # Multiple times')
-    
-    print_info("\n  Resource monitoring:")
-    print_info("    • Active connections: 10")
-    print_info("    • Memory usage: 512 MB")
-    print_info("    • CPU usage: ~48.7% average")
+    print_info("Resource monitoring:")
+    print_info("  • Active connections: 10")
+    print_info("  • Memory usage: 512 MB")
+    print_info("  • CPU usage: ~48.7% average")
     
     # Pattern 5: SLI/SLO tracking
     print_section("6. Pattern: SLI/SLO Tracking")
-    print_info("\n  Track metrics for SLO calculations:")
-    print_info("  Example SLO: 99% of requests complete in < 100ms")
+    print_info("Track metrics for SLO calculations:")
+    print_info("Example SLO: 99% of requests complete in < 100ms")
     
     # Fast requests (meet SLO)
-    for duration in [15.0, 25.0, 35.0, 45.0, 55.0, 65.0, 75.0, 85.0, 95.0]:
-        record_histogram("slo_request_duration_ms", duration, attributes={"slo_target": "100ms"})
-    print_code('record_histogram("slo_request_duration_ms", duration)  # 9 fast requests')
-    print_info("    → 9 requests under 100ms (meet SLO)")
+    sdk.record_histogram_batch("slo_request_duration_ms", [15.0, 25.0, 35.0, 45.0, 55.0, 65.0, 75.0, 85.0, 95.0], attributes={"slo_target": "100ms"})
+    print_info("→ 9 requests under 100ms (meet SLO)")
     
     # Slow request (violates SLO)
-    record_histogram("slo_request_duration_ms", 250.0, attributes={"slo_target": "100ms"})
-    print_code('record_histogram("slo_request_duration_ms", 250.0)  # 1 slow request')
-    print_info("    → 1 request over 100ms (violates SLO)")
+    sdk.record_histogram("slo_request_duration_ms", 250.0, attributes={"slo_target": "100ms"})
+    print_info("→ 1 request over 100ms (violates SLO)")
     
-    print_info("\n  SLO calculation:")
-    print_info("    • Total requests: 10")
-    print_info("    • Requests meeting SLO: 9")
-    print_info("    • SLO compliance: 90% (below 99% target)")
-    print_info("    • Action: Investigate slow request")
+    print_info("SLO calculation:")
+    print_info("  • Total requests: 10")
+    print_info("  • Requests meeting SLO: 9")
+    print_info("  • SLO compliance: 90% (below 99% target)")
+    print_info("  • Action: Investigate slow request")
     
     # Best practices summary
     print_section("7. Metrics Best Practices Summary")
@@ -308,15 +220,6 @@ def main():
     print_info("  • Include attributes for filtering")
     print_info("  • Monitor resource utilization")
     
-    # SDK Commands Summary
-    print_section("SDK Commands Summary")
-    print_info("Patterns demonstrated:")
-    print_code("1. track_request() - RED metrics pattern")
-    print_code("2. track_database_operation() - Database monitoring")
-    print_code("3. track_business_transaction() - Business KPIs")
-    print_code("4. Resource utilization tracking")
-    print_code("5. SLI/SLO compliance monitoring")
-    
     # Backend validation
     print_section("Backend Validation")
     print_info("To validate in backend:")
@@ -333,16 +236,15 @@ def main():
     print_info("      - db_operation_duration_ms: 4 measurements")
     print_info("      - db_operations_errors_total: 1")
     print_info("    Business Metrics:")
-    print_info("      - transactions_total: 4")
-    print_info("      - transaction_amount_usd: 3 measurements")
-    print_info("      - revenue_total_usd: 16997 cents ($169.97)")
+    print_info("      - transactions_total: 4 (2 purchase/success, 1 subscription/success, 1 purchase/failed)")
+    print_info("      - transaction_amount_usd: 3 measurements (2 purchase, 1 subscription)")
+    print_info("      - revenue_total_usd: 16996 cents ($169.96) - stored as cents to avoid floating point issues")
     print_info("    Resource Metrics:")
     print_info("      - active_connections: 10")
     print_info("      - memory_usage_mb: 512")
     print_info("      - cpu_usage_percent: 3 measurements")
     print_info("    SLO Metrics:")
     print_info("      - slo_request_duration_ms: 10 measurements")
-    
     
     print_footer("✓ Example 18 completed successfully!")
 

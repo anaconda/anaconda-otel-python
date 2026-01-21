@@ -36,6 +36,8 @@ from .print_utils import (
     print_success,
     print_info,
     print_code,
+    # Detailed logging
+    log_detailed,
     # Specialized prints
     print_environment_config,
     print_resource_attributes,
@@ -64,6 +66,11 @@ from .telemetry_utils import (
     flush_logs,
 )
 
+# Import from sdk_operations
+from .sdk_operations import (
+    SdkOperations,
+)
+
 __all__ = [
     # Config utils - Enums
     'EndpointType',
@@ -84,6 +91,8 @@ __all__ = [
     'print_success',
     'print_info',
     'print_code',
+    # Print utils - Detailed logging
+    'log_detailed',
     # Print utils - Specialized
     'print_environment_config',
     'print_resource_attributes',
@@ -107,4 +116,6 @@ __all__ = [
     'flush_metrics',
     'flush_traces',
     'flush_logs',
+    # SDK operations
+    'SdkOperations',
 ]

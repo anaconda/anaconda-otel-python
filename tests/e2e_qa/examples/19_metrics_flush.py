@@ -25,25 +25,17 @@ for cases where you need immediate export or want to ensure data is sent
 before continuing execution.
 """
 
-from anaconda.opentelemetry import (
-    Configuration, 
-    ResourceAttributes, 
-    initialize_telemetry,
-    increment_counter,
-    record_histogram,
-    decrement_counter
-)
+from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
-    EndpointType,
     load_environment,
     print_header,
     print_footer,
     print_info,
-    print_code,
     print_section,
     print_environment_config,
     flush_metrics,
-    apply_signal_specific_endpoints
+    apply_signal_specific_endpoints,
+    SdkOperations,
 )
 from test_data import (
     ServiceVersion,
@@ -81,49 +73,42 @@ def main():
         service_version=SERVICE_VERSION
     )
     
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
+    )
+    
     # Initialize with metrics enabled
     print_section("1. Initialize Telemetry with Metrics")
-    initialize_telemetry(
-        config=config,
-        attributes=attrs,
-        signal_types=['metrics']
-    )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
-    print_info("✓ Telemetry initialized with metrics enabled")
+    sdk.initialize(config, attrs, signal_types=['metrics'])
     
     # Send various metric types
     print_section("2. Send Different Metric Types")
+    print_info("Counter metrics:")
+    sdk.increment_counter(CounterName.API_REQUESTS.value, by=10, attributes=MetricAttributes.ENDPOINT_USERS.value)
+    print_info(f"→ {MetricDescriptions.COUNTER.value}")
     
-    print_info("\n  Counter metrics:")
-    increment_counter(CounterName.API_REQUESTS.value, by=MetricValues.INCREMENT_TEN.value, attributes=MetricAttributes.ENDPOINT_USERS.value)
-    print_code(f'increment_counter("{CounterName.API_REQUESTS.value}", by=10, attributes=ENDPOINT_USERS)')
-    print_info(f"    → {MetricDescriptions.COUNTER.value}")
+    sdk.increment_counter(CounterName.CACHE_HITS.value, by=50)
     
-    increment_counter(CounterName.CACHE_HITS.value, by=50)
-    print_code(f'increment_counter("{CounterName.CACHE_HITS.value}", by=50)')
+    print_info("Histogram metrics:")
+    sdk.record_histogram(HistogramName.REQUEST_DURATION_MS.value, 15.5, attributes=MetricAttributes.HTTP_GET.value)
+    print_info(f"→ {MetricDescriptions.HISTOGRAM.value}")
     
-    print_info("\n  Histogram metrics:")
-    record_histogram(HistogramName.REQUEST_DURATION_MS.value, MetricValues.FAST_RESPONSE.value, attributes=MetricAttributes.HTTP_GET.value)
-    print_code(f'record_histogram("{HistogramName.REQUEST_DURATION_MS.value}", 15.5, attributes=HTTP_GET)')
-    print_info(f"    → {MetricDescriptions.HISTOGRAM.value}")
+    sdk.record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, 125.0, attributes=MetricAttributes.DB_SELECT.value)
     
-    record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, MetricValues.NORMAL_RESPONSE.value, attributes=MetricAttributes.DB_SELECT.value)
-    print_code(f'record_histogram("{HistogramName.DATABASE_QUERY_DURATION_MS.value}", 125.0, attributes=DB_SELECT)')
+    print_info("Up/down counter metrics:")
+    sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=5)
+    print_info(f"→ {MetricDescriptions.UPDOWN_COUNTER.value}")
     
-    print_info("\n  Up/down counter metrics:")
-    increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=MetricValues.INCREASE_FIVE.value)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_CONNECTIONS.value}", by=5)')
-    print_info(f"    → {MetricDescriptions.UPDOWN_COUNTER.value}")
+    sdk.decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
     
-    decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
-    print_code(f'decrement_counter("{UpDownCounterName.ACTIVE_CONNECTIONS.value}", by=2)')
-    
-    print_info("\n✓ All metrics sent")
+    print_info("✓ All metrics sent")
     
     # Explicit flush
     print_section("3. Explicit Flush")
     print_info("Flushing metrics telemetry data...")
-    print_code("flush_metrics()")
     flush_metrics()
     print_info("✓ Flush completed successfully")
     print_info("\nNote: Python SDK automatically flushes on process exit.")
@@ -132,15 +117,6 @@ def main():
     print_info("  • Testing and validation")
     print_info("  • Ensuring metrics are sent before continuing")
     print_info("  • Batch jobs that need guaranteed delivery")
-    
-    # SDK Commands Summary
-    print_section("SDK Commands Summary")
-    print_info("Commands used in this example:")
-    print_code("1. initialize_telemetry(config, attrs, signal_types=['metrics'])")
-    print_code("2. increment_counter(name, by=value, attributes={...})")
-    print_code("3. record_histogram(name, value, attributes={...})")
-    print_code("4. decrement_counter(name, by=value)")
-    print_code("5. flush_metrics()  # Explicitly flush metrics data")
     
     # Backend validation
     print_section("Backend Validation")

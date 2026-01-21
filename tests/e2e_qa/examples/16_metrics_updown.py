@@ -28,23 +28,16 @@ KEY CONCEPTS:
 - Useful for gauges and current values
 """
 
-from anaconda.opentelemetry import (
-    Configuration, 
-    ResourceAttributes, 
-    initialize_telemetry,
-    increment_counter,
-    decrement_counter
-)
+from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
-    EndpointType,
     load_environment,
     print_header,
     print_footer,
     print_info,
-    print_code,
     print_section,
     print_environment_config,
-    apply_signal_specific_endpoints
+    apply_signal_specific_endpoints,
+    SdkOperations,
 )
 from test_data import (
     ServiceVersion,
@@ -80,178 +73,98 @@ def main():
         service_version=SERVICE_VERSION
     )
     
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
+    )
+    
     # Initialize with metrics enabled
     print_section("1. Initialize Telemetry")
-    initialize_telemetry(
-        config=config,
-        attributes=attrs,
-        signal_types=['metrics']
-    )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics'])")
-    print_info("✓ Telemetry initialized with metrics enabled")
+    sdk.initialize(config, attrs, signal_types=['metrics'])
     
     # Example 1: Active connections tracking
     print_section("2. Active Connections Tracking")
-    print_info("\n  Simulating connection lifecycle:")
+    print_info("Simulating connection lifecycle:")
+    sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=5)
+    print_info("→ Active connections: 5")
     
-    # Connections open
-    print_info("\n  Opening 5 connections:")
-    increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=5)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_CONNECTIONS.value}", by=5)')
-    print_info("    → Active connections: 5")
+    sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=3)
+    print_info("→ Active connections: 8 (5 + 3)")
     
-    # More connections open
-    print_info("\n  Opening 3 more connections:")
-    increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=3)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_CONNECTIONS.value}", by=3)')
-    print_info("    → Active connections: 8 (5 + 3)")
-    
-    # Some connections close
-    print_info("\n  Closing 2 connections:")
-    decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
-    print_code(f'decrement_counter("{UpDownCounterName.ACTIVE_CONNECTIONS.value}", by=2)')
-    print_info("    → Active connections: 6 (8 - 2)")
+    sdk.decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
+    print_info("→ Active connections: 6 (8 - 2)")
     
     # Example 2: Queue size management
     print_section("3. Queue Size Management")
-    print_info("\n  Simulating message queue operations:")
+    print_info("Simulating message queue operations:")
+    sdk.increment_counter(UpDownCounterName.QUEUE_SIZE.value, by=10)
+    print_info("→ Queue size: 10")
     
-    # Add messages to queue
-    print_info("\n  Adding 10 messages to queue:")
-    increment_counter(UpDownCounterName.QUEUE_SIZE.value, by=10)
-    print_code(f'increment_counter("{UpDownCounterName.QUEUE_SIZE.value}", by=10)')
-    print_info("    → Queue size: 10")
+    sdk.decrement_counter(UpDownCounterName.QUEUE_SIZE.value, by=3)
+    print_info("→ Queue size: 7 (10 - 3)")
     
-    # Process some messages
-    print_info("\n  Processing 3 messages:")
-    decrement_counter(UpDownCounterName.QUEUE_SIZE.value, by=3)
-    print_code(f'decrement_counter("{UpDownCounterName.QUEUE_SIZE.value}", by=3)')
-    print_info("    → Queue size: 7 (10 - 3)")
+    sdk.increment_counter(UpDownCounterName.QUEUE_SIZE.value, by=5)
+    print_info("→ Queue size: 12 (7 + 5)")
     
-    # Add more messages
-    print_info("\n  Adding 5 more messages:")
-    increment_counter(UpDownCounterName.QUEUE_SIZE.value, by=5)
-    print_code(f'increment_counter("{UpDownCounterName.QUEUE_SIZE.value}", by=5)')
-    print_info("    → Queue size: 12 (7 + 5)")
-    
-    # Process more messages
-    print_info("\n  Processing 8 messages:")
-    decrement_counter(UpDownCounterName.QUEUE_SIZE.value, by=8)
-    print_code(f'decrement_counter("{UpDownCounterName.QUEUE_SIZE.value}", by=8)')
-    print_info("    → Queue size: 4 (12 - 8)")
+    sdk.decrement_counter(UpDownCounterName.QUEUE_SIZE.value, by=8)
+    print_info("→ Queue size: 4 (12 - 8)")
     
     # Example 3: Active users tracking
     print_section("4. Active Users Tracking")
-    print_info("\n  Track users logging in and out:")
+    print_info("Track users logging in and out:")
+    sdk.increment_counter(UpDownCounterName.ACTIVE_USERS.value, by=5)
+    sdk.increment_counter(UpDownCounterName.ACTIVE_USERS.value, by=3)
+    print_info("→ Active users: 8")
     
-    # Users log in
-    print_info("\n  5 users log in:")
-    increment_counter(UpDownCounterName.ACTIVE_USERS.value, by=5)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_USERS.value}", by=5)')
-    
-    # More users log in
-    print_info("\n  3 more users log in:")
-    increment_counter(UpDownCounterName.ACTIVE_USERS.value, by=3)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_USERS.value}", by=3)')
-    print_info("    → Active users: 8")
-    
-    # Some users log out
-    print_info("\n  2 users log out:")
-    decrement_counter(UpDownCounterName.ACTIVE_USERS.value, by=2)
-    print_code(f'decrement_counter("{UpDownCounterName.ACTIVE_USERS.value}", by=2)')
-    print_info("    → Active users: 6")
+    sdk.decrement_counter(UpDownCounterName.ACTIVE_USERS.value, by=2)
+    print_info("→ Active users: 6")
     
     # Example 4: Memory usage tracking
     print_section("5. Memory Usage Tracking")
-    print_info("\n  Track memory allocation and deallocation:")
+    print_info("Track memory allocation and deallocation:")
+    sdk.increment_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=256)
+    sdk.increment_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=128)
+    print_info("→ Memory usage: 384 MB")
     
-    # Allocate memory
-    print_info("\n  Allocate 256 MB:")
-    increment_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=256)
-    print_code(f'increment_counter("{UpDownCounterName.MEMORY_USAGE_MB.value}", by=256)')
-    
-    # Allocate more
-    print_info("\n  Allocate 128 MB more:")
-    increment_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=128)
-    print_code(f'increment_counter("{UpDownCounterName.MEMORY_USAGE_MB.value}", by=128)')
-    print_info("    → Memory usage: 384 MB")
-    
-    # Free some memory
-    print_info("\n  Free 100 MB:")
-    decrement_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=100)
-    print_code(f'decrement_counter("{UpDownCounterName.MEMORY_USAGE_MB.value}", by=100)')
-    print_info("    → Memory usage: 284 MB")
+    sdk.decrement_counter(UpDownCounterName.MEMORY_USAGE_MB.value, by=100)
+    print_info("→ Memory usage: 284 MB")
     
     # Example 5: Concurrent requests with attributes
     print_section("6. Concurrent Requests by Region")
-    print_info("\n  Track concurrent requests across regions:")
+    print_info("Track concurrent requests across regions:")
+    sdk.increment_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=10, attributes=MetricAttributes.REGION_US_EAST.value)
+    print_info("→ US East: 10 concurrent requests")
     
-    # US East requests start
-    increment_counter(
-        UpDownCounterName.CONCURRENT_REQUESTS.value,
-        by=10,
-        attributes=MetricAttributes.REGION_US_EAST.value
-    )
-    print_code(f'increment_counter("{UpDownCounterName.CONCURRENT_REQUESTS.value}", by=10, attributes=REGION_US_EAST)')
-    print_info("    → US East: 10 concurrent requests")
+    sdk.increment_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=7, attributes=MetricAttributes.REGION_US_WEST.value)
+    print_info("→ US West: 7 concurrent requests")
     
-    # US West requests start
-    increment_counter(
-        UpDownCounterName.CONCURRENT_REQUESTS.value,
-        by=7,
-        attributes=MetricAttributes.REGION_US_WEST.value
-    )
-    print_code(f'increment_counter("{UpDownCounterName.CONCURRENT_REQUESTS.value}", by=7, attributes=REGION_US_WEST)')
-    print_info("    → US West: 7 concurrent requests")
-    
-    # Some US East requests complete
-    decrement_counter(
-        UpDownCounterName.CONCURRENT_REQUESTS.value,
-        by=3,
-        attributes=MetricAttributes.REGION_US_EAST.value
-    )
-    print_code(f'decrement_counter("{UpDownCounterName.CONCURRENT_REQUESTS.value}", by=3, attributes=REGION_US_EAST)')
-    print_info("    → US East: 7 concurrent requests (10 - 3)")
+    sdk.decrement_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=3, attributes=MetricAttributes.REGION_US_EAST.value)
+    print_info("→ US East: 7 concurrent requests (10 - 3)")
     
     # Example 6: Shopping cart items
     print_section("7. Shopping Cart Items")
-    print_info("\n  Track items added/removed from cart:")
+    print_info("Track items added/removed from cart:")
+    sdk.increment_counter(UpDownCounterName.ITEMS_IN_CART.value, by=3)
+    sdk.increment_counter(UpDownCounterName.ITEMS_IN_CART.value, by=2)
+    print_info("→ Cart items: 5")
     
-    # Add items
-    print_info("\n  Add 3 items to cart:")
-    increment_counter(UpDownCounterName.ITEMS_IN_CART.value, by=3)
-    print_code(f'increment_counter("{UpDownCounterName.ITEMS_IN_CART.value}", by=3)')
-    
-    # Add more items
-    print_info("\n  Add 2 more items:")
-    increment_counter(UpDownCounterName.ITEMS_IN_CART.value, by=2)
-    print_code(f'increment_counter("{UpDownCounterName.ITEMS_IN_CART.value}", by=2)')
-    print_info("    → Cart items: 5")
-    
-    # Remove an item
-    print_info("\n  Remove 1 item:")
-    decrement_counter(UpDownCounterName.ITEMS_IN_CART.value, by=MetricValues.DECREASE_ONE.value)
-    print_code(f'decrement_counter("{UpDownCounterName.ITEMS_IN_CART.value}", by=1)')
-    print_info("    → Cart items: 4")
+    sdk.decrement_counter(UpDownCounterName.ITEMS_IN_CART.value, by=1)
+    print_info("→ Cart items: 4")
     
     # Example 7: Additional up/down counters
     print_section("8. Additional Resource Tracking")
+    print_info("Disk usage tracking:")
+    sdk.increment_counter(UpDownCounterName.DISK_USAGE_GB.value, by=50)
+    sdk.decrement_counter(UpDownCounterName.DISK_USAGE_GB.value, by=5)
+    print_info("→ Disk usage: 45 GB (50 - 5)")
     
-    print_info("\n  Disk usage tracking:")
-    increment_counter(UpDownCounterName.DISK_USAGE_GB.value, by=50)
-    print_code(f'increment_counter("{UpDownCounterName.DISK_USAGE_GB.value}", by=50)')
-    decrement_counter(UpDownCounterName.DISK_USAGE_GB.value, by=MetricValues.DECREASE_FIVE.value)
-    print_code(f'decrement_counter("{UpDownCounterName.DISK_USAGE_GB.value}", by=5)')
-    print_info("    → Disk usage: 45 GB (50 - 5)")
-    
-    print_info("\n  Active sessions tracking:")
-    increment_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=MetricValues.INCREASE_FIVE.value)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_SESSIONS.value}", by=5)')
-    increment_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=3)
-    print_code(f'increment_counter("{UpDownCounterName.ACTIVE_SESSIONS.value}", by=3)')
-    decrement_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=2)
-    print_code(f'decrement_counter("{UpDownCounterName.ACTIVE_SESSIONS.value}", by=2)')
-    print_info("    → Active sessions: 6 (5 + 3 - 2)")
+    print_info("Active sessions tracking:")
+    sdk.increment_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=5)
+    sdk.increment_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=3)
+    sdk.decrement_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=2)
+    print_info("→ Active sessions: 6 (5 + 3 - 2)")
     
     # Best practices
     print_section("9. Up/Down Counter Best Practices")
@@ -273,15 +186,6 @@ def main():
     print_info("  • Decrement when resource released/removed")
     print_info("  • Track current state, not historical totals")
     print_info("  • Use attributes for multi-dimensional tracking")
-    
-    # SDK Commands Summary
-    print_section("SDK Commands Summary")
-    print_info("Commands used in this example:")
-    print_code("1. initialize_telemetry(config, attrs, signal_types=['metrics'])")
-    print_code("2. increment_counter(name, by=value)")
-    print_code("3. decrement_counter(name, by=value)")
-    print_code("4. increment_counter(name, by=value, attributes={'key': 'value'})")
-    print_code("5. decrement_counter(name, by=value, attributes={'key': 'value'})")
     
     # Backend validation
     print_section("Backend Validation")
