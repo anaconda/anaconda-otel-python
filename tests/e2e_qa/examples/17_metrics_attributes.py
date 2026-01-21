@@ -185,23 +185,6 @@ def main():
     print_info("  • Avoid attributes that change frequently")
     print_info("  • Use attributes for dimensions, not unique identifiers")
     
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected metrics with attributes:")
-    print_info("    - api_requests_total: Multiple series by http.method and http.status_code")
-    print_info("    - request_duration_ms: 3 series by region (15 total measurements)")
-    print_info("    - api_requests_total: 3 series by user.type (3500 total)")
-    print_info("    - database_query_duration_ms: 3 measurements with db.* attributes")
-    print_info("    - cache_hits_total: 850")
-    print_info("    - cache_misses_total: 150")
-    print_info("    - cache_operations_total: 1000 (with CACHE_SET attributes)")
-    print_info("    - errors_total: 7 (5 STATUS_ERROR + 2 STATUS_TIMEOUT)")
-    print_info("    - simple_counter: 100 (with EMPTY attributes)")
-    print_info("  • All metrics should be filterable by their attributes")
-    
     print_footer("✓ Example 17 completed successfully!")
 
 

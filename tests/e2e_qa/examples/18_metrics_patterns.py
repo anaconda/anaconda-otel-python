@@ -219,33 +219,7 @@ def main():
     print_info("  • Track both count and duration")
     print_info("  • Include attributes for filtering")
     print_info("  • Monitor resource utilization")
-    
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected metric patterns:")
-    print_info("    HTTP Metrics:")
-    print_info("      - http_requests_total: 12")
-    print_info("      - http_request_duration_ms: 12 measurements")
-    print_info("      - http_responses_total: 12 (by status code)")
-    print_info("      - http_requests_errors_total: 2")
-    print_info("    Database Metrics:")
-    print_info("      - db_operations_total: 4")
-    print_info("      - db_operation_duration_ms: 4 measurements")
-    print_info("      - db_operations_errors_total: 1")
-    print_info("    Business Metrics:")
-    print_info("      - transactions_total: 4 (2 purchase/success, 1 subscription/success, 1 purchase/failed)")
-    print_info("      - transaction_amount_usd: 3 measurements (2 purchase, 1 subscription)")
-    print_info("      - revenue_total_usd: 16996 cents ($169.96) - stored as cents to avoid floating point issues")
-    print_info("    Resource Metrics:")
-    print_info("      - active_connections: 10")
-    print_info("      - memory_usage_mb: 512")
-    print_info("      - cpu_usage_percent: 3 measurements")
-    print_info("    SLO Metrics:")
-    print_info("      - slo_request_duration_ms: 10 measurements")
-    
+        
     print_footer("✓ Example 18 completed successfully!")
 
 

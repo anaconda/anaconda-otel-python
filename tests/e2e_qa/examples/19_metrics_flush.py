@@ -117,21 +117,7 @@ def main():
     print_info("  • Testing and validation")
     print_info("  • Ensuring metrics are sent before continuing")
     print_info("  • Batch jobs that need guaranteed delivery")
-    
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected metrics:")
-    print_info(f"    - {CounterName.API_REQUESTS.value}: 10 (with endpoint attributes)")
-    print_info(f"    - {CounterName.CACHE_HITS.value}: 50")
-    print_info(f"    - {HistogramName.REQUEST_DURATION_MS.value}: 1 measurement (15.5ms)")
-    print_info(f"    - {HistogramName.DATABASE_QUERY_DURATION_MS.value}: 1 measurement (125.0ms)")
-    print_info(f"    - {UpDownCounterName.ACTIVE_CONNECTIONS.value}: 3 (5 - 2)")
-    print_info("  • All metrics should have resource attributes")
-    print_info("  • Metrics should appear in backend within export interval")
-    
+        
     print_footer("✓ Example 19 completed successfully!")
 
 

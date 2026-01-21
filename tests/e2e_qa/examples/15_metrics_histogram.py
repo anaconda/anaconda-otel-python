@@ -161,27 +161,6 @@ def main():
     print_info("  • Distribution: See how values are spread")
     print_info("  • Outliers: Identify slow requests or large payloads")
     
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected histogram metrics:")
-    print_info(f"    - {HistogramName.REQUEST_DURATION_MS.value}: 8 values (1 + 7)")
-    print_info(f"    - {HistogramName.API_RESPONSE_TIME_MS.value}: 3 values (different endpoints)")
-    print_info(f"    - {HistogramName.DATABASE_QUERY_DURATION_MS.value}: 9 values (5 + 3 + 1)")
-    print_info(f"    - {HistogramName.REQUEST_SIZE_BYTES.value}: 5 values")
-    print_info(f"    - {HistogramName.RESPONSE_SIZE_BYTES.value}: 5 values")
-    print_info(f"    - {HistogramName.ORDER_VALUE_USD.value}: 7 values")
-    print_info(f"    - {HistogramName.CACHE_LOOKUP_DURATION_MS.value}: 1 value")
-    print_info(f"    - {HistogramName.FILE_SIZE_BYTES.value}: 3 values")
-    print_info(f"    - {HistogramName.CART_VALUE_USD.value}: 1 value")
-    print_info(f"    - {HistogramName.TRANSACTION_AMOUNT_USD.value}: 1 value")
-    print_info("  • For each histogram, backend should show:")
-    print_info("    - Count, sum, min, max")
-    print_info("    - Percentiles (p50, p95, p99)")
-    print_info("    - Distribution visualization")
-    
     print_footer("✓ Example 15 completed successfully!")
 
 

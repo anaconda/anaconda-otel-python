@@ -186,24 +186,7 @@ def main():
     print_info("  • Decrement when resource released/removed")
     print_info("  • Track current state, not historical totals")
     print_info("  • Use attributes for multi-dimensional tracking")
-    
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected up/down counter final values:")
-    print_info(f"    - {UpDownCounterName.ACTIVE_CONNECTIONS.value}: 6")
-    print_info(f"    - {UpDownCounterName.QUEUE_SIZE.value}: 4")
-    print_info(f"    - {UpDownCounterName.ACTIVE_USERS.value}: 6")
-    print_info(f"    - {UpDownCounterName.MEMORY_USAGE_MB.value}: 284")
-    print_info(f"    - {UpDownCounterName.CONCURRENT_REQUESTS.value}: 7 (US East), 7 (US West)")
-    print_info(f"    - {UpDownCounterName.ITEMS_IN_CART.value}: 4")
-    print_info(f"    - {UpDownCounterName.DISK_USAGE_GB.value}: 45")
-    print_info(f"    - {UpDownCounterName.ACTIVE_SESSIONS.value}: 6")
-    print_info("  • Note: Values represent current state after all operations")
-    print_info("  • Backend should show increment/decrement history")
-    
+        
     print_footer("✓ Example 16 completed successfully!")
 
 

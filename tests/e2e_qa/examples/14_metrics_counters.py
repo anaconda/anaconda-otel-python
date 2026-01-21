@@ -144,30 +144,6 @@ def main():
     print_info("  • Use consistent attribute names")
     print_info("  • Group related attributes (http.*, db.*, cache.*)")
     
-    # Backend validation
-    print_section("Backend Validation")
-    print_info("To validate in backend:")
-    print_info(f"  • Service Name: {SERVICE_NAME}")
-    print_info(f"  • Service Version: {SERVICE_VERSION}")
-    print_info("  • Expected counter metrics:")
-    print_info(f"    - {CounterName.PAGE_VIEWS.value}: 6 (1 + 5)")
-    print_info(f"    - {CounterName.API_REQUESTS.value}: 3 (with different endpoint attributes)")
-    print_info(f"    - {CounterName.CACHE_HITS.value}: 10")
-    print_info(f"    - {CounterName.CACHE_MISSES.value}: 3")
-    print_info(f"    - {CounterName.USER_LOGINS.value}: 5")
-    print_info(f"    - {CounterName.USER_SIGNUPS.value}: 2")
-    print_info(f"    - {CounterName.ERRORS.value}: 1")
-    print_info(f"    - {CounterName.REQUESTS_RECEIVED.value}: 225 (100 + 75 + 50 across regions)")
-    print_info(f"    - {CounterName.REQUESTS_COMPLETED.value}: 225")
-    print_info(f"    - {CounterName.ORDERS_CREATED.value}: 10")
-    print_info(f"    - {CounterName.PAYMENTS_PROCESSED.value}: 10")
-    print_info(f"    - {CounterName.BYTES_SENT.value}: 1048576 (1 MB)")
-    print_info(f"    - {CounterName.BYTES_RECEIVED.value}: 524288 (512 KB)")
-    print_info(f"    - {CounterName.REVENUE_USD.value}: 779.48 (floating-point counter)")
-    print_info("  • All counters should have resource attributes")
-    print_info("  • Counters with attributes should be filterable by those attributes")
-    print_info("  • Floating-point counters stored as 'asDouble' in backend")
-    
     print_footer("✓ Example 14 completed successfully!")
 
 
