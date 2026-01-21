@@ -94,7 +94,7 @@ tests/e2e_qa/
    OTEL_ENVIRONMENT=your_env_name
    
    # Required: Set your OpenTelemetry collector endpoint URL
-   OTEL_ENDPOINT=https://your-collector-endpoint.com/v1/metrics
+   OTEL_ENDPOINT=https://your-collector-endpoint.com
    
    # Optional: Enable console output for local debugging
    OTEL_CONSOLE_EXPORTER=false  # Set to true for console-only output
@@ -145,10 +145,16 @@ python 02_attributes_examples.py
 
 **From the e2e_qa directory**:
 ```bash
-# Run all 7 initialization examples (each in separate process)
+# Run all initialization examples (each in separate process)
 python run_initialization_examples.py
 
-# Or run all example categories (config + attributes + initialization)
+# Run all logging examples (each in separate process)
+python run_logging_examples.py
+
+# Run all metrics examples (each in separate process)
+python run_metrics_examples.py
+
+# Or run all example categories (config + attributes + initialization + logging + metrics)
 python run_all_examples.py
 ```
 
