@@ -11,7 +11,6 @@ WHEN TO USE COUNTERS:
 - Track cumulative totals (bytes sent, items processed)
 """
 
-from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
     load_environment,
     print_header,
@@ -19,7 +18,6 @@ from utils import (
     print_info,
     print_section,
     print_environment_config,
-    apply_signal_specific_endpoints,
     SdkOperations,
 )
 from test_data import (
@@ -44,21 +42,19 @@ def main():
     _, endpoint, use_console, endpoints = load_environment()
     print_environment_config(endpoint, use_console)
     
-    # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    if use_console:
-        config.set_console_exporter(use_console=True)
-    
-    # Create attributes
-    attrs = ResourceAttributes(
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION
     )
     
-    # Initialize SDK operations wrapper
-    sdk = SdkOperations(
-        endpoint=endpoint,
+    # Create configuration
+    config = sdk.create_configuration(endpoint=endpoint, use_console=use_console)
+    sdk.apply_signal_specific_endpoints(config, endpoints)
+    
+    # Create attributes
+    attrs = sdk.create_attributes(
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION
     )
