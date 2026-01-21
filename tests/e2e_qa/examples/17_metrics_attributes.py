@@ -82,104 +82,47 @@ def main():
     
     # Example 1: HTTP status code tracking
     print_section("2. HTTP Status Code Tracking")
-    print_info("Track requests by HTTP method and status:")
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=100, attributes={"http.method": "GET", "http.status_code": 200})
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=50, attributes={"http.method": "POST", "http.status_code": 201})
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=5, attributes={"http.method": "GET", "http.status_code": 500})
-    
-    print_info("Backend queries enabled:")
-    print_info("  • Total requests: SUM(api_requests_total)")
-    print_info("  • Success rate: COUNT(status_code=2xx) / COUNT(all)")
-    print_info("  • Requests by method: GROUP BY http.method")
+    print_info("→ Attributes enable backend queries: totals, success rates, grouping by method")
     
     # Example 2: Regional performance tracking
     print_section("3. Regional Performance Tracking")
-    print_info("Track latency across different regions:")
     sdk.record_histogram_batch(HistogramName.REQUEST_DURATION_MS.value, [15.0, 18.0, 22.0, 16.0, 20.0], attributes=MetricAttributes.REGION_US_EAST.value)
-    print_info("→ US East: 5 measurements (avg ~18ms)")
-    
     sdk.record_histogram_batch(HistogramName.REQUEST_DURATION_MS.value, [45.0, 50.0, 48.0, 52.0, 47.0], attributes=MetricAttributes.REGION_US_WEST.value)
-    print_info("→ US West: 5 measurements (avg ~48ms)")
-    
     sdk.record_histogram_batch(HistogramName.REQUEST_DURATION_MS.value, [85.0, 90.0, 88.0, 92.0, 87.0], attributes=MetricAttributes.REGION_EU_WEST.value)
-    print_info("→ EU West: 5 measurements (avg ~88ms)")
-    
-    print_info("Backend analysis:")
-    print_info("  • Compare p95 latency by region")
-    print_info("  • Identify slowest region")
-    print_info("  • Track regional performance trends")
+    print_info("→ Region attributes enable performance comparison and trend analysis")
     
     # Example 3: User tier tracking
     print_section("4. User Tier Tracking")
-    print_info("Track API usage by user tier:")
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1000, attributes=MetricAttributes.USER_FREE.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=500, attributes=MetricAttributes.USER_PREMIUM.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=2000, attributes=MetricAttributes.USER_ENTERPRISE.value)
-    
-    print_info("Business insights:")
-    print_info("  • Usage by tier: Free (1000), Premium (500), Enterprise (2000)")
-    print_info("  • Revenue opportunity: Upgrade free users")
-    print_info("  • Capacity planning: Enterprise users dominate")
+    print_info("→ User tier attributes enable business insights and capacity planning")
     
     # Example 4: Database operation tracking
     print_section("5. Database Operation Tracking")
-    print_info("Track database performance by operation and table:")
     sdk.record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, 12.5, attributes={"db.operation": "SELECT", "db.table": "users", "db.system": "postgresql"})
     sdk.record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, 45.0, attributes={"db.operation": "INSERT", "db.table": "orders", "db.system": "postgresql"})
     sdk.record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, 125.0, attributes={"db.operation": "UPDATE", "db.table": "products", "db.system": "postgresql"})
-    
-    print_info("Query optimization:")
-    print_info("  • Identify slow tables")
-    print_info("  • Compare operation types")
-    print_info("  • Track query performance over time")
+    print_info("→ Multiple attributes enable detailed query optimization analysis")
     
     # Example 5: Cache effectiveness
     print_section("6. Cache Effectiveness Tracking")
-    print_info("Track cache hit/miss rates:")
     sdk.increment_counter(CounterName.CACHE_HITS.value, by=850, attributes=MetricAttributes.CACHE_HIT.value)
     sdk.increment_counter(CounterName.CACHE_MISSES.value, by=150, attributes=MetricAttributes.CACHE_MISS.value)
     sdk.increment_counter("cache_operations_total", by=1000, attributes=MetricAttributes.CACHE_SET.value)
     
-    print_info("Cache metrics:")
-    print_info("  • Hit rate: 850 / (850 + 150) = 85%")
-    print_info("  • Miss rate: 150 / (850 + 150) = 15%")
-    print_info("  • Set operations: 1000")
-    
     # Example 6: Error tracking with status
     print_section("7. Error Status Tracking")
-    print_info("Track errors by status type:")
     sdk.increment_counter(CounterName.ERRORS.value, by=5, attributes=MetricAttributes.STATUS_ERROR.value)
     sdk.increment_counter(CounterName.ERRORS.value, by=2, attributes=MetricAttributes.STATUS_TIMEOUT.value)
     
-    print_info("Error breakdown:")
-    print_info("  • General errors: 5")
-    print_info("  • Timeout errors: 2")
-    
     # Example 7: Metrics without attributes
     print_section("8. Metrics Without Attributes")
-    print_info("Sometimes metrics don't need attributes:")
     sdk.increment_counter("simple_counter", by=100, attributes=MetricAttributes.EMPTY.value)
-    print_info("→ Empty attributes for simple metrics")
-    
-    # Best practices
-    print_section("9. Attribute Best Practices")
-    print_info("Naming conventions:")
-    print_info("  • Use dot notation: 'http.method', 'db.table', 'user.type'")
-    print_info("  • Group related attributes: 'http.*', 'db.*', 'user.*'")
-    print_info("  • Be consistent across metrics")
-    print_info("  • Use lowercase with underscores: 'error_type' not 'ErrorType'")
-    print_info("\nCardinality management:")
-    print_info("  ✓ Low cardinality: http.method (GET, POST, PUT, DELETE)")
-    print_info("  ✓ Low cardinality: region (us-east, us-west, eu-west)")
-    print_info("  ✓ Low cardinality: user.type (free, premium, enterprise)")
-    print_info("  ✗ High cardinality: user.id (unique per user)")
-    print_info("  ✗ High cardinality: request.id (unique per request)")
-    print_info("  ✗ High cardinality: timestamp (unique per second)")
-    print_info("\nAttribute selection:")
-    print_info("  • Choose attributes that enable useful queries")
-    print_info("  • Limit to 5-10 attributes per metric")
-    print_info("  • Avoid attributes that change frequently")
-    print_info("  • Use attributes for dimensions, not unique identifiers")
+    print_info("→ Attributes are optional - use them when multi-dimensional analysis is needed")
     
     print_footer("✓ Example 17 completed successfully!")
 

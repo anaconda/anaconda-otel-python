@@ -109,113 +109,42 @@ def main():
     
     # Pattern 1: RED Metrics (Rate, Errors, Duration)
     print_section("2. Pattern: RED Metrics")
-    print_info("RED metrics for comprehensive service monitoring:")
-    print_info("  • Rate: Requests per second")
-    print_info("  • Errors: Error rate")
-    print_info("  • Duration: Response time distribution")
-    
-    print_info("Tracking successful requests:")
     for _ in range(10):
         track_request(sdk, "/api/users", "GET", 45.0, 200)
-    print_info("→ 10 successful requests, avg 45ms")
-    
-    print_info("Tracking some errors:")
     for _ in range(2):
         track_request(sdk, "/api/users", "GET", 125.0, 500)
-    print_info("→ 2 error requests")
-    
-    print_info("RED metrics calculated:")
-    print_info("  • Rate: 12 requests")
-    print_info("  • Errors: 2 errors (16.7% error rate)")
-    print_info("  • Duration: p50, p95, p99 from histogram")
+    print_info("→ RED pattern: Rate (counters) + Errors (error counters) + Duration (histograms)")
     
     # Pattern 2: Database monitoring
     print_section("3. Pattern: Database Monitoring")
-    print_info("Track database operations comprehensively:")
     track_database_operation(sdk, "SELECT", "users", 15.0, True)
     track_database_operation(sdk, "SELECT", "users", 18.0, True)
     track_database_operation(sdk, "INSERT", "orders", 45.0, True)
-    print_info("→ Successful operations tracked")
-    
     track_database_operation(sdk, "UPDATE", "products", 3000.0, False)
-    print_info("→ Failed operation tracked (timeout)")
-    
-    print_info("Database insights:")
-    print_info("  • Operation count by type")
-    print_info("  • Performance by table")
-    print_info("  • Error rate by operation")
-    print_info("  • Slow query detection (p95 > threshold)")
+    print_info("→ Track operation counts, durations, and errors for comprehensive DB monitoring")
     
     # Pattern 3: Business metrics
     print_section("4. Pattern: Business Metrics")
-    print_info("Track business KPIs alongside technical metrics:")
     track_business_transaction(sdk, "purchase", 49.99, True)
     track_business_transaction(sdk, "purchase", 99.99, True)
     track_business_transaction(sdk, "subscription", 19.99, True)
-    print_info("→ Successful transactions: $169.97 revenue")
-    
     track_business_transaction(sdk, "purchase", 199.99, False)
-    print_info("→ Failed transaction tracked")
-    
-    print_info("Business insights:")
-    print_info("  • Total revenue: $169.97")
-    print_info("  • Transaction count: 4 (3 success, 1 failed)")
-    print_info("  • Success rate: 75%")
-    print_info("  • Average transaction value: $56.66")
+    print_info("→ Combine technical metrics with business KPIs for complete monitoring")
     
     # Pattern 4: Resource utilization
     print_section("5. Pattern: Resource Utilization")
-    print_info("Track resource usage over time:")
     sdk.increment_counter("active_connections", by=10)
     sdk.increment_counter("memory_usage_mb", by=512)
     sdk.record_histogram_batch("cpu_usage_percent", [45.5, 52.0, 48.5])
     
-    print_info("Resource monitoring:")
-    print_info("  • Active connections: 10")
-    print_info("  • Memory usage: 512 MB")
-    print_info("  • CPU usage: ~48.7% average")
-    
     # Pattern 5: SLI/SLO tracking
     print_section("6. Pattern: SLI/SLO Tracking")
-    print_info("Track metrics for SLO calculations:")
-    print_info("Example SLO: 99% of requests complete in < 100ms")
-    
     # Fast requests (meet SLO)
     sdk.record_histogram_batch("slo_request_duration_ms", [15.0, 25.0, 35.0, 45.0, 55.0, 65.0, 75.0, 85.0, 95.0], attributes={"slo_target": "100ms"})
-    print_info("→ 9 requests under 100ms (meet SLO)")
-    
     # Slow request (violates SLO)
     sdk.record_histogram("slo_request_duration_ms", 250.0, attributes={"slo_target": "100ms"})
-    print_info("→ 1 request over 100ms (violates SLO)")
+    print_info("→ Histograms with SLO attributes enable compliance calculations and alerting")
     
-    print_info("SLO calculation:")
-    print_info("  • Total requests: 10")
-    print_info("  • Requests meeting SLO: 9")
-    print_info("  • SLO compliance: 90% (below 99% target)")
-    print_info("  • Action: Investigate slow request")
-    
-    # Best practices summary
-    print_section("7. Metrics Best Practices Summary")
-    print_info("Naming conventions:")
-    print_info("  • Use consistent suffixes: _total, _duration_ms, _bytes")
-    print_info("  • Group related metrics: http_*, db_*, business_*")
-    print_info("  • Be descriptive: http_request_duration_ms not latency")
-    print_info("\nMetric selection:")
-    print_info("  • Counters: Totals, rates, cumulative values")
-    print_info("  • Histograms: Durations, sizes, distributions")
-    print_info("  • Up/Down Counters: Current state, resource usage")
-    print_info("\nCombining metrics:")
-    print_info("  • Track rate + errors + duration (RED)")
-    print_info("  • Combine technical + business metrics")
-    print_info("  • Enable SLO calculations")
-    print_info("  • Support multiple analysis dimensions")
-    print_info("\nProduction patterns:")
-    print_info("  • Always track errors separately")
-    print_info("  • Use histograms for latency")
-    print_info("  • Track both count and duration")
-    print_info("  • Include attributes for filtering")
-    print_info("  • Monitor resource utilization")
-        
     print_footer("✓ Example 18 completed successfully!")
 
 

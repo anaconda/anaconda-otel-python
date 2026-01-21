@@ -81,38 +81,19 @@ def main():
     
     # Send various metric types
     print_section("2. Send Different Metric Types")
-    print_info("Counter metrics:")
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=10, attributes=MetricAttributes.ENDPOINT_USERS.value)
-    print_info(f"→ {MetricDescriptions.COUNTER.value}")
-    
     sdk.increment_counter(CounterName.CACHE_HITS.value, by=50)
-    
-    print_info("Histogram metrics:")
     sdk.record_histogram(HistogramName.REQUEST_DURATION_MS.value, 15.5, attributes=MetricAttributes.HTTP_GET.value)
-    print_info(f"→ {MetricDescriptions.HISTOGRAM.value}")
-    
     sdk.record_histogram(HistogramName.DATABASE_QUERY_DURATION_MS.value, 125.0, attributes=MetricAttributes.DB_SELECT.value)
-    
-    print_info("Up/down counter metrics:")
     sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=5)
-    print_info(f"→ {MetricDescriptions.UPDOWN_COUNTER.value}")
-    
     sdk.decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
-    
-    print_info("✓ All metrics sent")
     
     # Explicit flush
     print_section("3. Explicit Flush")
-    print_info("Flushing metrics telemetry data...")
     sdk.flush_metrics()
-    print_info("✓ Flush completed successfully")
-    print_info("\nNote: Python SDK automatically flushes on process exit.")
-    print_info("Explicit flush is useful for:")
-    print_info("  • Short-lived processes (Lambda, CLI tools)")
-    print_info("  • Testing and validation")
-    print_info("  • Ensuring metrics are sent before continuing")
-    print_info("  • Batch jobs that need guaranteed delivery")
-        
+    print_info("→ Explicit flush ensures metrics are sent immediately")
+    print_info("→ Useful for short-lived processes, Lambda functions, and testing")
+    
     print_footer("✓ Example 19 completed successfully!")
 
 

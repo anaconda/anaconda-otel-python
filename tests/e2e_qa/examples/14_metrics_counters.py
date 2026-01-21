@@ -67,12 +67,10 @@ def main():
     print_section("2. Basic Counter Usage")
     sdk.increment_counter(CounterName.PAGE_VIEWS.value, by=1)
     sdk.increment_counter(CounterName.PAGE_VIEWS.value, by=5)
-    print_info("→ Total is now 6 (1 + 5)")
+    print_info("→ Counters accumulate across multiple calls")
     
     # Example 3: Counter with attributes
     print_section("3. Counters with Attributes")
-    print_info("Track API requests by different endpoints:")
-    
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_USERS.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_ORDERS.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_PRODUCTS.value)
@@ -80,25 +78,19 @@ def main():
     
     # Example 4: Multiple counter types
     print_section("4. Different Counter Types")
-    print_info("Cache operations:")
     sdk.increment_counter(CounterName.CACHE_HITS.value, by=10, attributes=MetricAttributes.CACHE_HIT.value)
     sdk.increment_counter(CounterName.CACHE_MISSES.value, by=3, attributes=MetricAttributes.CACHE_MISS.value)
-    
-    print_info("User activity:")
     sdk.increment_counter(CounterName.USER_LOGINS.value, by=5)
     sdk.increment_counter(CounterName.USER_SIGNUPS.value, by=2)
-    
-    print_info("Error tracking:")
     sdk.increment_counter(CounterName.ERRORS.value, by=1, attributes=MetricAttributes.STATUS_ERROR.value)
     
     # Example 5: Regional tracking
     print_section("5. Multi-Dimensional Tracking")
-    print_info("Track requests across different regions:")
     sdk.increment_counter(CounterName.REQUESTS_RECEIVED.value, by=100, attributes=MetricAttributes.REGION_US_EAST.value)
     sdk.increment_counter(CounterName.REQUESTS_RECEIVED.value, by=75, attributes=MetricAttributes.REGION_US_WEST.value)
     sdk.increment_counter(CounterName.REQUESTS_RECEIVED.value, by=50, attributes=MetricAttributes.REGION_EU_WEST.value)
     sdk.increment_counter(CounterName.REQUESTS_COMPLETED.value, by=225)
-    print_info("→ Total: 225 requests across all regions, all completed")
+    print_info("→ Same metric with different region attributes tracked separately")
     
     # Example 6: Business metrics
     print_section("6. Business Metrics")
@@ -109,36 +101,14 @@ def main():
     print_section("7. Network Traffic")
     sdk.increment_counter(CounterName.BYTES_SENT.value, by=1048576)
     sdk.increment_counter(CounterName.BYTES_RECEIVED.value, by=524288)
-    print_info("→ Sent: 1 MB, Received: 512 KB")
+    print_info("→ Counters work well for tracking large numeric values")
     
     # Example 8: Floating-point counters (revenue tracking)
     print_section("8. Floating-Point Counters")
-    print_info("Counters support decimal values for currency, percentages, etc:")
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_SMALL.value)
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_MEDIUM.value)
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_LARGE.value)
-    total_revenue = MetricValues.REVENUE_SMALL.value + MetricValues.REVENUE_MEDIUM.value + MetricValues.REVENUE_LARGE.value
-    print_info(f"→ Total revenue: ${total_revenue:.2f} USD (stored as asDouble)")
-    
-    # Best practices
-    print_section("9. Counter Best Practices")
-    print_info(f"What is a counter? {MetricDescriptions.COUNTER.value}")
-    print_info("Naming conventions:")
-    print_info("  • Use descriptive names: 'api_requests_total' not 'count'")
-    print_info("  • Add '_total' suffix for clarity")
-    print_info("  • Use snake_case: 'page_views_total'")
-    print_info("  • Be consistent across your application")
-    print_info("\nWhen to use counters:")
-    print_info("  ✓ Tracking totals (requests, errors, events)")
-    print_info("  ✓ Calculating rates (per second, per minute)")
-    print_info("  ✓ Cumulative values that only increase")
-    print_info("  ✗ Values that can decrease (use up/down counter)")
-    print_info("  ✗ Distributions of values (use histogram)")
-    print_info("\nAttribute best practices:")
-    print_info("  • Use attributes for dimensions (endpoint, region, status)")
-    print_info("  • Keep cardinality reasonable (avoid unique IDs)")
-    print_info("  • Use consistent attribute names")
-    print_info("  • Group related attributes (http.*, db.*, cache.*)")
+    print_info("→ Counters support floating-point values (stored as asDouble)")
     
     print_footer("✓ Example 14 completed successfully!")
 
