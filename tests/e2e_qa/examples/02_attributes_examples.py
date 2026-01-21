@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: 2025 Anaconda, Inc
-# SPDX-License-Identifier: Apache-2.0
-
+#!/usr/bin/env python3
 """
 Resource Attributes Examples
 
@@ -9,12 +6,12 @@ This module demonstrates how to create and configure ResourceAttributes
 for the Anaconda OpenTelemetry SDK.
 """
 
-from anaconda.opentelemetry import ResourceAttributes
 from utils import (
     print_example_header,
     print_example_section,
     print_success,
-    print_info
+    print_info,
+    SdkOperations
 )
 from test_data import (
     ServiceName,
@@ -34,18 +31,13 @@ def example_01_basic_attributes():
     print_info("Create ResourceAttributes with required service_name and service_version")
     
     # Create basic attributes (only required fields)
+    sdk = SdkOperations(show_code=False)
     service_name = ServiceName.ATTRIBUTES_EXAMPLES.value
     service_version = ServiceVersion.DEFAULT.value
-    attrs = ResourceAttributes(
+    attrs = sdk.create_attributes(
         service_name=service_name,
         service_version=service_version
     )
-    
-    print_success("ResourceAttributes created")
-    print_info(f"Service name: {attrs.service_name}")
-    print_info(f"Service version: {attrs.service_version}")
-    print_info(f"SDK version (auto): {attrs.client_sdk_version}")
-    print_info(f"Schema version (auto): {attrs.schema_version}")
     
     return attrs
 
@@ -56,18 +48,14 @@ def example_02_optional_fields():
     print_info("Add optional fields like platform, hostname, environment")
     
     # Create attributes with optional fields
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.DEFAULT.value,
         platform=Platform.CONDA.value,
         hostname=Hostname.MY_LAPTOP.value,
         environment=Environment.DEVELOPMENT.value
     )
-    
-    print_success("ResourceAttributes with optional fields created")
-    print_info(f"Platform: {attrs.platform}")
-    print_info(f"Hostname: {attrs.hostname}")
-    print_info(f"Environment: {attrs.environment}")
     
     return attrs
 
@@ -78,16 +66,11 @@ def example_03_auto_populated_fields():
     print_info("Some fields are automatically populated if not provided")
     
     # Create attributes without optional fields - they'll be auto-populated
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.DEFAULT.value
     )
-    
-    print_success("ResourceAttributes created with auto-populated fields")
-    print_info(f"OS type (auto): {attrs.os_type}")
-    print_info(f"OS version (auto): {attrs.os_version}")
-    print_info(f"Python version (auto): {attrs.python_version}")
-    print_info(f"Hostname (auto): {attrs.hostname}")
     
     return attrs
 
@@ -98,19 +81,14 @@ def example_04_set_attributes_method():
     print_info("Add custom attributes after creation using set_attributes()")
     
     # Create basic attributes
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.DEFAULT.value
     )
     
     # Add custom attributes
-    attrs.set_attributes(**CustomAttributes.TEAM_PROJECT.value)
-    
-    print_success("Custom attributes added")
-    print_info("Custom attributes stored in 'parameters' dict:")
-    print_info(f"  team: {attrs.parameters.get('team')}")
-    print_info(f"  project: {attrs.parameters.get('project')}")
-    print_info(f"  region: {attrs.parameters.get('region')}")
+    sdk.set_custom_attributes(attrs, **CustomAttributes.TEAM_PROJECT.value)
     
     return attrs
 
@@ -121,7 +99,8 @@ def example_05_update_existing_attributes():
     print_info("Modify existing attributes using set_attributes()")
     
     # Create attributes
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.DEFAULT.value,
         environment=Environment.DEVELOPMENT.value
@@ -130,9 +109,8 @@ def example_05_update_existing_attributes():
     print_info(f"Initial environment: {attrs.environment}")
     
     # Update environment
-    attrs.set_attributes(environment=Environment.STAGING.value)
+    sdk.set_custom_attributes(attrs, environment=Environment.STAGING.value)
     
-    print_success("Attribute updated")
     print_info(f"Updated environment: {attrs.environment}")
     
     return attrs
@@ -144,7 +122,8 @@ def example_06_environment_specific_attributes():
     print_info("Add attributes that identify the deployment environment")
     
     # Create attributes with environment information
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.V2_1.value,
         environment=Environment.PRODUCTION.value,
@@ -152,14 +131,7 @@ def example_06_environment_specific_attributes():
     )
     
     # Add deployment-specific attributes
-    attrs.set_attributes(**DeploymentAttributes.US_EAST_PROD.value)
-    
-    print_success("Environment-specific attributes configured")
-    print_info(f"Environment: {attrs.environment}")
-    print_info(f"Platform: {attrs.platform}")
-    print_info("Deployment attributes:")
-    print_info(f"  Region: {attrs.parameters.get('deployment_region')}")
-    print_info(f"  Cluster: {attrs.parameters.get('deployment_cluster')}")
+    sdk.set_custom_attributes(attrs, **DeploymentAttributes.US_EAST_PROD.value)
     
     return attrs
 
@@ -170,15 +142,12 @@ def example_07_user_identification():
     print_info("Add user_id for tracking user-specific telemetry")
     
     # Create attributes with user_id
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.DEFAULT.value,
         user_id=UserId.TEST_USER_1.value
     )
-    
-    print_success("User identification configured")
-    print_info(f"User ID: {attrs.user_id}")
-    print_info("Note: user_id is handled specially and not included in resource attributes")
     
     return attrs
 
@@ -189,7 +158,8 @@ def example_08_complete_attributes():
     print_info("Combine all attribute types for comprehensive configuration")
     
     # Create comprehensive attributes
-    attrs = ResourceAttributes(
+    sdk = SdkOperations(show_code=False)
+    attrs = sdk.create_attributes(
         service_name=ServiceName.ATTRIBUTES_EXAMPLES.value,
         service_version=ServiceVersion.V3_2_1.value,
         platform=Platform.CONDA.value,
@@ -199,15 +169,7 @@ def example_08_complete_attributes():
     
     # Add custom attributes
     custom_attrs = {**CustomAttributes.ANALYTICS_TEAM.value, **DeploymentAttributes.ANALYTICS_PROD.value}
-    attrs.set_attributes(**custom_attrs)
-    
-    print_success("Complete attributes configuration created")
-    print_info("Standard attributes:")
-    print_info(f"  Service: {attrs.service_name} v{attrs.service_version}")
-    print_info(f"  Platform: {attrs.platform}")
-    print_info(f"  Environment: {attrs.environment}")
-    print_info(f"  User ID: {attrs.user_id}")
-    print_info(f"Custom attributes: {len(attrs.parameters)} attributes")
+    sdk.set_custom_attributes(attrs, **custom_attrs)
     
     return attrs
 
@@ -227,28 +189,16 @@ def example_09_validation():
     ]
     
     print_info("Valid service name patterns:")
+    sdk = SdkOperations(show_code=False)
     for name in valid_names:
         try:
-            attrs = ResourceAttributes(
+            attrs = sdk.create_attributes(
                 service_name=name,
                 service_version="1.0.0"
             )
             print_info(f"  ✓ '{name}' - valid")
         except ValueError as e:
             print_info(f"  ✗ '{name}' - invalid: {e}")
-    
-    # Valid environment values
-    valid_environments = ["", "test", "development", "staging", "production"]
-    
-    print_info("\nValid environment values:")
-    for env in valid_environments:
-        attrs = ResourceAttributes(
-            service_name="test-service",
-            service_version="1.0.0",
-            environment=env
-        )
-        display_env = env if env else "(empty string)"
-        print_info(f"  ✓ '{display_env}' - valid")
     
     print_success("Validation examples completed")
     

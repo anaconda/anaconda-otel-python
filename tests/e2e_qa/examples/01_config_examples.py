@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: 2025 Anaconda, Inc
-# SPDX-License-Identifier: Apache-2.0
-
+#!/usr/bin/env python3
 """
 Configuration Examples
 
@@ -9,16 +6,15 @@ This module demonstrates how to create and configure Configuration objects
 for the Anaconda OpenTelemetry SDK.
 """
 
-from anaconda.opentelemetry import Configuration
 from utils import (
     EndpointType,
     load_environment,
-    apply_signal_specific_endpoints,
     print_example_header,
     print_example_section,
     print_success,
     print_info,
-    validate_environment
+    validate_environment,
+    SdkOperations
 )
 from test_data import ExportInterval, LoggingLevel
 
@@ -32,8 +28,9 @@ def example_01_basic_configuration():
     _, endpoint, _, endpoints = load_environment()
     
     # Create basic configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(endpoint=endpoint, use_console=False)
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Configuration created successfully")
     print_info(f"Default endpoint: {endpoint}")
@@ -49,9 +46,9 @@ def example_02_console_exporter():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration and enable console exporter
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    config.set_console_exporter(use_console=True)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(endpoint=endpoint, use_console=True)
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Console exporter enabled")
     print_info("Telemetry data will be printed to console")
@@ -67,12 +64,16 @@ def example_03_signal_specific_endpoints():
     _, default_endpoint, _, _ = load_environment()
     
     # Create configuration with default endpoint
-    config = Configuration(default_endpoint=default_endpoint)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(endpoint=default_endpoint, use_console=False)
     
     # Set signal-specific endpoints (using same endpoint for demo)
-    config.set_metrics_endpoint(default_endpoint)
-    config.set_logging_endpoint(default_endpoint)
-    config.set_tracing_endpoint(default_endpoint)
+    sdk.set_signal_endpoints(
+        config,
+        metrics_endpoint=default_endpoint,
+        logging_endpoint=default_endpoint,
+        tracing_endpoint=default_endpoint
+    )
     
     print_success("Signal-specific endpoints configured")
     print_info(f"Metrics endpoint: {default_endpoint}")
@@ -90,12 +91,14 @@ def example_04_export_intervals():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Set export intervals (in milliseconds)
-    config.set_metrics_export_interval_ms(ExportInterval.METRICS_30S.value)  # 30 seconds
-    config.set_tracing_export_interval_ms(ExportInterval.TRACING_15S.value)  # 15 seconds
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=False,
+        metrics_interval_ms=ExportInterval.METRICS_30S.value,
+        tracing_interval_ms=ExportInterval.TRACING_15S.value
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Export intervals configured")
     print_info("Metrics export interval: 30 seconds")
@@ -112,11 +115,13 @@ def example_05_logging_level():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Set logging level (only logs at this level or higher will be sent)
-    config.set_logging_level(LoggingLevel.INFO.value)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=False,
+        logging_level=LoggingLevel.INFO.value
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Logging level configured")
     print_info("Logging level: info (info, warning, error will be sent)")
@@ -132,13 +137,15 @@ def example_06_session_entropy():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Set session entropy (any value that makes sessions unique)
+    sdk = SdkOperations(show_code=False)
     import time
     session_entropy = int(time.time() * 1000)
-    config.set_tracing_session_entropy(session_entropy)
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=False,
+        session_entropy=session_entropy
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Session entropy configured")
     print_info(f"Session entropy: {session_entropy}")
@@ -154,11 +161,13 @@ def example_07_skip_internet_check():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Skip internet check (useful for testing or offline environments)
-    config.set_skip_internet_check(True)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=False,
+        skip_internet_check=True
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Internet check disabled")
     print_info("SDK will not check for internet connectivity")
@@ -174,11 +183,13 @@ def example_08_cumulative_metrics():
     _, endpoint, _, endpoints = load_environment()
     
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Enable cumulative metrics
-    config.set_use_cumulative_metrics(True)
+    sdk = SdkOperations(show_code=False)
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=False,
+        use_cumulative_metrics=True
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Cumulative metrics enabled")
     print_info("Metrics will use cumulative aggregation")
@@ -194,22 +205,17 @@ def example_09_complete_configuration():
     _, endpoint, _, endpoints = load_environment()
     
     # Create comprehensive configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    
-    # Enable console for debugging
-    config.set_console_exporter(use_console=True)
-    
-    # Set export intervals
-    config.set_metrics_export_interval_ms(ExportInterval.METRICS_60S.value)  # 1 minute
-    config.set_tracing_export_interval_ms(ExportInterval.TRACING_30S.value)  # 30 seconds
-    
-    # Set logging level
-    config.set_logging_level(LoggingLevel.WARNING.value)
-    
-    # Set session entropy
+    sdk = SdkOperations(show_code=False)
     import time
-    config.set_tracing_session_entropy(int(time.time() * 1000))
+    config = sdk.create_configuration(
+        endpoint=endpoint,
+        use_console=True,
+        metrics_interval_ms=ExportInterval.METRICS_60S.value,
+        tracing_interval_ms=ExportInterval.TRACING_30S.value,
+        logging_level=LoggingLevel.WARNING.value,
+        session_entropy=int(time.time() * 1000)
+    )
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Complete configuration created")
     print_info("✓ Console exporter enabled")

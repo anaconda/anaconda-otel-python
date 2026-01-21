@@ -17,11 +17,7 @@ from .config_utils import (
     EndpointType,
     EndpointEnvVar,
     # Functions
-    setup_python_path,
     load_environment,
-    apply_signal_specific_endpoints,
-    create_basic_config,
-    create_basic_attributes,
     get_session_id,
     validate_environment,
 )
@@ -58,14 +54,6 @@ from .print_utils import (
     print_error_highlights,
 )
 
-# Import from telemetry_utils
-from .telemetry_utils import (
-    flush_telemetry,
-    flush_metrics,
-    flush_traces,
-    flush_logs,
-)
-
 # Import from sdk_operations
 from .sdk_operations import (
     SdkOperations,
@@ -76,11 +64,7 @@ __all__ = [
     'EndpointType',
     'EndpointEnvVar',
     # Config utils - Functions
-    'setup_python_path',
     'load_environment',
-    'apply_signal_specific_endpoints',
-    'create_basic_config',
-    'create_basic_attributes',
     'get_session_id',
     'validate_environment',
     # Print utils - Headers/Footers
@@ -111,11 +95,6 @@ __all__ = [
     'run_example_subprocess',
     'print_examples_summary',
     'print_error_highlights',
-    # Telemetry utils
-    'flush_telemetry',
-    'flush_metrics',
-    'flush_traces',
-    'flush_logs',
     # SDK operations
     'SdkOperations',
 ]

@@ -18,14 +18,12 @@ USE CASES:
 - Production environments requiring full observability
 """
 
-from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
     load_environment,
     print_header,
     print_footer,
     print_info,
     print_environment_config,
-    apply_signal_specific_endpoints,
     SdkOperations,
 )
 from test_data import (
@@ -54,23 +52,6 @@ def main():
     _, endpoint, use_console, endpoints = load_environment()
     print_environment_config(endpoint, use_console)
     
-    # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    if use_console:
-        config.set_console_exporter(use_console=True)
-    
-    # Create attributes
-    attrs = ResourceAttributes(
-        service_name=SERVICE_NAME,
-        service_version=SERVICE_VERSION
-    )
-    
-    # Add custom attributes for this example
-    custom_attrs = CustomAttributes.EXAMPLE_01.value
-    attrs.set_attributes(**custom_attrs)
-    print_info(f"✓ Custom attributes added: {custom_attrs}")
-    
     # Initialize SDK operations wrapper
     sdk = SdkOperations(
         endpoint=endpoint,
@@ -78,11 +59,22 @@ def main():
         service_version=SERVICE_VERSION
     )
     
+    # Create configuration
+    config = sdk.create_configuration(endpoint=endpoint, use_console=use_console)
+    sdk.apply_signal_specific_endpoints(config, endpoints)
+    
+    # Create attributes
+    attrs = sdk.create_attributes(
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
+    )
+    
+    # Add custom attributes for this example
+    custom_attrs = CustomAttributes.EXAMPLE_01.value
+    sdk.set_custom_attributes(attrs, **custom_attrs)
+    
     # Initialize with all signals
     sdk.initialize(config, attrs, signal_types=SignalTypes.ALL_SIGNALS.value)
-    
-    print_info("✓ Telemetry initialized with all signals")
-    print_info("Enabled: metrics, logs, traces")
     
     # Send a test metric
     sdk.increment_counter(METRIC_NAME, by=METRIC_VALUE)

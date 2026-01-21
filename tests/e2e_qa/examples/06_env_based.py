@@ -26,20 +26,13 @@ FEATURES DEMONSTRATED:
 - Dynamic configuration based on runtime environment
 """
 
-from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
 from utils import (
-    EndpointType,
     load_environment,
     print_header,
     print_footer,
     print_info,
-    print_code,
     print_environment_config,
-    print_resource_attributes,
-    print_metric_info,
-    print_backend_validation,
-    print_sdk_commands_summary,
-    apply_signal_specific_endpoints
+    SdkOperations
 )
 from test_data import (
     ServiceName,
@@ -66,58 +59,34 @@ def main():
     otel_env, endpoint, use_console, endpoints = load_environment()
     print_environment_config(endpoint, use_console, otel_env)
     
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
+    )
+    
     # Create configuration
-    config = Configuration(default_endpoint=endpoint)
-    apply_signal_specific_endpoints(config, endpoints)
-    if use_console:
-        config.set_console_exporter(use_console=True)
+    config = sdk.create_configuration(endpoint=endpoint, use_console=use_console)
+    sdk.apply_signal_specific_endpoints(config, endpoints)
     
     # Create attributes with environment info
-    attrs = ResourceAttributes(
+    attrs = sdk.create_attributes(
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION,
         environment=Environment.STAGING.value
     )
-    print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}", environment="staging")')
     
     # Add custom attributes for this example
     custom_attrs = {"otel_environment": otel_env, "test_type": TestType.E2E_QA.value}
-    attrs.set_attributes(**custom_attrs)
-    print_code(f'attrs.set_attributes(otel_environment="{otel_env}", test_type="{TestType.E2E_QA.value}")')
-    print_info(f"✓ Custom attributes added: {custom_attrs}")
+    sdk.set_custom_attributes(attrs, **custom_attrs)
     
     # Initialize with all signals
-    initialize_telemetry(
-        config=config,
-        attributes=attrs,
-        signal_types=SignalTypes.ALL_SIGNALS.value
-    )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
-    
-    print_info("✓ Environment-based initialization successful")
-    print_info(f"OTEL Environment: {otel_env}")
-    print_info(f"Endpoint: {endpoint}")
-    print_info("Service Environment: staging")
-    
-    # Print SDK commands summary
-    print_sdk_commands_summary([
-        'config = Configuration(default_endpoint=...)',
-        'attrs = ResourceAttributes(service_name="...", service_version="...", environment="...")',
-        'attrs.set_attributes(key1="value1", key2="value2")',
-        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
-        'increment_counter("metric_name", by=1, attributes={"key": "value"})',
-    ])
-    
-    # Print resource attributes
-    print_resource_attributes(attrs)
+    sdk.initialize(config, attrs, signal_types=SignalTypes.ALL_SIGNALS.value)
     
     # Send a test metric with metric-level attribute
     metric_attrs = {"environment": otel_env}
-    increment_counter(METRIC_NAME, by=METRIC_VALUE, attributes=metric_attrs)
-    print_metric_info(METRIC_NAME, METRIC_VALUE, metric_attrs)
-    
-    # Print backend validation checklist
-    print_backend_validation(SERVICE_NAME, METRIC_NAME, METRIC_VALUE, attrs, metric_attrs)
+    sdk.increment_counter(METRIC_NAME, by=METRIC_VALUE, attributes=metric_attrs)
     
     print_footer("✓ Example 6 completed successfully!")
 

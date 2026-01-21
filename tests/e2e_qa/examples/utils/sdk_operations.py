@@ -14,6 +14,15 @@ Usage:
     
     sdk = SdkOperations(endpoint="http://localhost:4318")
     
+    # Create configuration with logging
+    config = sdk.create_configuration(endpoint="http://localhost:4318")
+    
+    # Create attributes with logging
+    attrs = sdk.create_attributes(service_name="my-service", service_version="1.0.0")
+    
+    # Set custom attributes with logging
+    sdk.set_custom_attributes(attrs, team="data-science", region="us-east")
+    
     # Initialize telemetry with logging
     sdk.initialize(config, attrs, signal_types=['metrics'])
     
@@ -28,6 +37,7 @@ Usage:
 
 import time
 from typing import Any, Dict, List, Optional, Union
+from opentelemetry import metrics, trace
 from anaconda.opentelemetry import (
     Configuration,
     ResourceAttributes,
@@ -36,7 +46,9 @@ from anaconda.opentelemetry import (
     decrement_counter,
     record_histogram,
 )
-from .print_utils import log_detailed, print_code
+from anaconda.opentelemetry.signals import _AnacondaLogger
+from .print_utils import log_detailed, print_code, print_flush_status
+from .config_utils import EndpointType
 
 
 class SdkOperations:
@@ -77,6 +89,175 @@ class SdkOperations:
         items = [f'"{k}": {repr(v)}' for k, v in attributes.items()]
         return "{" + ", ".join(items) + "}"
     
+    def create_configuration(
+        self,
+        endpoint: str,
+        use_console: bool = False,
+        metrics_interval_ms: Optional[int] = None,
+        tracing_interval_ms: Optional[int] = None,
+        logging_level: Optional[str] = None,
+        skip_internet_check: bool = False,
+        use_cumulative_metrics: bool = False,
+        session_entropy: Optional[int] = None
+    ) -> Configuration:
+        """
+        Create a Configuration object with detailed logging.
+        
+        Args:
+            endpoint: Default endpoint URL
+            use_console: Enable console exporter
+            metrics_interval_ms: Metrics export interval in milliseconds
+            tracing_interval_ms: Tracing export interval in milliseconds
+            logging_level: Logging level (e.g., "info", "warning")
+            skip_internet_check: Skip internet connectivity check
+            use_cumulative_metrics: Use cumulative metrics aggregation
+            session_entropy: Session entropy value
+            
+        Returns:
+            Configured Configuration object
+        """
+        if self.show_code:
+            print_code(f'config = Configuration(default_endpoint="{endpoint}")')
+        
+        log_detailed("Creating Configuration...")
+        log_detailed(f"  → Default endpoint: {endpoint}")
+        
+        config = Configuration(default_endpoint=endpoint)
+        
+        if use_console:
+            if self.show_code:
+                print_code('config.set_console_exporter(use_console=True)')
+            config.set_console_exporter(use_console=True)
+            log_detailed("  → Console exporter enabled")
+        
+        if metrics_interval_ms:
+            if self.show_code:
+                print_code(f'config.set_metrics_export_interval_ms({metrics_interval_ms})')
+            config.set_metrics_export_interval_ms(metrics_interval_ms)
+            log_detailed(f"  → Metrics export interval: {metrics_interval_ms}ms")
+        
+        if tracing_interval_ms:
+            if self.show_code:
+                print_code(f'config.set_tracing_export_interval_ms({tracing_interval_ms})')
+            config.set_tracing_export_interval_ms(tracing_interval_ms)
+            log_detailed(f"  → Tracing export interval: {tracing_interval_ms}ms")
+        
+        if logging_level:
+            if self.show_code:
+                print_code(f'config.set_logging_level("{logging_level}")')
+            config.set_logging_level(logging_level)
+            log_detailed(f"  → Logging level: {logging_level}")
+        
+        if skip_internet_check:
+            if self.show_code:
+                print_code('config.set_skip_internet_check(True)')
+            config.set_skip_internet_check(True)
+            log_detailed("  → Internet check disabled")
+        
+        if use_cumulative_metrics:
+            if self.show_code:
+                print_code('config.set_use_cumulative_metrics(True)')
+            config.set_use_cumulative_metrics(True)
+            log_detailed("  → Cumulative metrics enabled")
+        
+        if session_entropy:
+            if self.show_code:
+                print_code(f'config.set_tracing_session_entropy({session_entropy})')
+            config.set_tracing_session_entropy(session_entropy)
+            log_detailed(f"  → Session entropy: {session_entropy}")
+        
+        log_detailed("✓ Configuration created successfully")
+        return config
+    
+    def create_attributes(
+        self,
+        service_name: str,
+        service_version: str,
+        platform: Optional[str] = None,
+        environment: Optional[str] = None,
+        hostname: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> ResourceAttributes:
+        """
+        Create ResourceAttributes object with detailed logging.
+        
+        Args:
+            service_name: Service name (required)
+            service_version: Service version (required)
+            platform: Platform (e.g., "conda", "kubernetes")
+            environment: Environment (e.g., "development", "production")
+            hostname: Hostname
+            user_id: User ID
+            
+        Returns:
+            ResourceAttributes object
+        """
+        # Build code string
+        if self.show_code:
+            params = [f'service_name="{service_name}"', f'service_version="{service_version}"']
+            if platform:
+                params.append(f'platform="{platform}"')
+            if environment:
+                params.append(f'environment="{environment}"')
+            if hostname:
+                params.append(f'hostname="{hostname}"')
+            if user_id:
+                params.append(f'user_id="{user_id}"')
+            print_code(f'attrs = ResourceAttributes({", ".join(params)})')
+        
+        log_detailed("Creating ResourceAttributes...")
+        log_detailed(f"  → Service name: {service_name}")
+        log_detailed(f"  → Service version: {service_version}")
+        
+        kwargs = {}
+        if platform:
+            kwargs['platform'] = platform
+            log_detailed(f"  → Platform: {platform}")
+        if environment:
+            kwargs['environment'] = environment
+            log_detailed(f"  → Environment: {environment}")
+        if hostname:
+            kwargs['hostname'] = hostname
+            log_detailed(f"  → Hostname: {hostname}")
+        if user_id:
+            kwargs['user_id'] = user_id
+            log_detailed(f"  → User ID: {user_id}")
+        
+        attrs = ResourceAttributes(
+            service_name=service_name,
+            service_version=service_version,
+            **kwargs
+        )
+        
+        log_detailed("✓ ResourceAttributes created successfully")
+        return attrs
+    
+    def set_custom_attributes(
+        self,
+        attrs: ResourceAttributes,
+        **custom_attrs
+    ) -> None:
+        """
+        Set custom attributes on ResourceAttributes with detailed logging.
+        
+        Args:
+            attrs: ResourceAttributes object to update
+            **custom_attrs: Custom attributes as keyword arguments
+        """
+        if not custom_attrs:
+            return
+        
+        if self.show_code:
+            attrs_str = ", ".join(f'{k}="{v}"' for k, v in custom_attrs.items())
+            print_code(f'attrs.set_attributes({attrs_str})')
+        
+        log_detailed("Setting custom attributes...")
+        for key, value in custom_attrs.items():
+            log_detailed(f"  → {key}: {value}")
+        
+        attrs.set_attributes(**custom_attrs)
+        log_detailed("✓ Custom attributes set successfully")
+    
     def initialize(
         self,
         config: Configuration,
@@ -102,11 +283,20 @@ class SdkOperations:
         log_detailed(f"  Signal types: {signal_types}")
         
         start_time = time.time()
-        initialize_telemetry(
-            config=config,
-            attributes=attributes,
-            signal_types=signal_types
-        )
+        # Only pass signal_types if it's not None to use the default value
+        if signal_types is not None:
+            log_detailed(f"  → Passing signal_types explicitly: {signal_types}")
+            initialize_telemetry(
+                config=config,
+                attributes=attributes,
+                signal_types=signal_types
+            )
+        else:
+            log_detailed("  → Using default signal_types (not passing parameter)")
+            initialize_telemetry(
+                config=config,
+                attributes=attributes
+            )
         duration = time.time() - start_time
         
         log_detailed(f"✓ Initialization completed in {duration:.3f}s")
@@ -284,3 +474,162 @@ class SdkOperations:
         
         log_detailed(f"✓ Counter decremented successfully (took {duration:.3f}s)")
         log_detailed("✓ SDK accepted metric, will export in background")
+    
+    def apply_signal_specific_endpoints(self, config: Configuration, endpoints: dict) -> None:
+        """
+        Apply signal-specific endpoints to a Configuration object if they are provided.
+        
+        This is a utility function to reduce code duplication when setting up
+        signal-specific endpoints (logging, metrics, tracing).
+        
+        Args:
+            config: Configuration object to update
+            endpoints: Dictionary with endpoint values (from load_environment())
+        
+        Example:
+            >>> sdk = SdkOperations()
+            >>> _, endpoint, _, endpoints = load_environment()
+            >>> config = Configuration(default_endpoint=endpoint)
+            >>> sdk.apply_signal_specific_endpoints(config, endpoints)
+        """
+        if endpoints.get(EndpointType.LOGGING.value):
+            config.set_logging_endpoint(endpoints[EndpointType.LOGGING.value])
+        if endpoints.get(EndpointType.METRICS.value):
+            config.set_metrics_endpoint(endpoints[EndpointType.METRICS.value])
+        if endpoints.get(EndpointType.TRACING.value):
+            config.set_tracing_endpoint(endpoints[EndpointType.TRACING.value])
+    
+    def set_signal_endpoints(
+        self,
+        config: Configuration,
+        metrics_endpoint: Optional[str] = None,
+        logging_endpoint: Optional[str] = None,
+        tracing_endpoint: Optional[str] = None
+    ) -> None:
+        """
+        Set individual signal-specific endpoints with detailed logging.
+        
+        Args:
+            config: Configuration object to update
+            metrics_endpoint: Optional metrics endpoint URL
+            logging_endpoint: Optional logging endpoint URL
+            tracing_endpoint: Optional tracing endpoint URL
+        
+        Example:
+            >>> sdk = SdkOperations()
+            >>> config = sdk.create_configuration(endpoint="http://localhost:4318")
+            >>> sdk.set_signal_endpoints(
+            ...     config,
+            ...     metrics_endpoint="http://metrics:4318",
+            ...     logging_endpoint="http://logs:4318",
+            ...     tracing_endpoint="http://traces:4318"
+            ... )
+        """
+        if self.show_code:
+            if metrics_endpoint:
+                print_code(f'config.set_metrics_endpoint("{metrics_endpoint}")')
+            if logging_endpoint:
+                print_code(f'config.set_logging_endpoint("{logging_endpoint}")')
+            if tracing_endpoint:
+                print_code(f'config.set_tracing_endpoint("{tracing_endpoint}")')
+        
+        if metrics_endpoint:
+            log_detailed(f"Setting metrics endpoint: {metrics_endpoint}")
+            config.set_metrics_endpoint(metrics_endpoint)
+            log_detailed("✓ Metrics endpoint set")
+        
+        if logging_endpoint:
+            log_detailed(f"Setting logging endpoint: {logging_endpoint}")
+            config.set_logging_endpoint(logging_endpoint)
+            log_detailed("✓ Logging endpoint set")
+        
+        if tracing_endpoint:
+            log_detailed(f"Setting tracing endpoint: {tracing_endpoint}")
+            config.set_tracing_endpoint(tracing_endpoint)
+            log_detailed("✓ Tracing endpoint set")
+    
+    def flush_metrics(self, timeout_millis: int = 5000) -> None:
+        """
+        Flush metrics provider with detailed logging.
+        
+        Args:
+            timeout_millis: Timeout in milliseconds (default: 5000)
+        """
+        if self.show_code:
+            print_code(f'# Flush metrics (timeout: {timeout_millis}ms)')
+        
+        log_detailed("Flushing metrics provider...")
+        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        
+        start_time = time.time()
+        meter_provider = metrics.get_meter_provider()
+        if hasattr(meter_provider, 'force_flush'):
+            meter_provider.force_flush(timeout_millis=timeout_millis)
+        duration = time.time() - start_time
+        
+        log_detailed(f"✓ Metrics flushed successfully (took {duration:.3f}s)")
+    
+    def flush_traces(self, timeout_millis: int = 5000) -> None:
+        """
+        Flush traces provider with detailed logging.
+        
+        Args:
+            timeout_millis: Timeout in milliseconds (default: 5000)
+        """
+        if self.show_code:
+            print_code(f'# Flush traces (timeout: {timeout_millis}ms)')
+        
+        log_detailed("Flushing traces provider...")
+        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        
+        start_time = time.time()
+        tracer_provider = trace.get_tracer_provider()
+        if hasattr(tracer_provider, 'force_flush'):
+            tracer_provider.force_flush(timeout_millis=timeout_millis)
+        duration = time.time() - start_time
+        
+        log_detailed(f"✓ Traces flushed successfully (took {duration:.3f}s)")
+    
+    def flush_logs(self, timeout_millis: int = 5000) -> None:
+        """
+        Flush logs provider with detailed logging.
+        
+        Args:
+            timeout_millis: Timeout in milliseconds (default: 5000)
+        """
+        if self.show_code:
+            print_code(f'# Flush logs (timeout: {timeout_millis}ms)')
+        
+        log_detailed("Flushing logs provider...")
+        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        
+        start_time = time.time()
+        if _AnacondaLogger._instance:
+            logger_instance = _AnacondaLogger._instance
+            if hasattr(logger_instance, '_provider') and logger_instance._provider:
+                logger_instance._provider.force_flush(timeout_millis=timeout_millis)
+        duration = time.time() - start_time
+        
+        log_detailed(f"✓ Logs flushed successfully (took {duration:.3f}s)")
+    
+    def flush_telemetry(self) -> None:
+        """
+        Flush all telemetry providers (metrics, traces, logs) with detailed logging.
+        
+        This is a convenience method that calls flush_metrics(), flush_traces(),
+        and flush_logs() in sequence. Use the individual methods if you only
+        need to flush specific providers.
+        """
+        if self.show_code:
+            print_code('# Flush all telemetry data')
+        
+        log_detailed("Flushing all telemetry providers...")
+        
+        start_time = time.time()
+        self.flush_metrics()
+        self.flush_traces()
+        self.flush_logs()
+        total_duration = time.time() - start_time
+        
+        log_detailed(f"✓ All telemetry flushed successfully (total: {total_duration:.3f}s)")
+        print_flush_status(success=True)
