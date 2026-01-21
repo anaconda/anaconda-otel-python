@@ -35,6 +35,7 @@ Usage:
                         attributes={"region": "us-east"})
 """
 
+import logging
 import time
 from typing import Any, Dict, List, Optional, Union
 from opentelemetry import metrics, trace
@@ -46,7 +47,7 @@ from anaconda.opentelemetry import (
     decrement_counter,
     record_histogram,
 )
-from anaconda.opentelemetry.signals import _AnacondaLogger
+from anaconda.opentelemetry.signals import _AnacondaLogger, get_telemetry_logger_handler
 from .print_utils import log_detailed, print_code, print_flush_status
 from .config_utils import EndpointType
 
@@ -305,6 +306,38 @@ class SdkOperations:
         if signal_types:
             for signal in signal_types:
                 log_detailed(f"✓ {signal.capitalize()} provider ready to accept {signal}")
+    
+    def get_logger(self, logger_name: str, level: int = logging.INFO) -> logging.Logger:
+        """
+        Get a logger configured with telemetry handler.
+        
+        Args:
+            logger_name: Name of the logger
+            level: Logging level (default: logging.INFO)
+            
+        Returns:
+            Configured logger instance
+        """
+        if self.show_code:
+            level_name = logging.getLevelName(level)
+            print_code(f'logger = logging.getLogger("{logger_name}")')
+            if level != logging.INFO:
+                print_code(f'logger.setLevel(logging.{level_name})')
+        
+        log_detailed(f"Creating logger: {logger_name}")
+        log_detailed(f"  → Level: {logging.getLevelName(level)}")
+        
+        # Get the telemetry handler
+        handler = get_telemetry_logger_handler()
+        
+        # Create and configure logger
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level)
+        logger.addHandler(handler)
+        
+        log_detailed(f"✓ Logger '{logger_name}' configured with telemetry handler")
+        
+        return logger
     
     def increment_counter(
         self,
