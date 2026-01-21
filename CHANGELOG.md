@@ -49,6 +49,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 - Vague exception handling for cases where telemetry is not initialized
 - Changed string casting of json objects to json.dumps
+- Fix counter (cumulative) not being DELTA temporality
 
 ### Security
 
