@@ -70,34 +70,14 @@ def main():
     # Get logger
     print_section("3. Setup Logger")
     logger = sdk.get_logger(LOGGER_NAME)
-    print_info(f"→ Logger '{LOGGER_NAME}' configured to capture all levels")
     
-    # Demonstrate all logging levels
+    # Demonstrate each log level
     print_section("4. Send Logs at All Levels")
-    
     logger.debug(LogMessage.BASIC_DEBUG.value)
-    print_info("→ DEBUG: Detailed troubleshooting information")
-    
     logger.info(LogMessage.BASIC_INFO.value)
-    print_info("→ INFO: General informational messages")
-    
     logger.warning(LogMessage.BASIC_WARNING.value)
-    print_info("→ WARNING: Non-critical issues")
-    
     logger.error(LogMessage.BASIC_ERROR.value)
-    print_info("→ ERROR: Failures that need attention")
-    
     logger.critical(LogMessage.BASIC_CRITICAL.value)
-    print_info("→ CRITICAL: System failures")
-    
-    # Explain log level filtering
-    print_section("5. Log Level Filtering")
-    print_info("Understanding log level filtering:")
-    print_info("  • DEBUG level: Captures all levels (current setting)")
-    print_info("  • INFO level: Captures INFO, WARNING, ERROR, CRITICAL")
-    print_info("  • WARNING level: Captures WARNING, ERROR, CRITICAL")
-    print_info("  • ERROR level: Captures ERROR, CRITICAL")
-    print_info("  • CRITICAL level: Captures only CRITICAL")
     
     print_footer("✓ Example 9 completed successfully!")
 

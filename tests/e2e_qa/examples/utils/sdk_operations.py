@@ -46,6 +46,7 @@ from anaconda.opentelemetry import (
     increment_counter,
     decrement_counter,
     record_histogram,
+    get_trace,
 )
 from anaconda.opentelemetry.signals import _AnacondaLogger, get_telemetry_logger_handler
 from .print_utils import log_detailed, print_code, print_flush_status
@@ -666,3 +667,29 @@ class SdkOperations:
         
         log_detailed(f"✓ All telemetry flushed successfully (total: {total_duration:.3f}s)")
         print_flush_status(success=True)
+    
+    def get_trace(self, name: str, attributes: Optional[Dict[str, Any]] = None):
+        """
+        Create a trace span context manager with detailed logging.
+        
+        Args:
+            name: Span name
+            attributes: Optional attributes dictionary
+            
+        Returns:
+            Context manager for the trace span
+            
+        Example:
+            >>> with sdk.get_trace("api_request", attributes={"http.method": "GET"}):
+            ...     # Your code here
+            ...     pass
+        """
+        if self.show_code:
+            attrs_str = f", attributes={self._format_attributes(attributes)}" if attributes else ""
+            print_code(f'with get_trace("{name}"{attrs_str}) as span:')
+        
+        log_detailed(f"Creating trace span: {name}")
+        if attributes:
+            log_detailed(f"  → Attributes: {attributes}")
+        
+        return get_trace(name, attributes=attributes or {})

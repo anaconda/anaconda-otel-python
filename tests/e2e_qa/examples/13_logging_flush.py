@@ -76,17 +76,10 @@ def main():
     logger.info(LogMessage.USER_LOGIN.value, extra=LogAttributes.USER_BASIC.value)
     logger.warning(LogMessage.SLOW_QUERY.value, extra=LogAttributes.DB_SLOW_QUERY.value)
     logger.error(LogMessage.CONNECTION_FAILED.value, extra=LogAttributes.ERROR_CONTEXT.value)
-    print_info("→ Sent INFO, WARNING, and ERROR logs")
     
     # Explicit flush
     print_section("4. Explicit Flush")
     sdk.flush_logs()
-    print_info("→ Flush completed successfully")
-    print_info("\nNote: Python SDK automatically flushes on process exit.")
-    print_info("Explicit flush is useful for:")
-    print_info("  • Short-lived processes (Lambda, CLI tools)")
-    print_info("  • Testing and validation")
-    print_info("  • Ensuring logs are sent before continuing")
     
     print_footer("✓ Example 13 completed successfully!")
 

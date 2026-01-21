@@ -72,39 +72,24 @@ def main():
     auth_logger = sdk.get_logger(LoggerName.AUTH_LOGGER.value, level=logging.WARNING)
     cache_logger = sdk.get_logger(LoggerName.CACHE_LOGGER.value, level=logging.INFO)
     custom_logger = sdk.get_logger(LoggerName.CUSTOM_LOGGER.value, level=logging.WARNING)
-    print_info("→ Created 5 component loggers with different levels")
     
     # Use the loggers
     print_section("3. Use Different Loggers")
-    
     api_logger.info(LogMessage.API_REQUEST.value, extra=LogAttributes.HTTP_REQUEST.value)
     api_logger.debug("API debug message")  # Filtered out (level < INFO)
-    print_info("→ API Logger (INFO): 1 log captured")
     
     db_logger.debug("Executing database query")
     db_logger.info(LogMessage.DATABASE_QUERY.value, extra=LogAttributes.DB_QUERY.value)
-    print_info("→ Database Logger (DEBUG): 2 logs captured")
     
     auth_logger.info("User authentication attempt")  # Filtered out (level < WARNING)
     auth_logger.warning(LogMessage.PERMISSION_DENIED.value, extra=LogAttributes.USER_WITH_ROLE.value)
-    print_info("→ Auth Logger (WARNING): 1 log captured")
     
     cache_logger.info(LogMessage.CACHE_HIT.value, extra=LogAttributes.CACHE_INFO.value)
     cache_logger.info(LogMessage.CACHE_MISS.value, extra=LogAttributes.CACHE_MISS_INFO.value)
-    print_info("→ Cache Logger (INFO): 2 logs captured")
     
     custom_logger.info("Custom info message")  # Filtered out (level < WARNING)
     custom_logger.warning(LogMessage.RATE_LIMIT.value, extra=LogAttributes.EMPTY.value)
     custom_logger.warning(LogMessage.HIGH_MEMORY.value)
-    print_info("→ Custom Logger (WARNING): 2 logs captured")
-    
-    # Logger hierarchy explanation
-    print_section("4. Logger Hierarchy and Naming")
-    print_info("Logger naming best practices:")
-    print_info("  • Use dot notation for hierarchy: 'app.api.users'")
-    print_info("  • Parent loggers: 'app' is parent of 'app.api'")
-    print_info("  • Child loggers inherit parent settings by default")
-    print_info("  • Organize by component: api, database, auth, cache")
     
     print_footer("✓ Example 11 completed successfully!")
 

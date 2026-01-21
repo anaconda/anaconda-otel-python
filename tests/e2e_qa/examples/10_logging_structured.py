@@ -71,47 +71,17 @@ def main():
     
     # Demonstrate structured logging with different attribute types
     print_section("3. Structured Logging Examples")
-    
     logger.info(LogMessage.USER_LOGIN.value, extra=LogAttributes.USER_BASIC.value)
-    print_info("→ User activity with user.id and user.name")
-    
     logger.info(LogMessage.API_REQUEST.value, extra=LogAttributes.HTTP_REQUEST.value)
-    print_info("→ HTTP request with method, url, status_code")
-    
     logger.info(LogMessage.DATABASE_QUERY.value, extra=LogAttributes.DB_QUERY.value)
-    print_info("→ Database query with system, operation, table")
-    
     logger.info("Operation completed", extra=LogAttributes.PERFORMANCE.value)
-    print_info("→ Performance metrics with duration_ms, memory_mb")
-    
     logger.error(LogMessage.CONNECTION_FAILED.value, extra=LogAttributes.ERROR_CONTEXT.value)
-    print_info("→ Error with error.type and error.message")
-    
     logger.info(LogMessage.CACHE_HIT.value, extra=LogAttributes.CACHE_INFO.value)
-    print_info("→ Cache operation with cache.key and cache.hit")
-    
     logger.info(LogMessage.USER_LOGIN.value, extra=LogAttributes.USER_WITH_EMAIL.value)
-    print_info("→ User activity with email")
-    
     logger.info(LogMessage.API_REQUEST.value, extra=LogAttributes.HTTP_POST.value)
-    print_info("→ HTTP POST request")
-    
     logger.error(LogMessage.API_REQUEST.value, extra=LogAttributes.HTTP_ERROR.value)
-    print_info("→ HTTP error response")
-    
     logger.info("Database insert operation", extra=LogAttributes.DB_INSERT.value)
-    print_info("→ Database insert operation")
-    
     logger.warning("Slow operation detected", extra=LogAttributes.SLOW_OPERATION.value)
-    print_info("→ Slow operation warning")
-    
-    # Best practices
-    print_section("4. Structured Logging Best Practices")
-    print_info("Attribute naming conventions:")
-    print_info("  • Use dot notation: 'user.id', 'http.method', 'db.system'")
-    print_info("  • Be consistent: Same attribute names across logs")
-    print_info("  • Be descriptive: 'duration_ms' not just 'time'")
-    print_info("  • Group related: 'user.*', 'http.*', 'db.*'")
     
     print_footer("✓ Example 10 completed successfully!")
 
