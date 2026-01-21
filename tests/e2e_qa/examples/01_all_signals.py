@@ -18,20 +18,15 @@ USE CASES:
 - Production environments requiring full observability
 """
 
-from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry, increment_counter
+from anaconda.opentelemetry import Configuration, ResourceAttributes
 from utils import (
-    EndpointType,
     load_environment,
     print_header,
     print_footer,
     print_info,
-    print_code,
     print_environment_config,
-    print_resource_attributes,
-    print_metric_info,
-    print_backend_validation,
-    print_sdk_commands_summary,
-    apply_signal_specific_endpoints
+    apply_signal_specific_endpoints,
+    SdkOperations,
 )
 from test_data import (
     ServiceName,
@@ -70,43 +65,27 @@ def main():
         service_name=SERVICE_NAME,
         service_version=SERVICE_VERSION
     )
-    print_code(f'attrs = ResourceAttributes(service_name="{SERVICE_NAME}", service_version="{SERVICE_VERSION}")')
     
     # Add custom attributes for this example
     custom_attrs = CustomAttributes.EXAMPLE_01.value
     attrs.set_attributes(**custom_attrs)
-    print_code(f'attrs.set_attributes({", ".join(f"{k}=\"{v}\"" for k, v in custom_attrs.items())})')
     print_info(f"✓ Custom attributes added: {custom_attrs}")
     
-    # Initialize with all signals
-    initialize_telemetry(
-        config=config,
-        attributes=attrs,
-        signal_types=SignalTypes.ALL_SIGNALS.value
+    # Initialize SDK operations wrapper
+    sdk = SdkOperations(
+        endpoint=endpoint,
+        service_name=SERVICE_NAME,
+        service_version=SERVICE_VERSION
     )
-    print_code("initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])")
+    
+    # Initialize with all signals
+    sdk.initialize(config, attrs, signal_types=SignalTypes.ALL_SIGNALS.value)
     
     print_info("✓ Telemetry initialized with all signals")
     print_info("Enabled: metrics, logs, traces")
     
-    # Print SDK commands summary
-    print_sdk_commands_summary([
-        'config = Configuration(default_endpoint=...)',
-        'attrs = ResourceAttributes(service_name="...", service_version="...")',
-        'attrs.set_attributes(key1="value1", key2="value2")',
-        "initialize_telemetry(config, attrs, signal_types=['metrics', 'logging', 'tracing'])",
-        'increment_counter("metric_name", by=1)',
-    ])
-    
-    # Print resource attributes
-    print_resource_attributes(attrs)
-    
     # Send a test metric
-    increment_counter(METRIC_NAME, by=METRIC_VALUE)
-    print_metric_info(METRIC_NAME, METRIC_VALUE)
-    
-    # Print backend validation checklist
-    print_backend_validation(SERVICE_NAME, METRIC_NAME, METRIC_VALUE, attrs)
+    sdk.increment_counter(METRIC_NAME, by=METRIC_VALUE)
     
     print_footer("✓ Example 1 completed successfully!")
 
