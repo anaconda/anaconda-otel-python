@@ -579,3 +579,242 @@ def print_error_highlights(all_errors: List[str], error_by_example: Dict[str, Li
             print("   • Check firewall settings")
     
     print("=" * 70)
+
+
+def print_initialization_header(env: str, endpoint: str, use_console: bool):
+    """
+    Print header for initialization examples runner.
+    
+    Args:
+        env: Environment name
+        endpoint: OTEL endpoint URL
+        use_console: Whether console exporter is enabled
+    """
+    print("\n" + "=" * 70)
+    print("  Running Initialization Examples")
+    print("=" * 70)
+    print("  Each example runs in a separate process for proper initialization")
+    print("-" * 70)
+    
+    print(f"  Environment: {env}")
+    print(f"  Endpoint: {endpoint}")
+    print(f"  Console Exporter: {use_console}")
+    
+    if use_console:
+        print("\n  ⚠️  WARNING: Console exporter is enabled!")
+        print("     Data will be printed to console but NOT sent to backend.")
+        print("     Set OTEL_CONSOLE_EXPORTER=false for backend validation.")
+    else:
+        print("\n  ✓ Console exporter is disabled - data will be sent to backend")
+    
+    print("=" * 70 + "\n")
+
+
+def print_initialization_summary(
+    results: Dict[str, Tuple[bool, List[str]]], 
+    config_results: Dict[str, Tuple[bool, List[str]]] = None,
+    use_console: bool = False
+):
+    """
+    Print comprehensive summary for initialization examples.
+    
+    Args:
+        results: Dict mapping initialization example names to (success, errors) tuples
+        config_results: Optional dict for configuration examples
+        use_console: Whether console exporter is enabled
+    """
+    print("\n" + "=" * 70)
+    print("📋 SUMMARY")
+    print("=" * 70)
+    
+    # Collect all errors
+    all_errors = []
+    all_error_by_example = {}
+    
+    # Console exporter warning
+    if use_console:
+        print("\n⚠️  CRITICAL WARNING:")
+        print("   OTEL_CONSOLE_EXPORTER=true in .env")
+        print("   Data is ONLY printed to console, NOT sent to backend!")
+        print("   To validate in backend: Set OTEL_CONSOLE_EXPORTER=false")
+        print("=" * 70)
+    
+    # Configuration examples summary
+    config_success = 0
+    if config_results:
+        config_success, _, error_by_example = print_examples_summary(
+            config_results, 
+            title="Configuration Examples",
+            emoji="📚"
+        )
+        all_error_by_example.update(error_by_example)
+        for errors in error_by_example.values():
+            all_errors.extend(errors)
+    
+    # Initialization examples summary
+    success_count, total_count, error_by_example = print_examples_summary(
+        results,
+        title="Initialization Examples",
+        emoji="🚀"
+    )
+    all_error_by_example.update(error_by_example)
+    for errors in error_by_example.values():
+        all_errors.extend(errors)
+    
+    # Overall summary
+    total_all = total_count + (len(config_results) if config_results else 0)
+    success_all = success_count + config_success
+    
+    # Print error highlights
+    print_error_highlights(all_errors, all_error_by_example)
+    
+    # Final status
+    if success_all == total_all:
+        print("\n✅ All examples completed successfully!")
+        
+        if all_errors:
+            print("   ⚠️  However, some HTTP errors were detected during execution")
+            print("   ⚠️  See error details above")
+        
+        if not use_console:
+            print("\n💡 To validate in backend:")
+            print("   1. Wait 1-5 minutes for backend processing")
+            print("   2. Query by service names:")
+            print("      - example-01-all-signals")
+            print("      - example-02-metrics-only")
+            print("      - example-03-default")
+            print("      - example-04-selective")
+            print("      - example-05-complete")
+            print("      - example-06-env-based")
+            print("      - example-07-flush-test")
+            print("   3. Each service should have 1 metric with value=1")
+    else:
+        print("\n❌ Some examples failed - check output above for errors")
+    
+    print("=" * 70 + "\n")
+
+
+def print_logging_header():
+    """Print header for logging examples runner."""
+    print("\n" + "=" * 80)
+    print("  Running Logging Examples")
+    print("=" * 80)
+    print("This will run all logging examples in sequence.")
+    print("Each example demonstrates different logging capabilities.")
+
+
+def print_logging_summary(results: Dict[str, Tuple[bool, List[str]]]):
+    """
+    Print comprehensive summary for logging examples.
+    
+    Args:
+        results: Dict mapping example names to (success, errors) tuples
+    """
+    print("\n" + "=" * 80)
+    print("📋 SUMMARY")
+    print("=" * 80)
+    
+    # Use utility function for consistent summary
+    success_count, total_count, error_by_example = print_examples_summary(
+        results,
+        title="Logging Examples",
+        emoji="📝"
+    )
+    
+    # Collect all errors
+    all_errors = []
+    for errors in error_by_example.values():
+        all_errors.extend(errors)
+    
+    # Print error highlights
+    print_error_highlights(all_errors, error_by_example)
+    
+    # Final status
+    if success_count == total_count:
+        print("\n✅ All logging examples completed successfully!")
+        
+        if all_errors:
+            print("   ⚠️  However, some HTTP errors were detected during execution")
+            print("   ⚠️  See error details above")
+    else:
+        print("\n❌ Some examples failed - check output above for errors")
+    
+    # Backend validation info
+    print("\n💡 To validate in backend:")
+    print("   Expected services:")
+    print("     1. example-08-logging-basic")
+    print("     2. example-09-logging-levels")
+    print("     3. example-10-logging-structured")
+    print("     4. example-11-logging-multiple")
+    print("     5. example-12-logging-integration")
+    print("     6. example-13-logging-flush")
+    print("\n   Each service should have log records with:")
+    print("     • Proper severity levels")
+    print("     • Resource attributes")
+    print("     • Structured attributes (where applicable)")
+    print("     • Logger names (where applicable)")
+    
+    print("=" * 80 + "\n")
+
+
+def print_metrics_header():
+    """Print header for metrics examples runner."""
+    print("\n" + "=" * 80)
+    print("  Running Metrics Examples")
+    print("=" * 80)
+    print("This will run all metrics examples in sequence.")
+    print("Each example demonstrates different metrics capabilities.")
+
+
+def print_metrics_summary(results: Dict[str, Tuple[bool, List[str]]]):
+    """
+    Print comprehensive summary for metrics examples.
+    
+    Args:
+        results: Dict mapping example names to (success, errors) tuples
+    """
+    print("\n" + "=" * 80)
+    print("📋 SUMMARY")
+    print("=" * 80)
+    
+    # Use utility function for consistent summary
+    success_count, total_count, error_by_example = print_examples_summary(
+        results,
+        title="Metrics Examples",
+        emoji="📊"
+    )
+    
+    # Collect all errors
+    all_errors = []
+    for errors in error_by_example.values():
+        all_errors.extend(errors)
+    
+    # Print error highlights
+    print_error_highlights(all_errors, error_by_example)
+    
+    # Final status
+    if success_count == total_count:
+        print("\n✅ All metrics examples completed successfully!")
+        
+        if all_errors:
+            print("   ⚠️  However, some HTTP errors were detected during execution")
+            print("   ⚠️  See error details above")
+    else:
+        print("\n❌ Some examples failed - check output above for errors")
+    
+    # Backend validation info
+    print("\n💡 To validate in backend:")
+    print("   Expected services:")
+    print("     1. example-14-metrics-counters")
+    print("     2. example-15-metrics-histogram")
+    print("     3. example-16-metrics-updown")
+    print("     4. example-17-metrics-attributes")
+    print("     5. example-18-metrics-patterns")
+    print("     6. example-19-metrics-flush")
+    print("\n   Each service should have metrics with:")
+    print("     • Proper metric types (counter, histogram, up/down counter)")
+    print("     • Resource attributes")
+    print("     • Metric-level attributes (where applicable)")
+    print("     • Correct values and aggregations")
+    
+    print("=" * 80 + "\n")

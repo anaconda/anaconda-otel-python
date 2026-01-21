@@ -104,7 +104,7 @@ All examples should be run from the `tests/e2e_qa/` directory:
 cd tests/e2e_qa
 ```
 
-#### 🚀 Recommended: Run Individual Examples
+#### Run Individual Examples
 
 **Run from the examples directory**:
 ```bash
@@ -124,7 +124,7 @@ python 01_config_examples.py
 python 02_attributes_examples.py
 ```
 
-#### Alternative: Run All Examples
+#### 🚀 Run Example Categories
 
 **From the e2e_qa directory**:
 ```bash
@@ -136,12 +136,9 @@ python run_logging_examples.py
 
 # Run all metrics examples (each in separate process)
 python run_metrics_examples.py
-
-# Or run all example categories (config + attributes + initialization + logging + metrics)
-python run_all_examples.py
 ```
 
-**Note**: Initialization examples run in separate processes to ensure proper OpenTelemetry initialization (only one initialization per process is allowed).
+**Note**: Each category runner executes examples in separate processes to ensure proper OpenTelemetry initialization (only one initialization per process is allowed).
 
 
 ## What's Demonstrated
