@@ -163,125 +163,40 @@ python run_all_examples.py
 
 ## What's Demonstrated
 
-### 1. Configuration (`examples/01_config_examples.py`)
-- Basic endpoint configuration
-- Console exporter setup
-- Signal-specific endpoints
-- Export intervals
-- Session entropy
-- Logging levels
+### 1. Configuration & Attributes
+- **`01_config_examples.py`** - Endpoint configuration, console exporter, signal-specific endpoints, export intervals
+- **`02_attributes_examples.py`** - Resource attributes, required/optional fields, custom attributes, environment-specific attributes
 
-### 2. Resource Attributes (`examples/02_attributes_examples.py`)
-- Basic attribute creation
-- Required vs optional fields
-- Custom attributes with `set_attributes()`
-- Environment-specific attributes
-- Dynamic parameters
+### 2. Initialization (7 examples via `run_initialization_examples.py`)
 
-### 3. Initialization Examples - Choosing the Right Approach
+Each example runs in a separate process to ensure proper OpenTelemetry initialization.
 
-**Note**: Each example runs in a separate process to ensure proper initialization.
+**Quick Selection:**
+- **`03_default.py`** - Simplest setup with SDK defaults
+- **`01_all_signals.py`** - All signals (metrics, logs, traces) for full observability
+- **`02_metrics_only.py`** - Metrics only for minimal overhead
+- **`04_selective.py`** - Specific signal combinations (e.g., metrics + tracing)
+- **`05_complete.py`** - Production-ready with all configuration options
+- **`06_env_based.py`** - Environment-aware setup (dev/staging/prod)
+- **`07_flush_test.py`** - Explicit flush call
 
-Run all 7 examples: `python run_initialization_examples.py`
+### 3. Logging (6 examples via `run_logging_examples.py`)
 
-#### Example Types: Atomic vs. Complex
+- **`08_logging_basic.py`** - Basic logging with telemetry handler
+- **`09_logging_levels.py`** - All Python logging levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- **`10_logging_structured.py`** - Structured logging with attributes
+- **`11_logging_multiple.py`** - Multiple named loggers for different components
+- **`12_logging_integration.py`** - Integration with metrics and traces
+- **`13_logging_flush.py`** - Explicit flush call
 
-These examples follow a **progressive learning approach** with two types:
+### 4. Metrics (6 examples via `run_metrics_examples.py`)
 
-**ATOMIC EXAMPLES** (Examples 1-4): Learn one concept at a time
-- **Purpose**: Demonstrate a single initialization pattern clearly
-- **Best for**: Quick reference, copy-paste templates, learning basics
-- **When to use**: You know exactly what you need and want a simple starting point
-
-**COMPLEX EXAMPLES** (Examples 5-6): See everything working together
-- **Purpose**: Show production-ready configurations with multiple options
-- **Best for**: Understanding real-world usage, comprehensive setups
-- **When to use**: You need advanced configuration or want to see all features
-
-#### Individual Examples
-
-##### Atomic Examples - Single Concept Focus
-
-- **`examples/01_all_signals.py`** - Initialize with all signals (metrics, logs, traces)
-  - **Use when**: You need comprehensive observability across all signal types
-  - **Best for**: Production microservices, complex applications needing full visibility
-  - **Copy this if**: You want complete telemetry coverage
-
-- **`examples/02_metrics_only.py`** - Initialize with metrics only
-  - **Use when**: You only need counters, gauges, and histograms
-  - **Best for**: Batch jobs, background workers, simple monitoring
-  - **Copy this if**: You want minimal overhead and only need metrics
-
-- **`examples/03_default.py`** - Default initialization (implicit metrics)
-  - **Use when**: You want the simplest possible setup with SDK defaults
-  - **Best for**: Quick prototyping, learning basics, simple scripts
-  - **Copy this if**: You prefer concise code and default behavior is sufficient
-
-- **`examples/04_selective.py`** - Selective signals (metrics + tracing)
-  - **Use when**: You need specific signal combinations, not all or just one
-  - **Best for**: Services needing request tracing and metrics but not logging
-  - **Copy this if**: You want to balance observability with resource constraints
-
-##### Complex Examples - Production-Ready Patterns
-
-- **`examples/05_complete.py`** - Complete configuration with all options
-  - **Use when**: You need fine-grained control over all configuration aspects
-  - **Best for**: Production services with specific export intervals, logging levels, custom attributes
-  - **Copy this if**: You need a comprehensive reference showing all SDK capabilities
-
-- **`examples/06_env_based.py`** - Environment-based initialization
-  - **Use when**: Your app runs in multiple environments (dev/staging/prod)
-  - **Best for**: Multi-environment deployments using 12-factor configuration
-  - **Copy this if**: You need environment-aware telemetry with dynamic configuration
-
-- **`examples/07_flush_test.py`** - Explicit flush test
-  - **Use when**: You need to verify flush functionality doesn't break telemetry flow
-  - **Best for**: Short-lived processes, CLI tools, Lambda functions, testing scenarios
-  - **Copy this if**: You need guaranteed delivery before shutdown or immediate export
-
-#### Quick Selection Guide
-
-| Your Need | Start With | Why |
-|-----------|------------|-----|
-| "I need everything" | `01_all_signals.py` | All signals enabled, simple setup |
-| "Just metrics" | `02_metrics_only.py` | Minimal overhead, focused |
-| "Simplest possible" | `03_default.py` | Fewest lines of code |
-| "Metrics + tracing only" | `04_selective.py` | Specific signal combination |
-| "Production config" | `05_complete.py` | All configuration options |
-| "Multi-environment" | `06_env_based.py` | Environment-aware setup |
-| "Test flush functionality" | `07_flush_test.py` | Explicit flush verification |
-
-**Note**: Examples 01-05 rely on automatic flushing when the process ends (Python SDK default behavior). Example 07 demonstrate explicit flush calls, to illustrate that flush call does not break flow.
-
-### 4. Logging (`examples/04_logging_examples.py`)
-- Getting logger handler
-- Adding handler to logger
-- Different log levels
-- Structured logging
-- Logger integration
-
-### 5. Metrics (`examples/05_metrics_examples.py`)
-- Counter increment
-- Counter decrement (up/down counters)
-- Histogram recording
-- Metric attributes
-- Multiple metrics coordination
-
-### 6. Tracing (`examples/06_tracing_examples.py`)
-- Basic trace context manager
-- Adding events to spans
-- Exception handling in spans
-- Setting error status
-- Adding attributes to spans
-- Nested traces
-- Trace propagation with carrier
-
-### 7. Advanced Patterns (`examples/07_advanced_examples.py`)
-- Multi-signal coordination
-- Error handling across signals
-- Performance monitoring
-- Real-world scenarios
-- Production-ready patterns
+- **`14_metrics_counters.py`** - Counter metrics for monotonically increasing values
+- **`15_metrics_histogram.py`** - Histogram metrics for distributions
+- **`16_metrics_updown.py`** - Up/down counters for values that can increase or decrease
+- **`17_metrics_attributes.py`** - Multi-dimensional metrics with attributes
+- **`18_metrics_patterns.py`** - Real-world metrics patterns and best practices
+- **`19_metrics_flush.py`** - Explicit flush call
 
 ## Example Output
 
