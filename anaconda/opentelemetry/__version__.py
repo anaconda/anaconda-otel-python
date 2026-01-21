@@ -5,5 +5,5 @@
 # __version__.py
 
 # DO NOT Change the __SDK_VERSION__ line!!! MUST be "0.0.0.devbuild"!!
-__SDK_VERSION__ = "0.0.0.devbuild"
+__SDK_VERSION__ = "1.0.0"
 __TELEMETRY_SCHEMA_VERSION__ = "0.3.0"
