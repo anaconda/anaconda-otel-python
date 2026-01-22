@@ -80,7 +80,7 @@ def main():
     # Send a test metric
     sdk.increment_counter(METRIC_NAME, by=METRIC_VALUE)
     
-    print_footer("✓ Example 2 completed successfully!")
+    print_footer("[OK] Example 2 completed successfully!")
 
 
 if __name__ == "__main__":

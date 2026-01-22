@@ -61,7 +61,7 @@ def print_success(message: str):
     Args:
         message: Success message text
     """
-    print(f"✓ {message}")
+    print(f"[OK] {message}")
 
 
 def print_info(message: str, indent: int = 2):
@@ -82,7 +82,7 @@ def print_code(code: str):
     Args:
         code: Code snippet text
     """
-    print(f"  📝 {code}")
+    print(f"  [CODE] {code}")
 
 
 def log_detailed(message: str):
@@ -97,8 +97,8 @@ def log_detailed(message: str):
         
     Example:
         log_detailed("Sending counter: api_requests_total")
-        log_detailed(f"  → Value: {value}, Attributes: {attrs}")
-        log_detailed("✓ Counter queued successfully")
+        log_detailed(f"  -> Value: {value}, Attributes: {attrs}")
+        log_detailed("[OK] Counter queued successfully")
     """
     if os.getenv('USE_DETAILED_LOG', 'false').lower() == 'true':
         print_info(f"[DETAILED] {message}")
@@ -126,20 +126,20 @@ def print_resource_attributes(attrs):
     Args:
         attrs: ResourceAttributes object
     """
-    print("\n  📋 Resource Attributes (sent with every metric):")
-    print(f"     • service.name: {attrs.service_name}")
-    print(f"     • service.version: {attrs.service_version}")
-    print(f"     • os.type: {attrs.os_type}")
-    print(f"     • os.version: {attrs.os_version}")
-    print(f"     • python.version: {attrs.python_version}")
-    print(f"     • hostname: {attrs.hostname}")
-    print(f"     • platform: {attrs.platform if attrs.platform else '(empty)'}")
-    print(f"     • environment: {attrs.environment if attrs.environment else '(empty)'}")
-    print(f"     • client.sdk.version: {attrs.client_sdk_version}")
-    print(f"     • schema.version: {attrs.schema_version}")
-    print(f"     • session.id: (auto-generated, visible with console exporter)")
+    print("\n  [ATTRS] Resource Attributes (sent with every metric):")
+    print(f"     - service.name: {attrs.service_name}")
+    print(f"     - service.version: {attrs.service_version}")
+    print(f"     - os.type: {attrs.os_type}")
+    print(f"     - os.version: {attrs.os_version}")
+    print(f"     - python.version: {attrs.python_version}")
+    print(f"     - hostname: {attrs.hostname}")
+    print(f"     - platform: {attrs.platform if attrs.platform else '(empty)'}")
+    print(f"     - environment: {attrs.environment if attrs.environment else '(empty)'}")
+    print(f"     - client.sdk.version: {attrs.client_sdk_version}")
+    print(f"     - schema.version: {attrs.schema_version}")
+    print(f"     - session.id: (auto-generated, visible with console exporter)")
     if attrs.parameters:
-        print(f"     • parameters: {attrs.parameters}")
+        print(f"     - parameters: {attrs.parameters}")
 
 
 def print_metric_info(metric_name: str, metric_value: any, metric_attrs: dict = None):
@@ -151,7 +151,7 @@ def print_metric_info(metric_name: str, metric_value: any, metric_attrs: dict = 
         metric_value: Value of the metric
         metric_attrs: Optional metric-level attributes
     """
-    print("\n  📊 Sending Metric:")
+    print("\n  [METRIC] Sending Metric:")
     if metric_attrs:
         print_code(f'increment_counter("{metric_name}", by={metric_value}, attributes={metric_attrs})')
     else:
@@ -170,33 +170,33 @@ def print_backend_validation(service_name: str, metric_name: str, metric_value: 
         attrs: ResourceAttributes object
         metric_attrs: Optional metric-level attributes
     """
-    print("\n  ✅ BACKEND VALIDATION CHECKLIST:")
+    print("\n  [VALIDATE] BACKEND VALIDATION CHECKLIST:")
     print("     Query backend for this service:")
     print(f"       WHERE service.name = '{service_name}'")
     print(f"       AND timestamp >= NOW() - INTERVAL '10 minutes'")
     print("\n     Expected in backend:")
-    print(f"       • Metric Name: {metric_name}")
-    print(f"       • Metric Value: {metric_value}")
+    print(f"       - Metric Name: {metric_name}")
+    print(f"       - Metric Value: {metric_value}")
     
     if metric_attrs:
-        print(f"       • Metric Attributes: {metric_attrs}")
+        print(f"       - Metric Attributes: {metric_attrs}")
     
-    print(f"       • service.name: {service_name}")
-    print(f"       • service.version: {attrs.service_version}")
+    print(f"       - service.name: {service_name}")
+    print(f"       - service.version: {attrs.service_version}")
     
     # Print additional attributes based on what's set
     if hasattr(attrs, 'platform') and attrs.platform:
-        print(f"       • platform: {attrs.platform}")
+        print(f"       - platform: {attrs.platform}")
     if hasattr(attrs, 'environment') and attrs.environment:
-        print(f"       • environment: {attrs.environment}")
+        print(f"       - environment: {attrs.environment}")
     
-    print(f"       • os.type: {attrs.os_type}")
-    print(f"       • python.version: {attrs.python_version}")
-    print(f"       • client.sdk.version: {attrs.client_sdk_version}")
-    print(f"       • schema.version: {attrs.schema_version}")
+    print(f"       - os.type: {attrs.os_type}")
+    print(f"       - python.version: {attrs.python_version}")
+    print(f"       - client.sdk.version: {attrs.client_sdk_version}")
+    print(f"       - schema.version: {attrs.schema_version}")
     
     if attrs.parameters:
-        print(f"       • parameters: {attrs.parameters}")
+        print(f"       - parameters: {attrs.parameters}")
 
 
 def print_sdk_commands_summary(commands: list):
@@ -206,13 +206,13 @@ def print_sdk_commands_summary(commands: list):
     Args:
         commands: List of command strings or tuples (command, description)
     """
-    print("\n  📝 SDK COMMANDS CALLED:")
+    print("\n  [SDK] SDK COMMANDS CALLED:")
     for i, cmd in enumerate(commands, 1):
         if isinstance(cmd, tuple):
             command, description = cmd
             print(f"     {i}. {command}")
             if description:
-                print(f"        → {description}")
+                print(f"        -> {description}")
         else:
             print(f"     {i}. {cmd}")
 
@@ -227,9 +227,9 @@ def print_flush_status(success: bool = True, error: Exception = None):
     """
     print("\n  Flushing telemetry data...")
     if success:
-        print("  ✓ Telemetry flushed to backend")
+        print("  [OK] Telemetry flushed to backend")
     else:
-        print(f"  ⚠️  Warning: Error during flush: {error}")
+        print(f"  [WARN] Warning: Error during flush: {error}")
 
 
 def print_initialization_status(signals: list, config_details: dict = None):
@@ -240,13 +240,13 @@ def print_initialization_status(signals: list, config_details: dict = None):
         signals: List of enabled signals
         config_details: Optional dict with configuration details
     """
-    print(f"  ✓ Telemetry initialized")
+    print(f"  [OK] Telemetry initialized")
     print(f"  Enabled: {', '.join(signals)}")
     
     if config_details:
         print("  Configuration:")
         for key, value in config_details.items():
-            print(f"    ✓ {key}: {value}")
+            print(f"    [OK] {key}: {value}")
 
 
 def print_validation_info(metric_name: str, value: any, attributes: dict = None, 
@@ -263,39 +263,39 @@ def print_validation_info(metric_name: str, value: any, attributes: dict = None,
         resource_attrs: Additional resource attributes to validate
         session_id: Session ID for backend correlation
     """
-    print(f"\n  ⚠️  TODO - VALIDATE BACKEND DATA:")
+    print(f"\n  [TODO] TODO - VALIDATE BACKEND DATA:")
     
     # Session ID section
     if session_id:
-        print(f"     ┌─ Session Information")
-        print(f"     │  • Session ID: {session_id}")
-        print(f"     │  • Use this to query backend for this specific test run")
-        print(f"     │")
-        print(f"     ├─ Metric Information")
+        print(f"     +-- Session Information")
+        print(f"     |  - Session ID: {session_id}")
+        print(f"     |  - Use this to query backend for this specific test run")
+        print(f"     |")
+        print(f"     +-- Metric Information")
     else:
-        print(f"     ┌─ Session Information")
-        print(f"     │  • Session ID: See console JSON output or summary at end")
-        print(f"     │  • All metrics in this run share the same session ID")
-        print(f"     │")
-        print(f"     ├─ Metric Information")
+        print(f"     +-- Session Information")
+        print(f"     |  - Session ID: See console JSON output or summary at end")
+        print(f"     |  - All metrics in this run share the same session ID")
+        print(f"     |")
+        print(f"     +-- Metric Information")
     
-    print(f"     │  • Metric Name: {metric_name}")
-    print(f"     │  • Expected Value: {value}")
+    print(f"     |  - Metric Name: {metric_name}")
+    print(f"     |  - Expected Value: {value}")
     if attributes:
-        print(f"     │  • Metric Attributes: {attributes}")
+        print(f"     |  - Metric Attributes: {attributes}")
     
     # Resource Attributes section
     if service_name:
-        print(f"     │")
-        print(f"     ├─ Resource Attributes")
-        print(f"     │  • service.name: {service_name}")
+        print(f"     |")
+        print(f"     +-- Resource Attributes")
+        print(f"     |  - service.name: {service_name}")
         if resource_attrs:
             for key, val in resource_attrs.items():
-                print(f"     │  • {key}: {val}")
+                print(f"     |  - {key}: {val}")
     
     # Verification Steps section
-    print(f"     │")
-    print(f"     └─ Verification Steps")
+    print(f"     |")
+    print(f"     +-- Verification Steps")
     print(f"        1. Check metric appears in backend within some delay")
     if session_id:
         print(f"        2. Query backend using session ID above")
@@ -456,13 +456,13 @@ def run_example_subprocess(script_path: str, python_executable: str = None) -> T
         errors.extend(process_subprocess_output(result.stdout, result.stderr))
         return True, errors
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Example failed: {script_path}")
+        print(f"\n[FAIL] Example failed: {script_path}")
         print(f"   Exit code: {e.returncode}")
         # Process output and extract errors
         errors.extend(process_subprocess_output(e.stdout, e.stderr))
         return False, errors
     except Exception as e:
-        print(f"\n❌ Error running example: {script_path}")
+        print(f"\n[FAIL] Error running example: {script_path}")
         print(f"   Error: {e}")
         errors.append(f"Exception: {str(e)}")
         return False, errors
@@ -470,7 +470,7 @@ def run_example_subprocess(script_path: str, python_executable: str = None) -> T
 
 def print_examples_summary(results: Dict[str, Tuple[bool, List[str]]], 
                           title: str = "Examples",
-                          emoji: str = "🚀") -> Tuple[int, int, Dict[str, List[str]]]:
+                          emoji: str = "[RUN]") -> Tuple[int, int, Dict[str, List[str]]]:
     """
     Print summary of examples with error indicators.
     
@@ -487,8 +487,8 @@ def print_examples_summary(results: Dict[str, Tuple[bool, List[str]]],
     error_by_example = {}
     
     for script, (success, errors) in results.items():
-        status = "✓" if success else "❌"
-        error_indicator = " ⚠️" if errors else ""
+        status = "[OK]" if success else "[FAIL]"
+        error_indicator = " [WARN]" if errors else ""
         print(f"   {status} {script}{error_indicator}")
         if success:
             success_count += 1
@@ -513,7 +513,7 @@ def print_error_highlights(all_errors: List[str], error_by_example: Dict[str, Li
         return
     
     print("\n" + "=" * 70)
-    print("⚠️  ERRORS DETECTED")
+    print("[WARN] ERRORS DETECTED")
     print("=" * 70)
     
     # Categorize errors
@@ -524,59 +524,59 @@ def print_error_highlights(all_errors: List[str], error_by_example: Dict[str, Li
     
     # Print categorized errors
     if http_404_errors:
-        print("\n🔴 HTTP 404 Errors (Not Found):")
+        print("\n[ERROR] HTTP 404 Errors (Not Found):")
         unique_404s = list(dict.fromkeys(http_404_errors))  # Remove duplicates while preserving order
         for error in unique_404s[:5]:  # Show first 5
-            print(f"   • {error}")
+            print(f"   - {error}")
         if len(unique_404s) > 5:
             print(f"   ... and {len(unique_404s) - 5} more")
     
     if http_other_errors:
-        print("\n🔴 Other HTTP Errors:")
+        print("\n[ERROR] Other HTTP Errors:")
         unique_others = list(dict.fromkeys(http_other_errors))
         for error in unique_others[:5]:
-            print(f"   • {error}")
+            print(f"   - {error}")
         if len(unique_others) > 5:
             print(f"   ... and {len(unique_others) - 5} more")
     
     if connection_errors:
-        print("\n🔴 Connection/Timeout Errors:")
+        print("\n[ERROR] Connection/Timeout Errors:")
         unique_conn = list(dict.fromkeys(connection_errors))
         for error in unique_conn[:5]:
-            print(f"   • {error}")
+            print(f"   - {error}")
         if len(unique_conn) > 5:
             print(f"   ... and {len(unique_conn) - 5} more")
     
     if other_errors:
-        print("\n🔴 Other Errors:")
+        print("\n[ERROR] Other Errors:")
         unique_other = list(dict.fromkeys(other_errors))
         for error in unique_other[:5]:
-            print(f"   • {error}")
+            print(f"   - {error}")
         if len(unique_other) > 5:
             print(f"   ... and {len(unique_other) - 5} more")
     
     # Show which examples had errors
-    print("\n📍 Examples with Errors:")
+    print("\n[INFO] Examples with Errors:")
     for example, errors in error_by_example.items():
-        print(f"   • {example} ({len(errors)} error(s))")
+        print(f"   - {example} ({len(errors)} error(s))")
     
     # Troubleshooting guidance
-    print("\n💡 Troubleshooting:")
+    print("\n[TIP] Troubleshooting:")
     if http_404_errors:
-        print("   • 404 errors may indicate incorrect endpoint configuration")
-        print("   • Verify OTEL_ENDPOINT in .env file")
-        print("   • Check that the backend service is running and accessible")
+        print("   - 404 errors may indicate incorrect endpoint configuration")
+        print("   - Verify OTEL_ENDPOINT in .env file")
+        print("   - Check that the backend service is running and accessible")
     if connection_errors:
         # Check for DNS-specific errors
         dns_errors = [e for e in connection_errors if 'failed to resolve' in e.lower() or 'nameresolutionerror' in e.lower()]
         if dns_errors:
-            print("   • DNS resolution errors detected - check endpoint URL for typos")
-            print("   • Verify OTEL_ENDPOINT in .env file (check spelling)")
-            print("   • Ensure the hostname is correct and accessible")
+            print("   - DNS resolution errors detected - check endpoint URL for typos")
+            print("   - Verify OTEL_ENDPOINT in .env file (check spelling)")
+            print("   - Ensure the hostname is correct and accessible")
         else:
-            print("   • Connection errors may indicate network issues")
-            print("   • Verify internet connectivity")
-            print("   • Check firewall settings")
+            print("   - Connection errors may indicate network issues")
+            print("   - Verify internet connectivity")
+            print("   - Check firewall settings")
     
     print("=" * 70)
 
@@ -601,11 +601,11 @@ def print_initialization_header(env: str, endpoint: str, use_console: bool):
     print(f"  Console Exporter: {use_console}")
     
     if use_console:
-        print("\n  ⚠️  WARNING: Console exporter is enabled!")
+        print("\n  [WARN] WARNING: Console exporter is enabled!")
         print("     Data will be printed to console but NOT sent to backend.")
         print("     Set OTEL_CONSOLE_EXPORTER=false for backend validation.")
     else:
-        print("\n  ✓ Console exporter is disabled - data will be sent to backend")
+        print("\n  [OK] Console exporter is disabled - data will be sent to backend")
     
     print("=" * 70 + "\n")
 
@@ -624,7 +624,7 @@ def print_initialization_summary(
         use_console: Whether console exporter is enabled
     """
     print("\n" + "=" * 70)
-    print("📋 SUMMARY")
+    print("[SUMMARY]")
     print("=" * 70)
     
     # Collect all errors
@@ -633,7 +633,7 @@ def print_initialization_summary(
     
     # Console exporter warning
     if use_console:
-        print("\n⚠️  CRITICAL WARNING:")
+        print("\n[WARN] CRITICAL WARNING:")
         print("   OTEL_CONSOLE_EXPORTER=true in .env")
         print("   Data is ONLY printed to console, NOT sent to backend!")
         print("   To validate in backend: Set OTEL_CONSOLE_EXPORTER=false")
@@ -645,7 +645,7 @@ def print_initialization_summary(
         config_success, _, error_by_example = print_examples_summary(
             config_results, 
             title="Configuration Examples",
-            emoji="📚"
+            emoji="[CONFIG]"
         )
         all_error_by_example.update(error_by_example)
         for errors in error_by_example.values():
@@ -655,7 +655,7 @@ def print_initialization_summary(
     success_count, total_count, error_by_example = print_examples_summary(
         results,
         title="Initialization Examples",
-        emoji="🚀"
+        emoji="[INIT]"
     )
     all_error_by_example.update(error_by_example)
     for errors in error_by_example.values():
@@ -670,14 +670,14 @@ def print_initialization_summary(
     
     # Final status
     if success_all == total_all:
-        print("\n✅ All examples completed successfully!")
+        print("\n[SUCCESS] All examples completed successfully!")
         
         if all_errors:
-            print("   ⚠️  However, some HTTP errors were detected during execution")
-            print("   ⚠️  See error details above")
+            print("   [WARN] However, some HTTP errors were detected during execution")
+            print("   [WARN] See error details above")
         
         if not use_console:
-            print("\n💡 To validate in backend:")
+            print("\n[TIP] To validate in backend:")
             print("   1. Wait 1-5 minutes for backend processing")
             print("   2. Query by service names:")
             print("      - example-01-all-signals")
@@ -689,7 +689,7 @@ def print_initialization_summary(
             print("      - example-07-flush-test")
             print("   3. Each service should have 1 metric with value=1")
     else:
-        print("\n❌ Some examples failed - check output above for errors")
+        print("\n[FAIL] Some examples failed - check output above for errors")
     
     print("=" * 70 + "\n")
 
@@ -711,14 +711,14 @@ def print_logging_summary(results: Dict[str, Tuple[bool, List[str]]]):
         results: Dict mapping example names to (success, errors) tuples
     """
     print("\n" + "=" * 80)
-    print("📋 SUMMARY")
+    print("[SUMMARY]")
     print("=" * 80)
     
     # Use utility function for consistent summary
     success_count, total_count, error_by_example = print_examples_summary(
         results,
         title="Logging Examples",
-        emoji="📝"
+        emoji="[LOG]"
     )
     
     # Collect all errors
@@ -731,16 +731,16 @@ def print_logging_summary(results: Dict[str, Tuple[bool, List[str]]]):
     
     # Final status
     if success_count == total_count:
-        print("\n✅ All logging examples completed successfully!")
+        print("\n[SUCCESS] All logging examples completed successfully!")
         
         if all_errors:
-            print("   ⚠️  However, some HTTP errors were detected during execution")
-            print("   ⚠️  See error details above")
+            print("   [WARN] However, some HTTP errors were detected during execution")
+            print("   [WARN] See error details above")
     else:
-        print("\n❌ Some examples failed - check output above for errors")
+        print("\n[FAIL] Some examples failed - check output above for errors")
     
     # Backend validation info
-    print("\n💡 To validate in backend:")
+    print("\n[TIP] To validate in backend:")
     print("   Expected services:")
     print("     1. example-08-logging-basic")
     print("     2. example-09-logging-levels")
@@ -749,10 +749,10 @@ def print_logging_summary(results: Dict[str, Tuple[bool, List[str]]]):
     print("     5. example-12-logging-integration")
     print("     6. example-13-logging-flush")
     print("\n   Each service should have log records with:")
-    print("     • Proper severity levels")
-    print("     • Resource attributes")
-    print("     • Structured attributes (where applicable)")
-    print("     • Logger names (where applicable)")
+    print("     - Proper severity levels")
+    print("     - Resource attributes")
+    print("     - Structured attributes (where applicable)")
+    print("     - Logger names (where applicable)")
     
     print("=" * 80 + "\n")
 
@@ -774,14 +774,14 @@ def print_metrics_summary(results: Dict[str, Tuple[bool, List[str]]]):
         results: Dict mapping example names to (success, errors) tuples
     """
     print("\n" + "=" * 80)
-    print("📋 SUMMARY")
+    print("[SUMMARY]")
     print("=" * 80)
     
     # Use utility function for consistent summary
     success_count, total_count, error_by_example = print_examples_summary(
         results,
         title="Metrics Examples",
-        emoji="📊"
+        emoji="[METRIC]"
     )
     
     # Collect all errors
@@ -794,16 +794,16 @@ def print_metrics_summary(results: Dict[str, Tuple[bool, List[str]]]):
     
     # Final status
     if success_count == total_count:
-        print("\n✅ All metrics examples completed successfully!")
+        print("\n[SUCCESS] All metrics examples completed successfully!")
         
         if all_errors:
-            print("   ⚠️  However, some HTTP errors were detected during execution")
-            print("   ⚠️  See error details above")
+            print("   [WARN] However, some HTTP errors were detected during execution")
+            print("   [WARN] See error details above")
     else:
-        print("\n❌ Some examples failed - check output above for errors")
+        print("\n[FAIL] Some examples failed - check output above for errors")
     
     # Backend validation info
-    print("\n💡 To validate in backend:")
+    print("\n[TIP] To validate in backend:")
     print("   Expected services:")
     print("     1. example-14-metrics-counters")
     print("     2. example-15-metrics-histogram")
@@ -812,9 +812,9 @@ def print_metrics_summary(results: Dict[str, Tuple[bool, List[str]]]):
     print("     5. example-18-metrics-patterns")
     print("     6. example-19-metrics-flush")
     print("\n   Each service should have metrics with:")
-    print("     • Proper metric types (counter, histogram, up/down counter)")
-    print("     • Resource attributes")
-    print("     • Metric-level attributes (where applicable)")
-    print("     • Correct values and aggregations")
+    print("     - Proper metric types (counter, histogram, up/down counter)")
+    print("     - Resource attributes")
+    print("     - Metric-level attributes (where applicable)")
+    print("     - Correct values and aggregations")
     
     print("=" * 80 + "\n")

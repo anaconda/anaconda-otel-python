@@ -196,9 +196,9 @@ def example_09_validation():
                 service_name=name,
                 service_version="1.0.0"
             )
-            print_info(f"  ✓ '{name}' - valid")
+            print_info(f"  [OK] '{name}' - valid")
         except ValueError as e:
-            print_info(f"  ✗ '{name}' - invalid: {e}")
+            print_info(f"  [FAIL] '{name}' - invalid: {e}")
     
     print_success("Validation examples completed")
     

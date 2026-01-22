@@ -88,7 +88,7 @@ def main():
     metric_attrs = {"environment": otel_env}
     sdk.increment_counter(METRIC_NAME, by=METRIC_VALUE, attributes=metric_attrs)
     
-    print_footer("✓ Example 6 completed successfully!")
+    print_footer("[OK] Example 6 completed successfully!")
 
 
 if __name__ == "__main__":

@@ -88,7 +88,7 @@ def main():
     # Explicitly flush telemetry
     sdk.flush_telemetry()
     
-    print_footer("✓ Example 7 completed successfully!")
+    print_footer("[OK] Example 7 completed successfully!")
 
 
 if __name__ == "__main__":

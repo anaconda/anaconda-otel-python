@@ -55,7 +55,7 @@ def main():
     config = sdk.create_configuration(endpoint=endpoint, use_console=use_console)
     sdk.apply_signal_specific_endpoints(config, endpoints)
     config.set_logging_level("DEBUG")
-    print_info("→ Logging level set to DEBUG (captures all levels)")
+    print_info("-> Logging level set to DEBUG (captures all levels)")
     
     # Create attributes
     attrs = sdk.create_attributes(
@@ -79,7 +79,7 @@ def main():
     logger.error(LogMessage.BASIC_ERROR.value)
     logger.critical(LogMessage.BASIC_CRITICAL.value)
     
-    print_footer("✓ Example 9 completed successfully!")
+    print_footer("[OK] Example 9 completed successfully!")
 
 
 if __name__ == "__main__":

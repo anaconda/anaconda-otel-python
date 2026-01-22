@@ -91,10 +91,10 @@ def main():
     # Explicit flush
     print_section("3. Explicit Flush")
     sdk.flush_metrics()
-    print_info("→ Explicit flush ensures metrics are sent immediately")
-    print_info("→ Useful for short-lived processes, Lambda functions, and testing")
+    print_info("-> Explicit flush ensures metrics are sent immediately")
+    print_info("-> Useful for short-lived processes, Lambda functions, and testing")
     
-    print_footer("✓ Example 19 completed successfully!")
+    print_footer("[OK] Example 19 completed successfully!")
 
 
 if __name__ == "__main__":

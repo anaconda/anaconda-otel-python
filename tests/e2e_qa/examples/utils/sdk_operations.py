@@ -122,7 +122,7 @@ class SdkOperations:
             print_code(f'config = Configuration(default_endpoint="{endpoint}")')
         
         log_detailed("Creating Configuration...")
-        log_detailed(f"  → Default endpoint: {endpoint}")
+        log_detailed(f"  -> Default endpoint: {endpoint}")
         
         config = Configuration(default_endpoint=endpoint)
         
@@ -130,45 +130,45 @@ class SdkOperations:
             if self.show_code:
                 print_code('config.set_console_exporter(use_console=True)')
             config.set_console_exporter(use_console=True)
-            log_detailed("  → Console exporter enabled")
+            log_detailed("  -> Console exporter enabled")
         
         if metrics_interval_ms:
             if self.show_code:
                 print_code(f'config.set_metrics_export_interval_ms({metrics_interval_ms})')
             config.set_metrics_export_interval_ms(metrics_interval_ms)
-            log_detailed(f"  → Metrics export interval: {metrics_interval_ms}ms")
+            log_detailed(f"  -> Metrics export interval: {metrics_interval_ms}ms")
         
         if tracing_interval_ms:
             if self.show_code:
                 print_code(f'config.set_tracing_export_interval_ms({tracing_interval_ms})')
             config.set_tracing_export_interval_ms(tracing_interval_ms)
-            log_detailed(f"  → Tracing export interval: {tracing_interval_ms}ms")
+            log_detailed(f"  -> Tracing export interval: {tracing_interval_ms}ms")
         
         if logging_level:
             if self.show_code:
                 print_code(f'config.set_logging_level("{logging_level}")')
             config.set_logging_level(logging_level)
-            log_detailed(f"  → Logging level: {logging_level}")
+            log_detailed(f"  -> Logging level: {logging_level}")
         
         if skip_internet_check:
             if self.show_code:
                 print_code('config.set_skip_internet_check(True)')
             config.set_skip_internet_check(True)
-            log_detailed("  → Internet check disabled")
+            log_detailed("  -> Internet check disabled")
         
         if use_cumulative_metrics:
             if self.show_code:
                 print_code('config.set_use_cumulative_metrics(True)')
             config.set_use_cumulative_metrics(True)
-            log_detailed("  → Cumulative metrics enabled")
+            log_detailed("  -> Cumulative metrics enabled")
         
         if session_entropy:
             if self.show_code:
                 print_code(f'config.set_tracing_session_entropy({session_entropy})')
             config.set_tracing_session_entropy(session_entropy)
-            log_detailed(f"  → Session entropy: {session_entropy}")
+            log_detailed(f"  -> Session entropy: {session_entropy}")
         
-        log_detailed("✓ Configuration created successfully")
+        log_detailed("[OK] Configuration created successfully")
         return config
     
     def create_attributes(
@@ -208,22 +208,22 @@ class SdkOperations:
             print_code(f'attrs = ResourceAttributes({", ".join(params)})')
         
         log_detailed("Creating ResourceAttributes...")
-        log_detailed(f"  → Service name: {service_name}")
-        log_detailed(f"  → Service version: {service_version}")
+        log_detailed(f"  -> Service name: {service_name}")
+        log_detailed(f"  -> Service version: {service_version}")
         
         kwargs = {}
         if platform:
             kwargs['platform'] = platform
-            log_detailed(f"  → Platform: {platform}")
+            log_detailed(f"  -> Platform: {platform}")
         if environment:
             kwargs['environment'] = environment
-            log_detailed(f"  → Environment: {environment}")
+            log_detailed(f"  -> Environment: {environment}")
         if hostname:
             kwargs['hostname'] = hostname
-            log_detailed(f"  → Hostname: {hostname}")
+            log_detailed(f"  -> Hostname: {hostname}")
         if user_id:
             kwargs['user_id'] = user_id
-            log_detailed(f"  → User ID: {user_id}")
+            log_detailed(f"  -> User ID: {user_id}")
         
         attrs = ResourceAttributes(
             service_name=service_name,
@@ -231,7 +231,7 @@ class SdkOperations:
             **kwargs
         )
         
-        log_detailed("✓ ResourceAttributes created successfully")
+        log_detailed("[OK] ResourceAttributes created successfully")
         return attrs
     
     def set_custom_attributes(
@@ -255,10 +255,10 @@ class SdkOperations:
         
         log_detailed("Setting custom attributes...")
         for key, value in custom_attrs.items():
-            log_detailed(f"  → {key}: {value}")
+            log_detailed(f"  -> {key}: {value}")
         
         attrs.set_attributes(**custom_attrs)
-        log_detailed("✓ Custom attributes set successfully")
+        log_detailed("[OK] Custom attributes set successfully")
     
     def initialize(
         self,
@@ -287,26 +287,26 @@ class SdkOperations:
         start_time = time.time()
         # Only pass signal_types if it's not None to use the default value
         if signal_types is not None:
-            log_detailed(f"  → Passing signal_types explicitly: {signal_types}")
+            log_detailed(f"  -> Passing signal_types explicitly: {signal_types}")
             initialize_telemetry(
                 config=config,
                 attributes=attributes,
                 signal_types=signal_types
             )
         else:
-            log_detailed("  → Using default signal_types (not passing parameter)")
+            log_detailed("  -> Using default signal_types (not passing parameter)")
             initialize_telemetry(
                 config=config,
                 attributes=attributes
             )
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Initialization completed in {duration:.3f}s")
+        log_detailed(f"[OK] Initialization completed in {duration:.3f}s")
         
         # Log which providers are ready
         if signal_types:
             for signal in signal_types:
-                log_detailed(f"✓ {signal.capitalize()} provider ready to accept {signal}")
+                log_detailed(f"[OK] {signal.capitalize()} provider ready to accept {signal}")
     
     def get_logger(self, logger_name: str, level: int = logging.INFO) -> logging.Logger:
         """
@@ -326,7 +326,7 @@ class SdkOperations:
                 print_code(f'logger.setLevel(logging.{level_name})')
         
         log_detailed(f"Creating logger: {logger_name}")
-        log_detailed(f"  → Level: {logging.getLevelName(level)}")
+        log_detailed(f"  -> Level: {logging.getLevelName(level)}")
         
         # Get the telemetry handler
         handler = get_telemetry_logger_handler()
@@ -336,7 +336,7 @@ class SdkOperations:
         logger.setLevel(level)
         logger.addHandler(handler)
         
-        log_detailed(f"✓ Logger '{logger_name}' configured with telemetry handler")
+        log_detailed(f"[OK] Logger '{logger_name}' configured with telemetry handler")
         
         return logger
     
@@ -368,19 +368,19 @@ class SdkOperations:
             log_msg += f" ({description})"
         log_detailed(log_msg)
         
-        log_detailed(f"  → Metric: {name}")
-        log_detailed(f"  → Value: {by}")
+        log_detailed(f"  -> Metric: {name}")
+        log_detailed(f"  -> Value: {by}")
         if attributes:
-            log_detailed(f"  → Attributes: {attributes}")
+            log_detailed(f"  -> Attributes: {attributes}")
         if self.endpoint:
-            log_detailed(f"  → Endpoint: {self.endpoint}")
+            log_detailed(f"  -> Endpoint: {self.endpoint}")
         
         start_time = time.time()
         increment_counter(name, by=by, attributes=attributes or {})
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Counter queued successfully (took {duration:.3f}s)")
-        log_detailed("✓ SDK accepted metric, will export in background")
+        log_detailed(f"[OK] Counter queued successfully (took {duration:.3f}s)")
+        log_detailed("[OK] SDK accepted metric, will export in background")
     
     def record_histogram(
         self,
@@ -409,19 +409,19 @@ class SdkOperations:
             log_msg += f" ({description})"
         log_detailed(log_msg)
         
-        log_detailed(f"  → Metric: {name}")
-        log_detailed(f"  → Value: {value}")
+        log_detailed(f"  -> Metric: {name}")
+        log_detailed(f"  -> Value: {value}")
         if attributes:
-            log_detailed(f"  → Attributes: {attributes}")
+            log_detailed(f"  -> Attributes: {attributes}")
         if self.endpoint:
-            log_detailed(f"  → Endpoint: {self.endpoint}")
+            log_detailed(f"  -> Endpoint: {self.endpoint}")
         
         start_time = time.time()
         record_histogram(name, value, attributes=attributes or {})
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Histogram queued successfully (took {duration:.3f}s)")
-        log_detailed("✓ SDK accepted metric, will export in background")
+        log_detailed(f"[OK] Histogram queued successfully (took {duration:.3f}s)")
+        log_detailed("[OK] SDK accepted metric, will export in background")
     
     def record_histogram_batch(
         self,
@@ -453,19 +453,19 @@ class SdkOperations:
             log_msg += f" ({description})"
         log_detailed(log_msg)
         
-        log_detailed(f"  → Metric: {name}")
+        log_detailed(f"  -> Metric: {name}")
         if attributes:
-            log_detailed(f"  → Attributes: {attributes}")
-        log_detailed(f"  → Values: {values}")
+            log_detailed(f"  -> Attributes: {attributes}")
+        log_detailed(f"  -> Values: {values}")
         
         start_time = time.time()
         for i, value in enumerate(values, 1):
             record_histogram(name, value, attributes=attributes or {})
-            log_detailed(f"  → Histogram {i}/{len(values)}: {value} queued")
+            log_detailed(f"  -> Histogram {i}/{len(values)}: {value} queued")
         total_duration = time.time() - start_time
         
-        log_detailed(f"✓ All {len(values)} histograms queued successfully (took {total_duration:.3f}s)")
-        log_detailed("✓ SDK accepted metrics, will export in background")
+        log_detailed(f"[OK] All {len(values)} histograms queued successfully (took {total_duration:.3f}s)")
+        log_detailed("[OK] SDK accepted metrics, will export in background")
     
     def decrement_counter(
         self,
@@ -495,19 +495,19 @@ class SdkOperations:
             log_msg += f" ({description})"
         log_detailed(log_msg)
         
-        log_detailed(f"  → Metric: {name}")
-        log_detailed(f"  → Value: -{by}")
+        log_detailed(f"  -> Metric: {name}")
+        log_detailed(f"  -> Value: -{by}")
         if attributes:
-            log_detailed(f"  → Attributes: {attributes}")
+            log_detailed(f"  -> Attributes: {attributes}")
         if self.endpoint:
-            log_detailed(f"  → Endpoint: {self.endpoint}")
+            log_detailed(f"  -> Endpoint: {self.endpoint}")
         
         start_time = time.time()
         decrement_counter(name, by=by, attributes=attributes or {})
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Counter decremented successfully (took {duration:.3f}s)")
-        log_detailed("✓ SDK accepted metric, will export in background")
+        log_detailed(f"[OK] Counter decremented successfully (took {duration:.3f}s)")
+        log_detailed("[OK] SDK accepted metric, will export in background")
     
     def apply_signal_specific_endpoints(self, config: Configuration, endpoints: dict) -> None:
         """
@@ -570,17 +570,17 @@ class SdkOperations:
         if metrics_endpoint:
             log_detailed(f"Setting metrics endpoint: {metrics_endpoint}")
             config.set_metrics_endpoint(metrics_endpoint)
-            log_detailed("✓ Metrics endpoint set")
+            log_detailed("[OK] Metrics endpoint set")
         
         if logging_endpoint:
             log_detailed(f"Setting logging endpoint: {logging_endpoint}")
             config.set_logging_endpoint(logging_endpoint)
-            log_detailed("✓ Logging endpoint set")
+            log_detailed("[OK] Logging endpoint set")
         
         if tracing_endpoint:
             log_detailed(f"Setting tracing endpoint: {tracing_endpoint}")
             config.set_tracing_endpoint(tracing_endpoint)
-            log_detailed("✓ Tracing endpoint set")
+            log_detailed("[OK] Tracing endpoint set")
     
     def flush_metrics(self, timeout_millis: int = 5000) -> None:
         """
@@ -593,7 +593,7 @@ class SdkOperations:
             print_code(f'# Flush metrics (timeout: {timeout_millis}ms)')
         
         log_detailed("Flushing metrics provider...")
-        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        log_detailed(f"  -> Timeout: {timeout_millis}ms")
         
         start_time = time.time()
         meter_provider = metrics.get_meter_provider()
@@ -601,7 +601,7 @@ class SdkOperations:
             meter_provider.force_flush(timeout_millis=timeout_millis)
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Metrics flushed successfully (took {duration:.3f}s)")
+        log_detailed(f"[OK] Metrics flushed successfully (took {duration:.3f}s)")
     
     def flush_traces(self, timeout_millis: int = 5000) -> None:
         """
@@ -614,7 +614,7 @@ class SdkOperations:
             print_code(f'# Flush traces (timeout: {timeout_millis}ms)')
         
         log_detailed("Flushing traces provider...")
-        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        log_detailed(f"  -> Timeout: {timeout_millis}ms")
         
         start_time = time.time()
         tracer_provider = trace.get_tracer_provider()
@@ -622,7 +622,7 @@ class SdkOperations:
             tracer_provider.force_flush(timeout_millis=timeout_millis)
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Traces flushed successfully (took {duration:.3f}s)")
+        log_detailed(f"[OK] Traces flushed successfully (took {duration:.3f}s)")
     
     def flush_logs(self, timeout_millis: int = 5000) -> None:
         """
@@ -635,7 +635,7 @@ class SdkOperations:
             print_code(f'# Flush logs (timeout: {timeout_millis}ms)')
         
         log_detailed("Flushing logs provider...")
-        log_detailed(f"  → Timeout: {timeout_millis}ms")
+        log_detailed(f"  -> Timeout: {timeout_millis}ms")
         
         start_time = time.time()
         if _AnacondaLogger._instance:
@@ -644,7 +644,7 @@ class SdkOperations:
                 logger_instance._provider.force_flush(timeout_millis=timeout_millis)
         duration = time.time() - start_time
         
-        log_detailed(f"✓ Logs flushed successfully (took {duration:.3f}s)")
+        log_detailed(f"[OK] Logs flushed successfully (took {duration:.3f}s)")
     
     def flush_telemetry(self) -> None:
         """
@@ -665,7 +665,7 @@ class SdkOperations:
         self.flush_logs()
         total_duration = time.time() - start_time
         
-        log_detailed(f"✓ All telemetry flushed successfully (total: {total_duration:.3f}s)")
+        log_detailed(f"[OK] All telemetry flushed successfully (total: {total_duration:.3f}s)")
         print_flush_status(success=True)
     
     def get_trace(self, name: str, attributes: Optional[Dict[str, Any]] = None):
@@ -690,6 +690,6 @@ class SdkOperations:
         
         log_detailed(f"Creating trace span: {name}")
         if attributes:
-            log_detailed(f"  → Attributes: {attributes}")
+            log_detailed(f"  -> Attributes: {attributes}")
         
         return get_trace(name, attributes=attributes or {})

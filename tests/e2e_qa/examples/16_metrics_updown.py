@@ -85,7 +85,7 @@ def main():
     sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=5)
     sdk.increment_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=3)
     sdk.decrement_counter(UpDownCounterName.ACTIVE_CONNECTIONS.value, by=2)
-    print_info("→ Up/down counters can both increment and decrement")
+    print_info("-> Up/down counters can both increment and decrement")
     
     # Example 2: Queue size management
     print_section("3. Queue Size Management")
@@ -111,7 +111,7 @@ def main():
     sdk.increment_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=10, attributes=MetricAttributes.REGION_US_EAST.value)
     sdk.increment_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=7, attributes=MetricAttributes.REGION_US_WEST.value)
     sdk.decrement_counter(UpDownCounterName.CONCURRENT_REQUESTS.value, by=3, attributes=MetricAttributes.REGION_US_EAST.value)
-    print_info("→ Track current state separately per region using attributes")
+    print_info("-> Track current state separately per region using attributes")
     
     # Example 6: Shopping cart items
     print_section("7. Shopping Cart Items")
@@ -128,7 +128,7 @@ def main():
     sdk.increment_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=3)
     sdk.decrement_counter(UpDownCounterName.ACTIVE_SESSIONS.value, by=2)
     
-    print_footer("✓ Example 16 completed successfully!")
+    print_footer("[OK] Example 16 completed successfully!")
 
 
 if __name__ == "__main__":

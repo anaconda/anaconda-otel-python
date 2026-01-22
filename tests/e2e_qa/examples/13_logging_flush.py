@@ -81,7 +81,7 @@ def main():
     print_section("4. Explicit Flush")
     sdk.flush_logs()
     
-    print_footer("✓ Example 13 completed successfully!")
+    print_footer("[OK] Example 13 completed successfully!")
 
 
 if __name__ == "__main__":

@@ -91,7 +91,7 @@ def main():
     custom_logger.warning(LogMessage.RATE_LIMIT.value, extra=LogAttributes.EMPTY.value)
     custom_logger.warning(LogMessage.HIGH_MEMORY.value)
     
-    print_footer("✓ Example 11 completed successfully!")
+    print_footer("[OK] Example 11 completed successfully!")
 
 
 if __name__ == "__main__":

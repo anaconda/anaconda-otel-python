@@ -218,10 +218,10 @@ def example_09_complete_configuration():
     sdk.apply_signal_specific_endpoints(config, endpoints)
     
     print_success("Complete configuration created")
-    print_info("✓ Console exporter enabled")
-    print_info("✓ Export intervals configured")
-    print_info("✓ Logging level set to 'warning'")
-    print_info("✓ Session entropy configured")
+    print_info("[OK] Console exporter enabled")
+    print_info("[OK] Export intervals configured")
+    print_info("[OK] Logging level set to 'warning'")
+    print_info("[OK] Session entropy configured")
     
     return config
 

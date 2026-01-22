@@ -83,7 +83,7 @@ def main():
     logger.info("Database insert operation", extra=LogAttributes.DB_INSERT.value)
     logger.warning("Slow operation detected", extra=LogAttributes.SLOW_OPERATION.value)
     
-    print_footer("✓ Example 10 completed successfully!")
+    print_footer("[OK] Example 10 completed successfully!")
 
 
 if __name__ == "__main__":

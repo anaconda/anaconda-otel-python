@@ -143,7 +143,7 @@ def main():
     print_section("5. Scenario 3: Multi-Service Coordination")
     simulate_multi_service_scenario(sdk)
     
-    print_footer("✓ Example 12 completed successfully!")
+    print_footer("[OK] Example 12 completed successfully!")
 
 
 if __name__ == "__main__":

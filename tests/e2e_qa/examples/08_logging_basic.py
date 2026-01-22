@@ -66,22 +66,22 @@ def main():
     # Get the telemetry logger and send log messages
     print_section("2. Setup Logger and Send Messages")
     logger = sdk.get_logger(LOGGER_NAME)
-    print_info(f"→ Logger '{LOGGER_NAME}' configured with telemetry handler")
+    print_info(f"-> Logger '{LOGGER_NAME}' configured with telemetry handler")
     
     # Send log messages at different levels
     print_section("3. Send Log Messages at Different Levels")
     logger.info(LogMessage.BASIC_INFO.value)
     logger.info(LogMessage.USER_LOGOUT.value)
-    print_info("→ Sent INFO level logs")
+    print_info("-> Sent INFO level logs")
     
     logger.warning(LogMessage.BASIC_WARNING.value)
-    print_info("→ Sent WARNING level log")
+    print_info("-> Sent WARNING level log")
     
     logger.error(LogMessage.BASIC_ERROR.value)
     logger.error(LogMessage.TIMEOUT_ERROR.value)
-    print_info("→ Sent ERROR level logs")
+    print_info("-> Sent ERROR level logs")
     
-    print_footer("✓ Example 8 completed successfully!")
+    print_footer("[OK] Example 8 completed successfully!")
 
 
 if __name__ == "__main__":

@@ -67,14 +67,14 @@ def main():
     print_section("2. Basic Counter Usage")
     sdk.increment_counter(CounterName.PAGE_VIEWS.value, by=1)
     sdk.increment_counter(CounterName.PAGE_VIEWS.value, by=5)
-    print_info("→ Counters accumulate across multiple calls")
+    print_info("-> Counters accumulate across multiple calls")
     
     # Example 3: Counter with attributes
     print_section("3. Counters with Attributes")
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_USERS.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_ORDERS.value)
     sdk.increment_counter(CounterName.API_REQUESTS.value, by=1, attributes=MetricAttributes.ENDPOINT_PRODUCTS.value)
-    print_info("→ Same metric name, different attributes enable filtering/aggregation")
+    print_info("-> Same metric name, different attributes enable filtering/aggregation")
     
     # Example 4: Multiple counter types
     print_section("4. Different Counter Types")
@@ -90,7 +90,7 @@ def main():
     sdk.increment_counter(CounterName.REQUESTS_RECEIVED.value, by=75, attributes=MetricAttributes.REGION_US_WEST.value)
     sdk.increment_counter(CounterName.REQUESTS_RECEIVED.value, by=50, attributes=MetricAttributes.REGION_EU_WEST.value)
     sdk.increment_counter(CounterName.REQUESTS_COMPLETED.value, by=225)
-    print_info("→ Same metric with different region attributes tracked separately")
+    print_info("-> Same metric with different region attributes tracked separately")
     
     # Example 6: Business metrics
     print_section("6. Business Metrics")
@@ -101,16 +101,16 @@ def main():
     print_section("7. Network Traffic")
     sdk.increment_counter(CounterName.BYTES_SENT.value, by=1048576)
     sdk.increment_counter(CounterName.BYTES_RECEIVED.value, by=524288)
-    print_info("→ Counters work well for tracking large numeric values")
+    print_info("-> Counters work well for tracking large numeric values")
     
     # Example 8: Floating-point counters (revenue tracking)
     print_section("8. Floating-Point Counters")
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_SMALL.value)
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_MEDIUM.value)
     sdk.increment_counter(CounterName.REVENUE_USD.value, by=MetricValues.REVENUE_LARGE.value)
-    print_info("→ Counters support floating-point values (stored as asDouble)")
+    print_info("-> Counters support floating-point values (stored as asDouble)")
     
-    print_footer("✓ Example 14 completed successfully!")
+    print_footer("[OK] Example 14 completed successfully!")
 
 
 if __name__ == "__main__":

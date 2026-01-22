@@ -67,7 +67,7 @@ def load_environment():
     if env_file.exists():
         load_dotenv(env_file, override=True)
     else:
-        print(f"⚠️  Warning: .env file not found at {env_file}")
+        print(f"[WARN] Warning: .env file not found at {env_file}")
         print("   Using default values.")
     
     # Get configuration from environment
@@ -128,7 +128,7 @@ def validate_environment():
     
     # Warn if using production
     if environment.startswith('production'):
-        print("\n⚠️  WARNING: Using production environment!")
+        print("\n[WARN] WARNING: Using production environment!")
         print("   Only send real production data to production endpoints.")
         response = input("   Continue? (yes/no): ")
         if response.lower() != 'yes':

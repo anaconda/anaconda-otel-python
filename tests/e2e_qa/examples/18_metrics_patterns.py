@@ -113,7 +113,7 @@ def main():
         track_request(sdk, "/api/users", "GET", 45.0, 200)
     for _ in range(2):
         track_request(sdk, "/api/users", "GET", 125.0, 500)
-    print_info("→ RED pattern: Rate (counters) + Errors (error counters) + Duration (histograms)")
+    print_info("-> RED pattern: Rate (counters) + Errors (error counters) + Duration (histograms)")
     
     # Pattern 2: Database monitoring
     print_section("3. Pattern: Database Monitoring")
@@ -121,7 +121,7 @@ def main():
     track_database_operation(sdk, "SELECT", "users", 18.0, True)
     track_database_operation(sdk, "INSERT", "orders", 45.0, True)
     track_database_operation(sdk, "UPDATE", "products", 3000.0, False)
-    print_info("→ Track operation counts, durations, and errors for comprehensive DB monitoring")
+    print_info("-> Track operation counts, durations, and errors for comprehensive DB monitoring")
     
     # Pattern 3: Business metrics
     print_section("4. Pattern: Business Metrics")
@@ -129,7 +129,7 @@ def main():
     track_business_transaction(sdk, "purchase", 99.99, True)
     track_business_transaction(sdk, "subscription", 19.99, True)
     track_business_transaction(sdk, "purchase", 199.99, False)
-    print_info("→ Combine technical metrics with business KPIs for complete monitoring")
+    print_info("-> Combine technical metrics with business KPIs for complete monitoring")
     
     # Pattern 4: Resource utilization
     print_section("5. Pattern: Resource Utilization")
@@ -143,9 +143,9 @@ def main():
     sdk.record_histogram_batch("slo_request_duration_ms", [15.0, 25.0, 35.0, 45.0, 55.0, 65.0, 75.0, 85.0, 95.0], attributes={"slo_target": "100ms"})
     # Slow request (violates SLO)
     sdk.record_histogram("slo_request_duration_ms", 250.0, attributes={"slo_target": "100ms"})
-    print_info("→ Histograms with SLO attributes enable compliance calculations and alerting")
+    print_info("-> Histograms with SLO attributes enable compliance calculations and alerting")
     
-    print_footer("✓ Example 18 completed successfully!")
+    print_footer("[OK] Example 18 completed successfully!")
 
 
 if __name__ == "__main__":

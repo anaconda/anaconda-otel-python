@@ -88,14 +88,14 @@ def main():
     print_section("3. Recording Multiple Values")
     durations = [15.5, 23.0, 125.0, 45.0, 850.0, 32.0, 67.0]
     sdk.record_histogram_batch(HistogramName.REQUEST_DURATION_MS.value, durations)
-    print_info("→ Backend calculates min, max, avg, p50, p95, p99 from distribution")
+    print_info("-> Backend calculates min, max, avg, p50, p95, p99 from distribution")
     
     # Example 3: Histogram with attributes
     print_section("4. Histograms with Attributes")
     sdk.record_histogram(HistogramName.API_RESPONSE_TIME_MS.value, 45.5, attributes=MetricAttributes.ENDPOINT_USERS.value)
     sdk.record_histogram(HistogramName.API_RESPONSE_TIME_MS.value, 125.0, attributes=MetricAttributes.ENDPOINT_ORDERS.value)
     sdk.record_histogram(HistogramName.API_RESPONSE_TIME_MS.value, 32.0, attributes=MetricAttributes.ENDPOINT_PRODUCTS.value)
-    print_info("→ Attributes enable performance comparison across dimensions")
+    print_info("-> Attributes enable performance comparison across dimensions")
     
     # Example 4: Database query durations
     print_section("5. Database Query Duration Tracking")
@@ -115,7 +115,7 @@ def main():
     print_section("7. Business Metrics Tracking")
     order_values = [9.99, 49.99, 19.99, 199.99, 29.99, 99.99, 14.99]
     sdk.record_histogram_batch(HistogramName.ORDER_VALUE_USD.value, order_values, attributes=MetricAttributes.STATUS_SUCCESS.value)
-    print_info("→ Histograms enable business analysis: total revenue, average order value, percentiles")
+    print_info("-> Histograms enable business analysis: total revenue, average order value, percentiles")
     
     # Example 7: Additional histogram types
     print_section("8. Additional Histogram Types")
@@ -124,7 +124,7 @@ def main():
     sdk.record_histogram(HistogramName.CART_VALUE_USD.value, 75.50)
     sdk.record_histogram(HistogramName.TRANSACTION_AMOUNT_USD.value, 250.00)
     
-    print_footer("✓ Example 15 completed successfully!")
+    print_footer("[OK] Example 15 completed successfully!")
 
 
 if __name__ == "__main__":

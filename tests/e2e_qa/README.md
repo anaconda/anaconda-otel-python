@@ -86,14 +86,14 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    ```
    
    **Important Notes**:
-   - ⚠️ When `OTEL_CONSOLE_EXPORTER=true`, data is printed to console only (not sent to backend)
-   - ⚠️ When `OTEL_CONSOLE_EXPORTER=false`, data is sent to the backend endpoint
-   - 💡 When `USE_DETAILED_LOG=true`, examples show detailed output (names, values, attributes, endpoints, timing, status)
+   - [WARN] When `OTEL_CONSOLE_EXPORTER=true`, data is printed to console only (not sent to backend)
+   - [WARN] When `OTEL_CONSOLE_EXPORTER=false`, data is sent to the backend endpoint
+   - [TIP] When `USE_DETAILED_LOG=true`, examples show detailed output (names, values, attributes, endpoints, timing, status)
    - Contact your organization's telemetry team for endpoint URLs and credentials
 
 5. **Verify installation**
    ```bash
-   python -c "from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry; print('✓ SDK imported successfully')"
+   python -c "from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry; print('[OK] SDK imported successfully')"
    ```
 
 ### Running Examples
@@ -124,7 +124,7 @@ python 01_config_examples.py
 python 02_attributes_examples.py
 ```
 
-#### 🚀 Run Example Categories
+#### [RUN] Run Example Categories
 
 **From the e2e_qa directory**:
 ```bash

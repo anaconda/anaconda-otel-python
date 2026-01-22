@@ -59,7 +59,7 @@ def main():
     
     # Run configuration examples first (they don't initialize telemetry)
     print("\n" + "=" * 70)
-    print("📚 CONFIGURATION EXAMPLES")
+    print("[CONFIG] CONFIGURATION EXAMPLES")
     print("=" * 70)
     print("These examples demonstrate configuration without initializing telemetry\n")
     
@@ -67,7 +67,7 @@ def main():
         script_path = Path(__file__).parent / example
         
         if not script_path.exists():
-            print(f"\n❌ Example not found: {example}")
+            print(f"\n[FAIL] Example not found: {example}")
             config_results[example] = (False, [f"File not found: {example}"])
             continue
         
@@ -77,7 +77,7 @@ def main():
     
     # Run initialization examples (each in separate process)
     print("\n" + "=" * 70)
-    print("🚀 INITIALIZATION EXAMPLES")
+    print("[INIT] INITIALIZATION EXAMPLES")
     print("=" * 70)
     print("Each example runs in a separate process for proper initialization\n")
     
@@ -85,7 +85,7 @@ def main():
         script_path = Path(__file__).parent / example
         
         if not script_path.exists():
-            print(f"\n❌ Example not found: {example}")
+            print(f"\n[FAIL] Example not found: {example}")
             init_results[example] = (False, [f"File not found: {example}"])
             continue
         
