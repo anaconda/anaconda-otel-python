@@ -51,15 +51,19 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    conda env create -f environment.yml
    conda activate e2e-qa-examples
    ```
+   
+   **What gets installed:**
+   - Python 3.10 and pip
+   - `python-dotenv` (for loading .env configuration)
+   - `anaconda-opentelemetry` SDK from local repository (development mode)
+   - All SDK dependencies (opentelemetry-api, opentelemetry-sdk, exporters, etc.)
+   
+   **Note:** The SDK is installed in editable mode (`-e ../../`) which means:
+   - Any changes to the SDK code are immediately reflected
+   - Mimics how external products would use: `pip install anaconda-opentelemetry`
+   - Once published to PyPI, you can test with specific versions (see environment.yml comments)
 
-3. **Install SDK in development mode**
-   ```bash
-   cd ../..  # Go to repo root
-   pip install -e .
-   cd tests/e2e_qa
-   ```
-
-4. **Configure environment**
+3. **Configure environment**
    
    Create a `.env` file from the example:
    ```bash
@@ -91,7 +95,7 @@ This dual approach ensures the SDK is accessible to beginners while providing de
    - [TIP] When `USE_DETAILED_LOG=true`, examples show detailed output (names, values, attributes, endpoints, timing, status)
    - Contact your organization's telemetry team for endpoint URLs and credentials
 
-5. **Verify installation**
+4. **Verify installation**
    ```bash
    python -c "from anaconda.opentelemetry import Configuration, ResourceAttributes, initialize_telemetry; print('[OK] SDK imported successfully')"
    ```
@@ -266,9 +270,9 @@ Demonstrates all public SDK methods (23 total):
 
 **`ModuleNotFoundError: No module named 'anaconda'`**
 ```bash
-# Install SDK in development mode from repo root
-cd /path/to/anaconda-otel-python
-pip install -e .
+# Recreate the conda environment (it should install the SDK automatically)
+conda env create -f environment.yml --force
+conda activate e2e-qa-examples
 ```
 
 **`ModuleNotFoundError: No module named 'dotenv'`**
