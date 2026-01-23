@@ -82,7 +82,7 @@ class ResourceAttributes:
         elif hasattr(self, '_readonly_fields') and key in self._readonly_fields:
             logging.getLogger(__package__).warning(f"Attempted overwrite of readonly common attribute {key}")
         elif (key == "service_name" or key == "service_version") and not self._check_valid_string(value):
-            raise ValueError(f"{key} not set. {value} is invalid regex for this key: `^[a-zA-Z0-9._-]{{1,50}}$`. This is a required parameter")
+            raise ValueError(f"{key} not set. {value} is invalid regex for this key: `^[a-zA-Z0-9._-]{{1,30}}$`. This is a required parameter")
         else:
             super().__setattr__(
                 str(key),
