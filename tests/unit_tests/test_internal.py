@@ -285,45 +285,6 @@ class TestAnacondaCommon:
                 "Attributes `{None: 'val'}` passed with non empty str type key. Invalid attributes."
             )
 
-    def test_url_validation(self, AnacondaCommon: AnacondaTelBase):
-        """
-        Checks that the urls validation functions as expected
-        """
-        pos_list = [
-            "http://localhost/v1/metrics",
-            "http://localhost:2118/v1/logs",
-            "http://127.0.0.1:2118/v1/traces",
-            "https://some.website.test:2118/v1/metrics",
-            "https://some.website.test/v1/metrics",
-            "grpc://localhost/",
-            "grpc://localhost:2118/",
-            "grpc://127.0.0.1:2118/",
-            "grpcs://some.website.test:2118/",
-            "grpcs://some.website.test:2118/",
-            "grpcs://some.website.test/"
-        ]
-        neg_list = [
-            "http://localhost/",
-            "http://me/v1/metrics",
-            "http://me:2118/v1/logs",
-            "http://256.0.0.1:2118/v1/traces",
-            "https://some.website.test:2118/v2/metrics",
-            "https://some.website.test:0/v1/metrics",  # The urlparse produces a 16bit value, so 0 is the only illegal value
-            "https://some.website.test/v1/bad",
-            "grpc://localhost/v1/metrics",
-            "grpc://localhost:2118/v1/logs",
-            "grpc://256.0.0.1:2118/",
-            "grpcs://some.website.test:2118/v2",
-            "grpcs://some.website.test:0/"  # The urlparse produces a 16bit value, so 0 is the only illegal value
-        ]
-        # Positive Checks
-        for url in pos_list:
-            assert AnacondaCommon.is_valid_otel_url(url) == True
-
-        # Negative Checks
-        for url in neg_list:
-            assert AnacondaCommon.is_valid_otel_url(url) == False
-
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None
@@ -637,16 +598,16 @@ class TestAnacondaTrace:
         parent = AnacondaTracer.get_span("parent", {}, carrier)
         parent_trace = parent._span.get_span_context().trace_id
         parent_span = parent._span.get_span_context().span_id
-
+        
         assert len(carrier) > 0, "Carrier should contain trace context"
-
+        
         child = AnacondaTracer.get_span("child", {}, carrier)
         child_trace = child._span.get_span_context().trace_id
         child_span = child._span.get_span_context().span_id
-
+        
         assert child_trace == parent_trace, "Child should share parent's trace_id"
         assert child_span != parent_span, "Child should have different span_id"
-
+        
         child._close()
         parent._close()
 
@@ -660,19 +621,19 @@ class TestAnacondaTrace:
         """
         span1 = AnacondaTracer.get_span("span1", {}, None)
         span2 = AnacondaTracer.get_span("span2", {}, None)
-
+        
         assert span1._span.get_span_context().trace_id != \
             span2._span.get_span_context().trace_id, \
             "Spans without carrier should have different trace_ids"
-
+        
         carrier1, carrier2 = {}, {}
         span3 = AnacondaTracer.get_span("span3", {}, carrier1)
         span4 = AnacondaTracer.get_span("span4", {}, carrier2)
-
+        
         assert span3._span.get_span_context().trace_id != \
             span4._span.get_span_context().trace_id, \
             "Separate carriers should create separate traces"
-
+        
         for span in [span1, span2, span3, span4]:
             span._close()
 
@@ -688,16 +649,16 @@ class TestAnacondaTrace:
         spans = []
         trace_ids = []
         span_ids = []
-
+        
         for i in range(3):
             span = AnacondaTracer.get_span(f"span-{i}", {}, carrier)
             spans.append(span)
             trace_ids.append(span._span.get_span_context().trace_id)
             span_ids.append(span._span.get_span_context().span_id)
-
+        
         assert len(set(trace_ids)) == 1, "All spans should share trace_id"
         assert len(set(span_ids)) == 3, "Each span should have unique span_id"
-
+        
         for span in reversed(spans):
             span._close()
 

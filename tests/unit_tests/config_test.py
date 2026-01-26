@@ -374,7 +374,7 @@ class TestConfiguration:
         assert new_endpoint == "https://tracehost:9090/v1/traces"
 
         new_endpoint = cfg._change_signal_endpoint("logging", "grpc://loghost:4317", auth_token="logtoken")
-        assert new_endpoint == "grpc://loghost:4317"
+        assert new_endpoint == "grpc://loghost:4317/v1/logs"
         assert cfg._get_auth_token_logging() == "logtoken"
 
     def test_change_signal_endpoint_preserves_path(self):
