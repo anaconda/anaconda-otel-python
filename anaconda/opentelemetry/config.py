@@ -475,7 +475,7 @@ class Configuration:
             return self
         self._config[self.METRICS_EXPORT_INTERVAL_MS_NAME] = interval_ms
         return self
-    
+
     def set_tracing_export_interval_ms(self, interval_ms: int):
         """
         Sets the tracing export interval in milliseconds. If this value is not set,
@@ -629,6 +629,8 @@ class Configuration:
         return get_endpoint()
 
     def _set_otel_signal_endpoint(self, endpoint: str, signal: str) -> str:
+        if endpoint.lower().startswith("grpc"):
+            return endpoint
         endpoint_str = f"v1/{signal}"
         if not endpoint.endswith(endpoint_str):
             endpoint_str = "/" + endpoint_str if endpoint[-1] != "/" else endpoint_str
@@ -701,7 +703,7 @@ class Configuration:
 
     def _get_metrics_export_interval_ms(self) -> int:
         return self._config.get(self.METRICS_EXPORT_INTERVAL_MS_NAME, 60_000)
-    
+
     def _get_tracing_export_interval_ms(self) -> int:
         return self._config.get(self.TRACING_EXPORT_INTERVAL_MS_NAME, 60_000)
 
