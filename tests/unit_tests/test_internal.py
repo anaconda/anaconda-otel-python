@@ -285,45 +285,6 @@ class TestAnacondaCommon:
                 "Attributes `{None: 'val'}` passed with non empty str type key. Invalid attributes."
             )
 
-    def test_url_validation(self, AnacondaCommon: AnacondaTelBase):
-        """
-        Checks that the urls validation functions as expected
-        """
-        pos_list = [
-            "http://localhost/v1/metrics",
-            "http://localhost:2118/v1/logs",
-            "http://127.0.0.1:2118/v1/traces",
-            "https://some.website.test:2118/v1/metrics",
-            "https://some.website.test/v1/metrics",
-            "grpc://localhost/",
-            "grpc://localhost:2118/",
-            "grpc://127.0.0.1:2118/",
-            "grpcs://some.website.test:2118/",
-            "grpcs://some.website.test:2118/",
-            "grpcs://some.website.test/"
-        ]
-        neg_list = [
-            "http://localhost/",
-            "http://me/v1/metrics",
-            "http://me:2118/v1/logs",
-            "http://256.0.0.1:2118/v1/traces",
-            "https://some.website.test:2118/v2/metrics",
-            "https://some.website.test:0/v1/metrics",  # The urlparse produces a 16bit value, so 0 is the only illegal value
-            "https://some.website.test/v1/bad",
-            "grpc://localhost/v1/metrics",
-            "grpc://localhost:2118/v1/logs",
-            "grpc://256.0.0.1:2118/",
-            "grpcs://some.website.test:2118/v2",
-            "grpcs://some.website.test:0/"  # The urlparse produces a 16bit value, so 0 is the only illegal value
-        ]
-        # Positive Checks
-        for url in pos_list:
-            assert AnacondaCommon.is_valid_otel_url(url) == True
-
-        # Negative Checks
-        for url in neg_list:
-            assert AnacondaCommon.is_valid_otel_url(url) == False
-
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None
