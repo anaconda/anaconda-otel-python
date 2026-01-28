@@ -86,6 +86,9 @@ class TestConfiguration:
         cfg.set_logging_endpoint('http://localhost:2346/')
         assert 'http://localhost:2346/v1/logs' == cfg._get_logging_endpoint()
 
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
+            Config(default_endpoint="   ")  # empty url
+
     def test_endpoints_as_urls(self):
         cfg = Config(default_endpoint="https://localhost:2345")
         assert True == cfg._get_TLS_default().tls  # passed https to constructor

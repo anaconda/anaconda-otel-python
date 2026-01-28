@@ -16,7 +16,6 @@ from abc import ABC
 from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
 from contextlib import contextmanager
 from dataclasses import fields
-from urllib.parse import urlparse
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
@@ -126,138 +125,6 @@ class _AnacondaCommon:
             attributes['user.id'] = self._user_id
             return attributes
 
-    def is_valid_otel_url(self, url: str) -> bool:
-        return self._is_valid_otel_grpc_url(url) or self._is_valid_otel_http_url(url)
-
-    def _is_valid_otel_http_url(self, url_str: str) -> bool:
-        """
-        1) Validate an OTLP/HTTP(S) URL:
-        - scheme: http | https
-        - host: ipv4 | domain | localhost
-        - optional port
-        - REQUIRED path: /v1/{metrics|logs|traces}
-        - NO trailing slash, NO extra segments, NO query/fragment
-        """
-        try:
-            u = urlparse(url_str)
-        except Exception:
-            return False
-
-        if u.scheme not in ("http", "https"):
-            return False
-
-        # Must have a host
-        if not u.hostname:
-            return False
-
-        # Disallow userinfo
-        if u.username is not None or u.password is not None:
-            return False
-
-        if not self._is_valid_host(u.hostname):
-            return False
-
-        # Optional port; if present must be valid
-        if u.port is not None and not (1 <= u.port <= 65535):
-            return False
-
-        # Required exact path: /v1/{type}
-        m = re.fullmatch(r"/v1/(metrics|logs|traces)", u.path)
-        if not m:
-            return False
-
-        # No query / fragment / params
-        if u.query or u.fragment or u.params:
-            return False
-
-        return True
-
-
-    def _is_valid_otel_grpc_url(self, url_str: str) -> bool:
-        """
-        2) Validate an OTLP/gRPC URL:
-        - scheme: grpc | grpcs
-        - host: ipv4 | domain | localhost
-        - optional port
-        - MUST NOT have a path ("" or "/"), NO query/fragment
-        """
-        try:
-            u = urlparse(url_str)
-        except Exception:
-            return False
-
-        if u.scheme not in ("grpc", "grpcs"):
-            return False
-
-        if not u.hostname:
-            return False
-
-        # Disallow userinfo
-        if u.username is not None or u.password is not None:
-            return False
-
-        if not self._is_valid_host(u.hostname):
-            return False
-
-        if u.port is not None and not (1 <= u.port <= 65535):
-            return False
-
-        # No path (urlparse may yield "" or "/")
-        if u.path not in ("", "/"):
-            return False
-
-        if u.query or u.fragment or u.params:
-            return False
-
-        return True
-
-
-    def _is_valid_host(self, hostname: str) -> bool:
-        if hostname == "localhost":
-            return True
-        if self._is_valid_ipv4(hostname):
-            return True
-        return self._is_valid_domain(hostname)
-
-
-    def _is_valid_ipv4(self, s: str) -> bool:
-        parts = s.split(".")
-        if len(parts) != 4:
-            return False
-        for p in parts:
-            if not re.fullmatch(r"\d{1,3}", p):
-                return False
-            # Disallow leading zeros like "01"
-            if len(p) > 1 and p.startswith("0"):
-                return False
-            n = int(p)
-            if n < 0 or n > 255:
-                return False
-        return True
-
-
-    def _is_valid_domain(self, host: str) -> bool:
-        h = host.lower()
-        if not (1 <= len(h) <= 253):
-            return False
-        if "." not in h:
-            return False
-
-        labels = h.split(".")
-        if any(label == "" for label in labels):
-            return False
-
-        # label: [a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?
-        label_re = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
-        for label in labels:
-            if not label_re.fullmatch(label):
-                return False
-
-        tld = labels[-1]
-        if not re.fullmatch(r"[a-z]{2,63}", tld):
-            return False
-
-        return True
 
 class _AnacondaLogger(_AnacondaCommon):
     # Singleton instance (internal only); provide a logger handler for OpenTelemetry log instrumentation
@@ -265,9 +132,6 @@ class _AnacondaLogger(_AnacondaCommon):
 
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
-        if self.is_valid_otel_url(config._get_logging_endpoint()) == False:
-            logging.getLogger().fatal("The logs URL is invalid: {}".format(config._get_logging_endpoint()))
-            return
         self.log_level = self._get_log_level(config._get_logging_level())
         self.logger_endpoint = config._get_logging_endpoint()
 
@@ -355,9 +219,6 @@ class _AnacondaMetrics(_AnacondaCommon):
 
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
-        if self.is_valid_otel_url(config._get_metrics_endpoint()) == False:
-            logging.getLogger().fatal("The metrics URL is invalid: {}".format(config._get_metrics_endpoint()))
-            return
 
         self.metrics_endpoint = config._get_metrics_endpoint()
         self.telemetry_export_interval_millis = config._get_metrics_export_interval_ms()
@@ -577,9 +438,6 @@ class _AnacondaTrace(_AnacondaCommon):
     def __init__(self, config: Config, attributes: Attributes):
         # Init singleton instance
         super().__init__(config, attributes)
-        if self.is_valid_otel_url(config._get_tracing_endpoint()) == False:
-            logging.getLogger().fatal("The traces URL is invalid: {}".format(config._get_tracing_endpoint()))
-            return
         self.telemetry_export_interval_millis = config._get_tracing_export_interval_ms()
         self.tracing_endpoint = config._get_tracing_endpoint()
 
