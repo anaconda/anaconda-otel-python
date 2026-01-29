@@ -12,7 +12,6 @@ This module provides the configuration setting from a file or a dictionary (or b
 from typing import Dict, Any, List
 import re, os, grpc, warnings, functools
 
-
 """
 Configuration class to supply settings for Anaconda Telemetry.
 It allows loading configuration from a JSON or YAML file, or from a dictionary.
@@ -552,7 +551,7 @@ class Configuration:
             # - path - path of the endpoint passed to the constructor
             # - valid - whether or not the endpoint is valid
             # - _internet_check_port - internet check port used for connection check
-            self._parse_endpoint(endpoint)
+            self._parse_endpoint(endpoint.strip())
 
         # Getters for configuration settings (internal only for the package)
         def _parse_endpoint(self, url: str):
@@ -582,6 +581,8 @@ class Configuration:
             self.url = url
 
         def _validate_endpoint(self, endpoint: str):
+            if endpoint == '':
+                raise ValueError(f"Invalid endpoint format: {endpoint}")
             pattern = re.compile(
                 r"^"
                 r"(https?://|grpcs?://)"                       # capture group 1: optional protocol
