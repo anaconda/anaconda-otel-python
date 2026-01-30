@@ -90,7 +90,7 @@ class TestConfiguration:
             Config(default_endpoint="   ")  # url with whitespace
         with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
             Config(default_endpoint="")  # empty url
-        with pytest.raises(KeyError, match=f"Invalid endpoint format: "):
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
             Config(default_endpoint="https://")  # cutoff url
 
     def test_endpoints_as_urls(self):
