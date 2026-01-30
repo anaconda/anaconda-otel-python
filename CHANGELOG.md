@@ -50,6 +50,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 - Vague exception handling for cases where telemetry is not initialized
 - Changed string casting of json objects to json.dumps
 - Fix counter (cumulative) not being DELTA temporality
+- Added more endpoint validation, fixed bug where user could create an empty string endpoint
 
 ### Security
 
@@ -61,6 +62,9 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Pull Requests Merged
 
+- Generalizing schema, added endpoint guidance [#44](https://github.com/anaconda/anaconda-otel-python/pull/44)
+- [fix] Corrected fix for endpoint validation [#43](https://github.com/anaconda/anaconda-otel-python/pull/43)
+- Lower maximum service name characters [#41](https://github.com/anaconda/anaconda-otel-python/pull/41)
 - use package nesting for anaconda.opentelemetry [#36](https://github.com/anaconda/anaconda-otel-python/pull/36)
 - [fix] Update Temporality presets for Metrics [#35](https://github.com/anaconda/anaconda-otel-python/pull/35)
 - Add Best Practices Documentation [#34](https://github.com/anaconda/anaconda-otel-python/pull/34)
