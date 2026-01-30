@@ -1,7 +1,8 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
 This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
-## [v0.3.0] (12/01/2025) - Current Schema
+## Current Schema
+### [v0.3.0] (12/01/2025)
 ```
 {
   "resourceMetrics|resourceLogs": [
@@ -73,7 +74,27 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## [v0.2.0] (07/18/25) - (12/01/2025)
+## Definitions of schema properties
+Telemetry.sdk.language: set by OpenTelemetry’s SDK, denotes the language utilized
+Telemetry.sdk.name: set by OpenTelemetry’s SDK, name of SDK utilized
+Telemetry.sdk.version: set by OpenTelemetry’s SDK, version of SDK utilized
+Service.name (was Source): name of the client service sending telemetry
+Service.version: version of the client service sending telemetry
+Os.type: client operating system type
+Os.version: version of client operating system
+Python.version: python version used by client
+Hostname: hostname of client
+Client.sdk.version: version of the anaconda-opentelemetry package, set by package (readonly)
+Schema.version: version of the schema used in anaconda-opentelemetry package, set by package (readonly)
+Platform: The infrastructure on which the software is executed, which could include cloud providers (where is the user leveraging our products?)
+Environment: “” | test | development | staging | production
+Session.id: the setting of this is handled entirely by the anaconda-opentelemetry package, not the user. It is the result of hashing a session-unique string (readonly)
+Timestamp (automatically set): The UTC timestamp during which this event occurred
+Event: Custom event name defined per product
+Parameters: Optional values for the consumer to send in a dictionary format (this allows for flexibility of the schema). We decided on a nested pattern based on the established data platform patterns and processes.
+
+## Historic Schemas
+### [v0.2.0] (07/18/25) - (12/01/2025)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
@@ -95,7 +116,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## [v0.1.0] (06/18/25)
+### [v0.1.0] (06/18/25)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
