@@ -4,7 +4,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 ## [v0.3.0] (12/01/2025) - Current Schema
 ```
 {
-  "resource_metrics": [
+  "resourceMetrics|resourceLogs": [
     {
       "resource": {
         "attributes": {  # key value pairs within here are where data is added
@@ -25,23 +25,48 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
         }
       }
-      "scope_metrics": [
+      "scopeMetrics|scopeLogs": [
+        ### Metrics -----------------------------------------------------------------
         {
           "metrics": [
             {
               "data": {
                 "data_points": [
                   {
-                    "attributes": {  # key value pairs within here are where data is added
-                      "user.id": "1234",  # moved from resource.attributes in v0.3.0
+                    "attributes": [
+                      {  # key value pairs within here are where data is added
+                        "key": "user.id",  # moved from resource.attributes in v0.3.0
+                        "value": {
+                          "stringValue": "1234"
+                        }
+                      },
                       # this section also includes event specific attributes
-                    },
+                    ],
                   }
                 ]
               }
             }
           ]
         }
+        ### End Metrics -------------------------------------------------------------
+
+        ### Logs --------------------------------------------------------------------
+        {
+          "logRecords": [
+            {
+              "attributes": [
+                {  # key value pairs within here are where data is added
+                  "key": "user.id",  # moved from resource.attributes in v0.3.0
+                  "value": {
+                    "stringValue": "1234"
+                  }
+                },
+                # this section also includes event specific attributes
+              ],
+            }
+          ]
+        }
+        ### End Logs ----------------------------------------------------------------
       ]
     }
   ]
@@ -92,10 +117,11 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## Example Full OpenTelemetry Payload  - [Schema v0.2.0]
+## Example Full OpenTelemetry Metric Payload  - [Schema <= v0.2.0]
+### All schemas newer than v0.2.0 show a full payload example
 ```
 {
-  "resource_metrics": [
+  "resourceMetrics": [
     {
       "resource": {
         "attributes": {

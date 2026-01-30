@@ -144,6 +144,12 @@ class Configuration:
         """
         Creates the configuration object passed to initialize_telemetry.
 
+        If configuring the default endpoint and desiring to send multiple metric types, do not use any paths like:
+            - /v1/metrics
+            - /v1/logs
+            - /v1/traces
+        Just use the host. The path is automatically appended by this sdk
+
         Args:
             default_endpoint (str): The endpoint used when not specifying a specific endpoint for a specific signal type. May be None.
             default_auth_token (str): The default auth token use for the default_endpoint or None.
