@@ -87,7 +87,11 @@ class TestConfiguration:
         assert 'http://localhost:2346/v1/logs' == cfg._get_logging_endpoint()
 
         with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
-            Config(default_endpoint="   ")  # empty url
+            Config(default_endpoint="   ")  # url with whitespace
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
+            Config(default_endpoint="")  # empty url
+        with pytest.raises(ValueError, match=f"Invalid endpoint format: "):
+            Config(default_endpoint="https://")  # cutoff url
 
     def test_endpoints_as_urls(self):
         cfg = Config(default_endpoint="https://localhost:2345")

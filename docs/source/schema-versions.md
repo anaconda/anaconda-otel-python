@@ -1,10 +1,11 @@
 # Schema Versions for `anaconda-opentelemetry` Payloads
 This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
-## [v0.3.0] (12/01/2025) - Current Schema
+## Current Schema
+### [v0.3.0] (12/01/2025)
 ```
 {
-  "resource_metrics": [
+  "resourceMetrics|resourceLogs": [
     {
       "resource": {
         "attributes": {  # key value pairs within here are where data is added
@@ -25,30 +26,57 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
         }
       }
-      "scope_metrics": [
+      "scopeMetrics|scopeLogs": [
+        # Only one of Metrics or Logs would apply to a given payload - this is to illustrate the path for either case
+        ### Metrics -----------------------------------------------------------------
         {
           "metrics": [
             {
               "data": {
                 "data_points": [
                   {
-                    "attributes": {  # key value pairs within here are where data is added
-                      "user.id": "1234",  # moved from resource.attributes in v0.3.0
+                    "attributes": [
+                      {  # key value pairs within here are where data is added
+                        "key": "user.id",  # moved from resource.attributes in v0.3.0
+                        "value": {
+                          "stringValue": "1234"
+                        }
+                      },
                       # this section also includes event specific attributes
-                    },
+                    ],
                   }
                 ]
               }
             }
           ]
         }
+        ### End Metrics -------------------------------------------------------------
+
+        ### Logs --------------------------------------------------------------------
+        {
+          "logRecords": [
+            {
+              "attributes": [
+                {  # key value pairs within here are where data is added
+                  "key": "user.id",  # moved from resource.attributes in v0.3.0
+                  "value": {
+                    "stringValue": "1234"
+                  }
+                },
+                # this section also includes event specific attributes
+              ],
+            }
+          ]
+        }
+        ### End Logs ----------------------------------------------------------------
       ]
     }
   ]
 }
 ```
 
-## [v0.2.0] (07/18/25) - (12/01/2025)
+## Historic Schemas
+### [v0.2.0] (07/18/25) - (12/01/2025)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
@@ -70,7 +98,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## [v0.1.0] (06/18/25)
+### [v0.1.0] (06/18/25)
 ```
 {
   "telemetry.sdk.language": "python",  # added by Otel
@@ -92,10 +120,11 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## Example Full OpenTelemetry Payload  - [Schema v0.2.0]
+## Example Full OpenTelemetry Metric Payload  - [Schema <= v0.2.0]
+### All schemas newer than v0.2.0 show a full payload example
 ```
 {
-  "resource_metrics": [
+  "resourceMetrics": [
     {
       "resource": {
         "attributes": {
