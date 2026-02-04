@@ -81,7 +81,7 @@ function git_version() {
 }
 
 function replace_version() {
-    sed -i.bak "s/__SDK_VERSION__ = \\\"1.0.0\\\"/__SDK_VERSION__ = \"${1}\"/g" anaconda_opentelemetry/__version__.py
+    sed -i.bak "s/__SDK_VERSION__ = \\\"1.0.1\\\"/__SDK_VERSION__ = \"${1}\"/g" anaconda_opentelemetry/__version__.py
 }
 
 function restore_version() {
