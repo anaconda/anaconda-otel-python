@@ -6,13 +6,13 @@ sys.path.append("./")
 
 import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
-import anaconda.opentelemetry.signals as signals_package
-from anaconda.opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
+import anaconda_opentelemetry.signals as signals_package
+from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
     decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized, change_signal_endpoint
-from anaconda.opentelemetry.signals import __check_internet_status as check_internet
-from anaconda.opentelemetry.config import Configuration as Config
-from anaconda.opentelemetry.attributes import ResourceAttributes as Attributes
-from anaconda.opentelemetry.signals import _AnacondaMetrics, _AnacondaLogger, _AnacondaTrace
+from anaconda_opentelemetry.signals import __check_internet_status as check_internet
+from anaconda_opentelemetry.config import Configuration as Config
+from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
+from anaconda_opentelemetry.signals import _AnacondaMetrics, _AnacondaLogger, _AnacondaTrace
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_mock_logging():
@@ -28,10 +28,10 @@ class TestInitializeTelemetry:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
         os.environ['OTEL_SDK_DISABLED'] = '' # Reset OTEL_SDK_DISABLED environment variable
 
-    # @patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True))
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    # @patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True))
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_basic_initialization_default_params(
         self,
         # _: MagicMock,
@@ -51,7 +51,7 @@ class TestInitializeTelemetry:
         assert getattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED") is False
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'logging', 'tracing'])
             mock.assert_called_once()
 
@@ -98,9 +98,9 @@ class TestInitializeTelemetry:
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
         attributes = Attributes("test_service", "1.0.0")
 
-        with patch('anaconda.opentelemetry.signals._AnacondaLogger') as mock_logger, \
-             patch('anaconda.opentelemetry.signals._AnacondaMetrics') as mock_metrics, \
-             patch('anaconda.opentelemetry.signals._AnacondaTrace') as mock_trace:
+        with patch('anaconda_opentelemetry.signals._AnacondaLogger') as mock_logger, \
+             patch('anaconda_opentelemetry.signals._AnacondaMetrics') as mock_metrics, \
+             patch('anaconda_opentelemetry.signals._AnacondaTrace') as mock_trace:
 
             initialize_telemetry(config={'use_console_exporters': True}, attributes=attributes)
 
@@ -109,9 +109,9 @@ class TestInitializeTelemetry:
             mock_metrics.assert_not_called()
             mock_trace.assert_not_called()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_selective_signal_types_logging_only(
         self,
         mock_trace: MagicMock,
@@ -126,7 +126,7 @@ class TestInitializeTelemetry:
         """
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['logging'])
             mock.assert_called_once()
 
@@ -135,9 +135,9 @@ class TestInitializeTelemetry:
         mock_trace.assert_not_called()
         assert getattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED") is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_selective_signal_types_metrics_tracing(
         self,
         mock_trace: MagicMock,
@@ -152,7 +152,7 @@ class TestInitializeTelemetry:
         """
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'tracing'])
             mock.assert_called_once()
 
@@ -161,9 +161,9 @@ class TestInitializeTelemetry:
         mock_trace.assert_called_once()
         assert getattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED") is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     @patch('logging.getLogger')
     def test_empty_signal_types_warning(
         self,
@@ -183,7 +183,7 @@ class TestInitializeTelemetry:
 
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=[])
             mock.assert_called_once()
 
@@ -194,9 +194,9 @@ class TestInitializeTelemetry:
         assert "No signal types were initialized" in mock_logger_instance.warning.call_args[0][0]
         assert getattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED") is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_ssl_certificate_and_auth_token_parameters(self, mock_logger: MagicMock, mock_metrics: MagicMock, mock_trace: MagicMock):
         """
         Test that SSL certificate and auth token are properly added to config
@@ -215,7 +215,7 @@ class TestInitializeTelemetry:
             set_auth_token(auth_token)
             attributes = Attributes("test_service", "1.0.0")
         try:
-            with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+            with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
                 initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'logging', 'tracing'])
                 mock.assert_called_once()
 
@@ -226,7 +226,7 @@ class TestInitializeTelemetry:
         finally:
             os.unlink(temp_path)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
     @patch('time.time')
     def test_entropy_param_default_timestamp(
         self,
@@ -243,7 +243,7 @@ class TestInitializeTelemetry:
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'logging', 'tracing'])
             mock.assert_called_once()
 
@@ -252,7 +252,7 @@ class TestInitializeTelemetry:
 
         assert config_obj._get_tracing_session_entropy() == expected_entropy
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
     def test_entropy_param_custom_value(self, mock_logger: MagicMock):
         """
         Test that custom entropy parameter is used when provided
@@ -262,7 +262,7 @@ class TestInitializeTelemetry:
         custom_entropy = "custom_entropy_12345"
         config = Config(default_endpoint='http://localhost:4317').set_tracing_session_entropy(custom_entropy)
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'logging', 'tracing'])
             mock.assert_called_once()
 
@@ -271,9 +271,9 @@ class TestInitializeTelemetry:
 
         assert config_obj._get_tracing_session_entropy() == custom_entropy
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger')
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_instance_attribute_setting(
         self,
         mock_trace: MagicMock,
@@ -296,7 +296,7 @@ class TestInitializeTelemetry:
         mock_trace.return_value = mock_trace_instance
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("test_service", "1.0.0")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=['metrics', 'logging', 'tracing'])
             mock.assert_called_once()
 
@@ -319,7 +319,7 @@ class TestInitializeTelemetry:
 
         config = Config(default_endpoint='http://localhost:4317')
         attributes = Attributes("xyz", "zya")
-        with patch('anaconda.opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
+        with patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True,True)) as mock:
             initialize_telemetry(config=config, attributes=attributes, signal_types=["logging"])  # only init logging since we aren't yet handling None value attribute keys
             mock.assert_called_once()
 
@@ -375,7 +375,7 @@ class TestRecordHistogram:
         """Reset global state before each test"""
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_histogram_recording_minimal_params(self, mock_metrics: MagicMock):
         """
         Test successful histogram recording with minimal required parameters
@@ -398,7 +398,7 @@ class TestRecordHistogram:
             "cpu_usage", 85.7, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_histogram_recording_with_attributes(self, mock_metrics: MagicMock):
         """
         Test successful histogram recording with custom attributes
@@ -427,7 +427,7 @@ class TestRecordHistogram:
             "request_duration", 123.45, custom_attributes
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_histogram_recording_failure_returns_false(self, mock_metrics: MagicMock):
         """
         Test that function returns False when underlying record_histogram fails
@@ -449,7 +449,7 @@ class TestRecordHistogram:
             "failed_metric", 99.9, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_various_numeric_values(self, mock_metrics: MagicMock):
         """
         Test histogram recording with various numeric value types
@@ -479,7 +479,7 @@ class TestRecordHistogram:
         # Verify all calls were made
         assert mock_metrics_instance.record_histogram.call_count == len(test_values)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_empty_attributes_dict_default(self, mock_metrics: MagicMock):
         """
         Test that empty dict is used as default for attributes parameter
@@ -501,7 +501,7 @@ class TestRecordHistogram:
             "default_attrs_test", 50.0, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_instance_method_exception_handling(self, mock_metrics: MagicMock):
         """
         Test behavior when underlying record_histogram method raises exception
@@ -560,7 +560,7 @@ class TestIncrementCounter:
         """Reset global state before each test"""
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_counter_increment_default_params(self, mock_metrics):
         """
         Test successful counter increment with default parameters
@@ -583,7 +583,7 @@ class TestIncrementCounter:
             "api_requests", 1, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_counter_increment_with_attributes(self, mock_metrics):
         """
         Test successful counter increment with custom attributes
@@ -612,7 +612,7 @@ class TestIncrementCounter:
             "http_requests", 3, custom_attributes
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_counter_increment_failure_returns_false(self, mock_metrics):
         """
         Test that function returns False when underlying increment_counter fails
@@ -634,7 +634,7 @@ class TestIncrementCounter:
             "failed_counter", 2, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_various_increment_values(self, mock_metrics):
         """
         Test counter increment with various increment value types
@@ -663,7 +663,7 @@ class TestIncrementCounter:
         # Verify all calls were made
         assert mock_metrics_instance.increment_counter.call_count == len(test_values)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_instance_method_exception_handling(self, mock_metrics):
         """
         Test behavior when underlying increment_counter method raises exception
@@ -714,7 +714,7 @@ class TestDecrementCounter:
         """Reset global state before each test"""
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_counter_decrement_default_params(self, mock_metrics):
         """
         Test successful counter decrement with default parameters
@@ -737,7 +737,7 @@ class TestDecrementCounter:
             "api_failures", 1, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_successful_counter_decrement_with_attributes(self, mock_metrics):
         """
         Test successful counter decrement with custom attributes
@@ -766,7 +766,7 @@ class TestDecrementCounter:
             "cache_entries", 10, custom_attributes
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_counter_decrement_failure_returns_false(self, mock_metrics):
         """
         Test that function returns False when underlying decrement_counter fails
@@ -788,7 +788,7 @@ class TestDecrementCounter:
             "failed_counter", 3, {}
         )
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_various_decrement_values(self, mock_metrics):
         """
         Test counter decrement with various decrement value types
@@ -817,7 +817,7 @@ class TestDecrementCounter:
         # Verify all calls were made
         assert mock_metrics_instance.decrement_counter.call_count == len(test_values)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_updown_counter_vs_regular_counter_behavior(self, mock_metrics):
         """
         Test decrement_counter behavior with different counter types
@@ -843,7 +843,7 @@ class TestDecrementCounter:
         # Verify both calls were made
         assert mock_metrics_instance.decrement_counter.call_count == 2
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
     def test_instance_method_exception_handling(self, mock_metrics):
         """
         Test behavior when underlying decrement_counter method raises exception
@@ -894,7 +894,7 @@ class TestGetTrace:
         """Reset global state before each test"""
         setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_successful_trace_creation_default_params(self, mock_trace):
         """
         Test successful trace creation with default parameters
@@ -917,7 +917,7 @@ class TestGetTrace:
         mock_trace_instance.get_span.assert_called_once_with("test_trace", {}, None)
         mock_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_successful_trace_creation_with_attributes(self, mock_trace):
         """
         Test successful trace creation with custom attributes
@@ -948,7 +948,7 @@ class TestGetTrace:
         )
         mock_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_successful_trace_creation_with_carrier(self, mock_trace):
         """
         Test successful trace creation with carrier for trace continuation
@@ -978,7 +978,7 @@ class TestGetTrace:
         )
         mock_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_successful_trace_creation_all_parameters(self, mock_trace):
         """
         Test successful trace creation with all parameters provided
@@ -1006,7 +1006,7 @@ class TestGetTrace:
         )
         mock_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_trace_with_exception_handling(self, mock_trace):
         """
         Test trace behavior when exception occurs within context
@@ -1038,7 +1038,7 @@ class TestGetTrace:
         mock_span._close.assert_called_once()
         mock_logger.error.assert_called_once_with("Error in trace span error_trace: Test error")
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_span_close_called_even_if_status_methods_fail(self, mock_trace):
         """
         Test that span._close() is always called even if status methods fail
@@ -1060,7 +1060,7 @@ class TestGetTrace:
         mock_trace_instance.get_span.assert_called_once()
         mock_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_multiple_nested_traces(self, mock_trace):
         """
         Test behavior with multiple nested trace contexts
@@ -1102,7 +1102,7 @@ class TestGetTrace:
         mock_outer_span._close.assert_called_once()
         mock_inner_span._close.assert_called_once()
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace')
     def test_span_returns_correct_object(self, mock_trace):
         """
         Test that the context manager yields the correct span object
@@ -1136,22 +1136,22 @@ class TestLogging:
         _initialized = False
         _instance = None
 
-    @patch('anaconda.opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_without_init(self):
         with pytest.raises(RuntimeError):
             get_telemetry_logger_handler()
 
-    @patch('anaconda.opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_without_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=[])
         assert get_telemetry_logger_handler() is None
 
-    @patch('anaconda.opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_with_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
         attr = Attributes('test_service_name', '1.2.3')
@@ -1170,7 +1170,7 @@ class TestUpdateEndpoint:
         result = change_signal_endpoint('invalid_signal', 'http://new-endpoint:4317')
         assert result is False
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
     def test_change_signal_endpoint_logging_success(self, mock_logger_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = True
@@ -1191,7 +1191,7 @@ class TestUpdateEndpoint:
         )
         assert result is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
     def test_change_signal_endpoint_logging_with_auth_token(self, mock_logger_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = True
@@ -1212,7 +1212,7 @@ class TestUpdateEndpoint:
         )
         assert result is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
     def test_change_signal_endpoint_logging_failure(self, mock_logger_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = False
@@ -1227,7 +1227,7 @@ class TestUpdateEndpoint:
         
         assert result is False
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics._instance')
     def test_change_signal_endpoint_metrics_success(self, mock_metrics_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = True
@@ -1248,7 +1248,7 @@ class TestUpdateEndpoint:
         )
         assert result is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaMetrics._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics._instance')
     def test_change_signal_endpoint_metrics_failure(self, mock_metrics_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = False
@@ -1263,7 +1263,7 @@ class TestUpdateEndpoint:
         
         assert result is False
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace._instance')
     def test_change_signal_endpoint_tracing_success(self, mock_trace_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = True
@@ -1284,7 +1284,7 @@ class TestUpdateEndpoint:
         )
         assert result is True
 
-    @patch('anaconda.opentelemetry.signals._AnacondaTrace._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaTrace._instance')
     def test_change_signal_endpoint_tracing_failure(self, mock_trace_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = False
@@ -1299,7 +1299,7 @@ class TestUpdateEndpoint:
         
         assert result is False
 
-    @patch('anaconda.opentelemetry.signals._AnacondaLogger._instance')
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance')
     def test_change_signal_endpoint_case_insensitive(self, mock_logger_instance):
         mock_exporter = MagicMock()
         mock_exporter.change_signal_endpoint.return_value = True

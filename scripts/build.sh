@@ -81,12 +81,12 @@ function git_version() {
 }
 
 function replace_version() {
-    sed -i.bak "s/__SDK_VERSION__ = \\\"1.0.0\\\"/__SDK_VERSION__ = \"${1}\"/g" anaconda/opentelemetry/__version__.py
+    sed -i.bak "s/__SDK_VERSION__ = \\\"1.0.0\\\"/__SDK_VERSION__ = \"${1}\"/g" anaconda_opentelemetry/__version__.py
 }
 
 function restore_version() {
-    rm anaconda/opentelemetry/__version__.py
-    mv anaconda/opentelemetry/__version__.py.bak anaconda/opentelemetry/__version__.py
+    rm anaconda_opentelemetry/__version__.py
+    mv anaconda_opentelemetry/__version__.py.bak anaconda_opentelemetry/__version__.py
 }
 
 # Set global variables
@@ -112,7 +112,7 @@ export PYTHONPATH="${LOCATION}/:$PYTHONPATH"
 export PATH="${BIN}:$PATH"
 
 # Generate and modify API docs.
-sphinx-apidoc -o docs/source anaconda/opentelemetry
+sphinx-apidoc -o docs/source anaconda_opentelemetry
 rm -f docs/source/modules.rst
 [[ $? -ne 0 ]] && echo "ERROR: sphinx-apidoc build failed!" >&2 && restore_version && exit 1
 

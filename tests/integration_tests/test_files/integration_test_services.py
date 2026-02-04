@@ -8,8 +8,8 @@ import requests
 import threading
 import time
 from flask import Flask, request, jsonify
-from anaconda.opentelemetry.signals import initialize_telemetry, get_trace
-from anaconda.opentelemetry import Configuration, ResourceAttributes
+from anaconda_opentelemetry.signals import initialize_telemetry, get_trace
+from anaconda_opentelemetry import Configuration, ResourceAttributes
 
 app_a = Flask(__name__)
 

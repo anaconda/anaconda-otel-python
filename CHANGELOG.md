@@ -2,13 +2,18 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.0.1] (2026-02-04)
 
-## [v1.0.0] (2026-01-21) - v1 Release
+### Changed
+- Removed package namespacing added in v1.0.0
+- Returns to `anaconda_opentelemetry`
+
+## [v1.0.0] (2026-02-03) - v1 Release
 
 ### !!! Breaking Changes !!!
 
 - Updated module structure to use package nesting for consistency with other conda packages
-- Now imported as `anaconda.opentelemetry` rather than `anaconda_opentelemetry`
+- Now imported as `anaconda_opentelemetry` rather than `anaconda_opentelemetry`
 - Documentation has been updated to reflect this
 
 ### Added
@@ -65,7 +70,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 - Generalizing schema, added endpoint guidance [#44](https://github.com/anaconda/anaconda-otel-python/pull/44)
 - [fix] Corrected fix for endpoint validation [#43](https://github.com/anaconda/anaconda-otel-python/pull/43)
 - Lower maximum service name characters [#41](https://github.com/anaconda/anaconda-otel-python/pull/41)
-- use package nesting for anaconda.opentelemetry [#36](https://github.com/anaconda/anaconda-otel-python/pull/36)
+- use package nesting for anaconda_opentelemetry [#36](https://github.com/anaconda/anaconda-otel-python/pull/36)
 - [fix] Update Temporality presets for Metrics [#35](https://github.com/anaconda/anaconda-otel-python/pull/35)
 - Add Best Practices Documentation [#34](https://github.com/anaconda/anaconda-otel-python/pull/34)
 - Add publishing documentation and coverage report on PR merge. [#31](https://github.com/anaconda/anaconda-otel-python/pull/31)

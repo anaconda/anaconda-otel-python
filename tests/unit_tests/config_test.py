@@ -5,7 +5,7 @@
 import sys
 sys.path.append("./")
 
-from anaconda.opentelemetry.config import Configuration as Config
+from anaconda_opentelemetry.config import Configuration as Config
 
 import pytest, os, tempfile, re
 from grpc import ChannelCredentials

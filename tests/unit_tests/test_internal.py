@@ -4,13 +4,13 @@
 import sys, time, json
 sys.path.append("./")
 
-from anaconda.opentelemetry.attributes import ResourceAttributes as Attributes
-from anaconda.opentelemetry.signals import _AnacondaCommon as AnacondaTelBase
-from anaconda.opentelemetry.signals import _AnacondaLogger as AnacondaLogger
-from anaconda.opentelemetry.signals import _AnacondaTrace as AnacondaTrace
-from anaconda.opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
-from anaconda.opentelemetry.config import Configuration as Config
-from anaconda.opentelemetry.signals import AttrDict
+from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
+from anaconda_opentelemetry.signals import _AnacondaCommon as AnacondaTelBase
+from anaconda_opentelemetry.signals import _AnacondaLogger as AnacondaLogger
+from anaconda_opentelemetry.signals import _AnacondaTrace as AnacondaTrace
+from anaconda_opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
+from anaconda_opentelemetry.config import Configuration as Config
+from anaconda_opentelemetry.signals import AttrDict
 from opentelemetry.trace import Span, Tracer
 from opentelemetry.metrics import Meter, Histogram
 from opentelemetry.sdk.resources import Resource
@@ -330,7 +330,7 @@ class TestAnacondaLogger:
             "INFO": logging.INFO,        # uppercase input
             "WaRnInG": logging.WARNING,  # mixed case input
         }
-        # with patch('anaconda.opentelemetry.signals._AnacondaLogger._inject_otel_logging'):
+        # with patch('anaconda_opentelemetry.signals._AnacondaLogger._inject_otel_logging'):
         alogger = AnacondaLogger(Config(default_endpoint='http://localhost:4317').set_console_exporter(True),
                                 Attributes(service_name='test_name', service_version='0.0.0'))
         for input_str, expected in test_cases.items():
