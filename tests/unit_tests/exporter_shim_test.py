@@ -9,7 +9,7 @@ import pytest, threading
 from unittest.mock import Mock, MagicMock, patch, call
 from enum import Enum
 
-from anaconda.opentelemetry.exporter_shim import (
+from anaconda_opentelemetry.exporter_shim import (
     ExporterState,
     _OTLPExporterMixin,
     OTLPMetricExporterShim,

@@ -7,9 +7,9 @@ sys.path.append("./")
 import random, logging
 from io import StringIO
 
-from anaconda.opentelemetry.attributes import ResourceAttributes
-from anaconda.opentelemetry.config import Configuration
-from anaconda.opentelemetry.signals import (
+from anaconda_opentelemetry.attributes import ResourceAttributes
+from anaconda_opentelemetry.config import Configuration
+from anaconda_opentelemetry.signals import (
     initialize_telemetry,
     get_telemetry_logger_handler,
     record_histogram,

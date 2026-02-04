@@ -7,8 +7,8 @@ sys.path.append("./")
 
 import unittest, pytest
 from unittest.mock import patch, MagicMock
-from anaconda.opentelemetry.attributes import ResourceAttributes
-from anaconda.opentelemetry.__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
+from anaconda_opentelemetry.attributes import ResourceAttributes
+from anaconda_opentelemetry.__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
 class TestResourceAttributes(unittest.TestCase):
 
