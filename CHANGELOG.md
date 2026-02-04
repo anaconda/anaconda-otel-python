@@ -4,9 +4,38 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ## [v1.0.1] (2026-02-04)
 
+### Added
+
+- N/A
+
 ### Changed
 - Removed package namespacing added in v1.0.0
 - Returns to `anaconda_opentelemetry`
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- N/A
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+- [fix] revert package namespacing [#45](https://github.com/anaconda/anaconda-otel-python/pull/45)
+
+
 
 ## [v1.0.0] (2026-02-03) - v1 Release
 
