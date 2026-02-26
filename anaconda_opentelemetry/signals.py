@@ -31,6 +31,7 @@ from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
 from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
+from .silent_logger import SilentLogger
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
@@ -169,8 +170,15 @@ class _AnacondaLogger(_AnacondaCommon):
         self.exporter = exporter
         self._processor = BatchLogRecordProcessor(self.exporter)
         self._provider.add_log_record_processor(self._processor)
-        self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
 
+    def _get_log_handler(self) -> LoggingHandler:
+        return LoggingHandler(level=self.log_level, logger_provider=self._provider)
+    
+    def _get_silent_logger(self, logger_name: str = None) -> SilentLogger:
+        if logger_name is None:
+            logger_name = f'{self.service_name}_silent_logger'
+        return SilentLogger(self._provider, logger_name=logger_name)
+        
     def _get_log_level(self, str_level: str)-> int:
         # Convert string from config file to logging level.
         levels = {
@@ -786,5 +794,29 @@ def get_telemetry_logger_handler() -> LoggingHandler:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
-        return _AnacondaLogger._instance._handler
+        return _AnacondaLogger._instance._get_log_handler()
     return None  # No logger handler available, logging not initialized or not configured.
+
+def get_silent_telemetry_logger(logger_name: str = None) -> SilentLogger:
+    """
+    Returns a custom logging handler that doesn't use the python logging module. This is useful when you want to export log
+    (text payload based) telemetry, but don't want the output mixing with your application's output or developer logs.
+
+    This logger is lazily initialized.
+
+    Params:
+        logger_name (str): optional name to pass to the SilentLogger instance for the name
+    Returns:
+        logging.Logger: The telemetry logger handler if logging was enabled via signal_types in initialize_telemetry,
+        otherwise this function returns None.
+    Raises:
+        RuntimeError: if `initialize_telemetry` has not been called
+    """
+    global __ANACONDA_TELEMETRY_INITIALIZED
+    if __ANACONDA_TELEMETRY_INITIALIZED is False:
+        logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
+        raise RuntimeError("Anaconda telemetry system not initialized.")
+    if _AnacondaLogger._instance is not None:
+        return _AnacondaLogger._instance._get_silent_logger(logger_name)
+    return None
+    

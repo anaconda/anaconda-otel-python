@@ -1,7 +1,13 @@
-from opentelemetry.sdk._logs import LoggerProvider, LogRecord
-# from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry._logs.severity import SeverityNumber
+import warnings
+from opentelemetry.sdk._logs import LogDeprecatedInitWarning
+warnings.filterwarnings(
+    "ignore",
+    category=LogDeprecatedInitWarning,
+    message=".*LogRecord will be removed.*",
+)
 
+from opentelemetry.sdk._logs import LoggerProvider, LogRecord
+from opentelemetry._logs.severity import SeverityNumber
 
 class SilentLogger:
     """
