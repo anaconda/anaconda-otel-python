@@ -33,3 +33,15 @@ class SilentLogger:
             attributes=attributes,
         )
         self._logger.emit(record)
+
+    def INFO(self, body: str, **attrs):
+        self.emit(body, SeverityNumber.INFO, attrs or None)
+
+    def WARN(self, body: str, **attrs):
+        self.emit(body, SeverityNumber.WARN, attrs or None)
+
+    def ERROR(self, body: str, **attrs):
+        self.emit(body, SeverityNumber.ERROR, attrs or None)
+
+    def DEBUG(self, body: str, **attrs):
+        self.emit(body, SeverityNumber.DEBUG, attrs or None)
