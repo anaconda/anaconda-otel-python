@@ -869,6 +869,11 @@ class TestAnacondaMetrics:
 class TestSilentLogger:
     """Tests for the SilentLogger class."""
 
+    @pytest.fixture(scope="class")
+    def SeverityNumber(self):
+        from opentelemetry._logs.severity import SeverityNumber
+        return SeverityNumber
+
     @pytest.fixture
     def mock_provider(self):
         provider = MagicMock()
@@ -880,22 +885,19 @@ class TestSilentLogger:
         from anaconda_opentelemetry.silent_logger import SilentLogger
         return SilentLogger(mock_provider)
 
-    def test_init_defaults(self, mock_provider):
+    def test_init_defaults(self, mock_provider, SeverityNumber):
         from anaconda_opentelemetry.silent_logger import SilentLogger
-        from opentelemetry._logs.severity import SeverityNumber
         logger = SilentLogger(mock_provider)
         mock_provider.get_logger.assert_called_with("silent_logger")
         assert logger._default_severity == SeverityNumber.INFO
 
-    def test_init_custom_params(self, mock_provider):
+    def test_init_custom_params(self, mock_provider, SeverityNumber):
         from anaconda_opentelemetry.silent_logger import SilentLogger
-        from opentelemetry._logs.severity import SeverityNumber
         logger = SilentLogger(mock_provider, logger_name="custom", default_severity=SeverityNumber.ERROR)
         mock_provider.get_logger.assert_called_with("custom")
         assert logger._default_severity == SeverityNumber.ERROR
 
-    def test_emit_default_severity(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_emit_default_severity(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.emit("test message")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
@@ -904,8 +906,7 @@ class TestSilentLogger:
         assert record.severity_number == SeverityNumber.INFO
         assert record.attributes == {}
 
-    def test_emit_custom_severity_and_attributes(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_emit_custom_severity_and_attributes(self, silent_logger, mock_provider, SeverityNumber):
         attrs = {"key": "value"}
         silent_logger.emit("error msg", severity=SeverityNumber.ERROR, attributes=attrs)
         mock_logger = mock_provider.get_logger.return_value
@@ -914,32 +915,28 @@ class TestSilentLogger:
         assert record.severity_number == SeverityNumber.ERROR
         assert record.attributes == {"key": "value"}
 
-    def test_INFO(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_INFO(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.INFO("info message", attributes={"tag": "test"})
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "info message"
         assert record.severity_number == SeverityNumber.INFO
         assert record.attributes == {"tag": "test"}
 
-    def test_WARN(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_WARN(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.WARN("warn message")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "warn message"
         assert record.severity_number == SeverityNumber.WARN
         assert record.attributes == {}
 
-    def test_ERROR(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_ERROR(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.ERROR("error message", attributes={"code": 500})
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "error message"
         assert record.severity_number == SeverityNumber.ERROR
         assert record.attributes == {"code": 500}
 
-    def test_DEBUG(self, silent_logger, mock_provider):
-        from opentelemetry._logs.severity import SeverityNumber
+    def test_DEBUG(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.DEBUG("debug message")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "debug message"
