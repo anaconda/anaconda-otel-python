@@ -6,6 +6,7 @@ warnings.filterwarnings(
     message=".*LogRecord will be removed.*",
 )
 
+from typing import Optional
 from opentelemetry.sdk._logs import LoggerProvider, LogRecord
 from opentelemetry._logs.severity import SeverityNumber
 from .custom_types import AttrDict
@@ -31,7 +32,7 @@ class SilentLogger:
         self,
         body: str,
         event_name: str,
-        severity: SeverityNumber | None = None,
+        severity: Optional[SeverityNumber] = None,
         attributes: AttrDict={},
     ):
         # update attributes with event name - mandatory for silent logs
