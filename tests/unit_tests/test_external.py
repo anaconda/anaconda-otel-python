@@ -8,7 +8,8 @@ import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
 import anaconda_opentelemetry.signals as signals_package
 from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
-    decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized, change_signal_endpoint
+    decrement_counter, get_trace, get_telemetry_logger_handler, get_silent_telemetry_logger, MetricsNotInitialized, change_signal_endpoint
+from anaconda_opentelemetry.silent_logger import SilentLogger
 from anaconda_opentelemetry.signals import __check_internet_status as check_internet
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -1156,6 +1157,49 @@ class TestLogging:
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
         assert get_telemetry_logger_handler() is not None
+
+class TestSilentLogging:
+    _instance = None
+    _initialized: bool = False
+
+    def setup_method(self):
+        """Reset logger instance state before each test"""
+        _initialized = False
+        _instance = None
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_get_silent_telemetry_logger_without_init(self):
+        with pytest.raises(RuntimeError):
+            get_silent_telemetry_logger()
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_get_silent_telemetry_logger_without_logger(self):
+        cfg = Config(default_endpoint='http://localhost:4317')
+        attr = Attributes('test_service_name', '1.2.3')
+        initialize_telemetry(config=cfg, attributes=attr, signal_types=[])
+        assert get_silent_telemetry_logger() is None
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_get_silent_telemetry_logger_with_logger(self):
+        cfg = Config(default_endpoint='http://localhost:4317')
+        attr = Attributes('test_service_name', '1.2.3')
+        initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
+        result = get_silent_telemetry_logger()
+        assert result is not None
+        assert isinstance(result, SilentLogger)
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_get_silent_telemetry_logger_custom_name(self):
+        cfg = Config(default_endpoint='http://localhost:4317')
+        attr = Attributes('test_service_name', '1.2.3')
+        initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
+        result = get_silent_telemetry_logger(logger_name='custom_silent')
+        assert result is not None
+        assert isinstance(result, SilentLogger)
 
 class TestUpdateEndpoint:
     _instance = None
