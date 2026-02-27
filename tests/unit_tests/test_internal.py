@@ -10,7 +10,7 @@ from anaconda_opentelemetry.signals import _AnacondaLogger as AnacondaLogger
 from anaconda_opentelemetry.signals import _AnacondaTrace as AnacondaTrace
 from anaconda_opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
 from anaconda_opentelemetry.config import Configuration as Config
-from anaconda_opentelemetry.signals import AttrDict
+from anaconda_opentelemetry.custom_types import AttrDict
 from opentelemetry.trace import Span, Tracer
 from opentelemetry.metrics import Meter, Histogram
 from opentelemetry.sdk.resources import Resource
