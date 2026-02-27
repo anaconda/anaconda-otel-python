@@ -27,12 +27,15 @@ class SilentLogger:
         self._logger = provider.get_logger(logger_name)
         self._default_severity = default_severity
 
-    def emit(
+    def _sendEvent(
         self,
         body: str,
+        event_name: str,
         severity: SeverityNumber | None = None,
         attributes: AttrDict={},
     ):
+        # update attributes with event name - mandatory for silent logs
+        attributes.update({"log.event.name": event_name})
         record = LogRecord(
             body=body,
             severity_number=severity or self._default_severity,
@@ -40,14 +43,14 @@ class SilentLogger:
         )
         self._logger.emit(record)
 
-    def INFO(self, body: str, attributes: AttrDict={}):
-        self.emit(body, SeverityNumber.INFO, attributes)
+    def INFO(self, body: str, event_name: str, attributes: AttrDict={}):
+        self._sendEvent(body, event_name, SeverityNumber.INFO, attributes)
 
-    def WARN(self, body: str, attributes: AttrDict={}):
-        self.emit(body, SeverityNumber.WARN, attributes)
+    def WARN(self, body: str, event_name: str, attributes: AttrDict={}):
+        self._sendEvent(body, event_name, SeverityNumber.WARN, attributes)
 
-    def ERROR(self, body: str, attributes: AttrDict={}):
-        self.emit(body, SeverityNumber.ERROR, attributes)
+    def ERROR(self, body: str, event_name: str, attributes: AttrDict={}):
+        self._sendEvent(body, event_name, SeverityNumber.ERROR, attributes)
 
-    def DEBUG(self, body: str, attributes: AttrDict={}):
-        self.emit(body, SeverityNumber.DEBUG, attributes)
+    def DEBUG(self, body: str, event_name: str, attributes: AttrDict={}):
+        self._sendEvent(body, event_name, SeverityNumber.DEBUG, attributes)

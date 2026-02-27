@@ -897,57 +897,62 @@ class TestSilentLogger:
         mock_provider.get_logger.assert_called_with("custom")
         assert logger._default_severity == SeverityNumber.ERROR
 
-    def test_emit_default_severity(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.emit("test message")
+    def test_sendEvent_default_severity(self, silent_logger, mock_provider, SeverityNumber):
+        silent_logger._sendEvent("test message", "test.event")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "test message"
         assert record.severity_number == SeverityNumber.INFO
-        assert record.attributes == {}
+        assert record.attributes["log.event.name"] == "test.event"
 
-    def test_emit_custom_severity_and_attributes(self, silent_logger, mock_provider, SeverityNumber):
+    def test_sendEvent_custom_severity_and_attributes(self, silent_logger, mock_provider, SeverityNumber):
         attrs = {"key": "value"}
-        silent_logger.emit("error msg", severity=SeverityNumber.ERROR, attributes=attrs)
+        silent_logger._sendEvent("error msg", "error.event", severity=SeverityNumber.ERROR, attributes=attrs)
         mock_logger = mock_provider.get_logger.return_value
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "error msg"
         assert record.severity_number == SeverityNumber.ERROR
-        assert record.attributes == {"key": "value"}
+        assert record.attributes == {"key": "value", "log.event.name": "error.event"}
+
+    def test_sendEvent_missing_event_name(self, silent_logger):
+        """Verifies that _sendEvent raises TypeError when event_name is not passed."""
+        with pytest.raises(TypeError):
+            silent_logger._sendEvent("message")
 
     def test_INFO(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.INFO("info message", attributes={"tag": "test"})
+        silent_logger.INFO("info message", "info.event", attributes={"tag": "test"})
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "info message"
         assert record.severity_number == SeverityNumber.INFO
-        assert record.attributes == {"tag": "test"}
+        assert record.attributes == {"tag": "test", "log.event.name": "info.event"}
 
     def test_WARN(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.WARN("warn message")
+        silent_logger.WARN("warn message", "warn.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "warn message"
         assert record.severity_number == SeverityNumber.WARN
-        assert record.attributes == {}
+        assert record.attributes["log.event.name"] == "warn.event"
 
     def test_ERROR(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.ERROR("error message", attributes={"code": 500})
+        silent_logger.ERROR("error message", "error.event", attributes={"code": 500})
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "error message"
         assert record.severity_number == SeverityNumber.ERROR
-        assert record.attributes == {"code": 500}
+        assert record.attributes == {"code": 500, "log.event.name": "error.event"}
 
     def test_DEBUG(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.DEBUG("debug message")
+        silent_logger.DEBUG("debug message", "debug.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "debug message"
         assert record.severity_number == SeverityNumber.DEBUG
-        assert record.attributes == {}
+        assert record.attributes["log.event.name"] == "debug.event"
 
     def test_severity_helpers_default_empty_attributes(self, silent_logger, mock_provider):
-        """Verifies that helpers default to empty dict when no attributes given."""
-        silent_logger.INFO("msg")
+        """Verifies that helpers default to empty dict with event_name still injected."""
+        silent_logger.INFO("msg", "test.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.attributes == {}
+        assert record.attributes == {"log.event.name": "test.event"}
 
 
 class MockHistogram(Histogram):
