@@ -21,6 +21,7 @@ from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry._logs.severity import SeverityNumber
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry import trace
@@ -809,26 +810,29 @@ def get_telemetry_logger_handler() -> LoggingHandler:
         return _AnacondaLogger._instance._get_log_handler()
     return None  # No logger handler available, logging not initialized or not configured.
 
-def get_silent_telemetry_logger(logger_name: str = None) -> SilentLogger:
+def send_event(body: str, event_name: str, severity: Optional[SeverityNumber] = None, attributes: AttrDict={}) -> bool:
     """
-    Returns a custom logging handler that doesn't use the python logging module. This is useful when you want to export log
-    (text payload based) telemetry, but don't want the output mixing with your application's output or developer logs.
-
-    This logger is lazily initialized.
+    Sends a log event directly to the OpenTelemetry pipeline without using Python's logging module.
+    This is useful when you want to export log telemetry but don't want the output mixing with
+    your application's output or developer logs.
 
     Params:
-        logger_name (str): optional name to pass to the SilentLogger instance for the name
+        body (str): the log message body
+        event_name (str): mandatory event name added to attributes
+        severity (SeverityNumber): optional severity level, defaults to the logger's default
+        attributes (AttrDict): optional attributes dict
     Returns:
-        logging.Logger: The telemetry logger handler if logging was enabled via signal_types in initialize_telemetry,
-        otherwise this function returns None.
+        bool: True if the event was sent, False if logging was not initialized
     Raises:
         RuntimeError: if `initialize_telemetry` has not been called
     """
     global __ANACONDA_TELEMETRY_INITIALIZED
     if __ANACONDA_TELEMETRY_INITIALIZED is False:
-        logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
+        logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
-        return _AnacondaLogger._instance._get_silent_logger(logger_name)
-    return None
+        silent = _AnacondaLogger._instance._get_silent_logger()
+        silent._sendEvent(body, event_name, severity, attributes)
+        return True
+    return False
     
