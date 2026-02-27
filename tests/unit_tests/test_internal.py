@@ -10,7 +10,7 @@ from anaconda_opentelemetry.signals import _AnacondaLogger as AnacondaLogger
 from anaconda_opentelemetry.signals import _AnacondaTrace as AnacondaTrace
 from anaconda_opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
 from anaconda_opentelemetry.config import Configuration as Config
-from anaconda_opentelemetry.custom_types import AttrDict
+from anaconda_opentelemetry.formatting import AttrDict, log_event_name_key
 from opentelemetry.trace import Span, Tracer
 from opentelemetry.metrics import Meter, Histogram
 from opentelemetry.sdk.resources import Resource
@@ -336,6 +336,27 @@ class TestAnacondaLogger:
         for input_str, expected in test_cases.items():
             result = alogger._get_log_level(input_str)
             assert result == expected, f"Expected {expected} for input '{input_str}', got {result}"
+
+    def test_log_event_name_key_value(self):
+        """
+        Ensures log_event_name_key is always 'log.event.name'. This test will fail if the constant is changed.
+        """
+        assert log_event_name_key == 'log.event.name'
+
+    def test_log_handler_injects_default_event_name(self):
+        """
+        Checks that the logging handler's filter injects log.event.name='__LOG__' on log records.
+        """
+        alogger = AnacondaLogger(Config(default_endpoint='http://localhost:4317').set_console_exporter(True),
+                                 Attributes(service_name='test_name', service_version='0.0.0'))
+        handler = alogger._get_log_handler()
+        record = logging.LogRecord(
+            name="test", level=logging.INFO, pathname="", lineno=0,
+            msg="test message", args=None, exc_info=None
+        )
+        assert not hasattr(record, log_event_name_key)
+        handler.handle(record)
+        assert getattr(record, log_event_name_key) == '__LOG__'
 
 class TestAnacondaTrace:
     instance: AnacondaTrace = None
@@ -904,7 +925,7 @@ class TestSilentLogger:
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "test message"
         assert record.severity_number == SeverityNumber.INFO
-        assert record.attributes["log.event.name"] == "test.event"
+        assert record.attributes[log_event_name_key] == "test.event"
 
     def test_sendEvent_custom_severity_and_attributes(self, silent_logger, mock_provider, SeverityNumber):
         attrs = {"key": "value"}
@@ -913,7 +934,7 @@ class TestSilentLogger:
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "error msg"
         assert record.severity_number == SeverityNumber.ERROR
-        assert record.attributes == {"key": "value", "log.event.name": "error.event"}
+        assert record.attributes == {"key": "value", log_event_name_key: "error.event"}
 
     def test_sendEvent_missing_event_name(self, silent_logger):
         """Verifies that _sendEvent raises TypeError when event_name is not passed."""
@@ -925,34 +946,34 @@ class TestSilentLogger:
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "info message"
         assert record.severity_number == SeverityNumber.INFO
-        assert record.attributes == {"tag": "test", "log.event.name": "info.event"}
+        assert record.attributes == {"tag": "test", log_event_name_key: "info.event"}
 
     def test_WARN(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.WARN("warn message", "warn.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "warn message"
         assert record.severity_number == SeverityNumber.WARN
-        assert record.attributes["log.event.name"] == "warn.event"
+        assert record.attributes[log_event_name_key] == "warn.event"
 
     def test_ERROR(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.ERROR("error message", "error.event", attributes={"code": 500})
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "error message"
         assert record.severity_number == SeverityNumber.ERROR
-        assert record.attributes == {"code": 500, "log.event.name": "error.event"}
+        assert record.attributes == {"code": 500, log_event_name_key: "error.event"}
 
     def test_DEBUG(self, silent_logger, mock_provider, SeverityNumber):
         silent_logger.DEBUG("debug message", "debug.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.body == "debug message"
         assert record.severity_number == SeverityNumber.DEBUG
-        assert record.attributes["log.event.name"] == "debug.event"
+        assert record.attributes[log_event_name_key] == "debug.event"
 
     def test_severity_helpers_default_empty_attributes(self, silent_logger, mock_provider):
         """Verifies that helpers default to empty dict with event_name still injected."""
         silent_logger.INFO("msg", "test.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.attributes == {"log.event.name": "test.event"}
+        assert record.attributes == {log_event_name_key: "test.event"}
 
 
 class MockHistogram(Histogram):

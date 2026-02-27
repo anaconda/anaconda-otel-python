@@ -15,4 +15,4 @@ from .signals import ASpan
 from .config import Configuration
 from .attributes import ResourceAttributes
 from .silent_logger import SilentLogger as SilentLogger
-from .custom_types import AttrDict as AttrDict
+from .formatting import AttrDict as AttrDict

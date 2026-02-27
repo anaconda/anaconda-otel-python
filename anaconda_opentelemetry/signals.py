@@ -34,8 +34,7 @@ from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLog
 from .silent_logger import SilentLogger
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
-
-from .custom_types import Scalar, AttrDict
+from .formatting import AttrDict, log_event_name_key
 
 
 class MetricsNotInitialized(RuntimeError):
@@ -129,6 +128,8 @@ class _AnacondaLogger(_AnacondaCommon):
     # Singleton instance (internal only); provide a logger handler for OpenTelemetry log instrumentation
     _instance = None
 
+    _default_log_attributes = {log_event_name_key: "__LOG__"}
+
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
         self.log_level = self._get_log_level(config._get_logging_level())
@@ -170,7 +171,20 @@ class _AnacondaLogger(_AnacondaCommon):
         self._provider.add_log_record_processor(self._processor)
 
     def _get_log_handler(self) -> LoggingHandler:
-        return LoggingHandler(level=self.log_level, logger_provider=self._provider)
+        handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
+        handler.addFilter(self._set_default_attribute_filter())
+        return handler
+
+    def _set_default_attribute_filter(self) -> logging.Filter:
+        attrs = self._default_log_attributes
+        f = logging.Filter()
+        def _filter(record):
+            for k, v in attrs.items():
+                if not hasattr(record, k):
+                    setattr(record, k, v)
+            return True
+        f.filter = _filter
+        return f
     
     def _get_silent_logger(self, logger_name: str = None) -> SilentLogger:
         if logger_name is None:

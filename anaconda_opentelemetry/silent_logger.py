@@ -9,7 +9,8 @@ warnings.filterwarnings(
 from typing import Optional
 from opentelemetry.sdk._logs import LoggerProvider, LogRecord
 from opentelemetry._logs.severity import SeverityNumber
-from .custom_types import AttrDict
+from .formatting import AttrDict, log_event_name_key
+
 
 class SilentLogger:
     """
@@ -36,7 +37,7 @@ class SilentLogger:
         attributes: AttrDict={},
     ):
         # update attributes with event name - mandatory for silent logs
-        attributes.update({"log.event.name": event_name})
+        attributes.update({log_event_name_key: event_name})
         record = LogRecord(
             body=body,
             severity_number=severity or self._default_severity,
