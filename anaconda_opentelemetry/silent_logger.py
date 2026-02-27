@@ -8,6 +8,7 @@ warnings.filterwarnings(
 
 from opentelemetry.sdk._logs import LoggerProvider, LogRecord
 from opentelemetry._logs.severity import SeverityNumber
+from .custom_types import AttrDict
 
 class SilentLogger:
     """
@@ -30,9 +31,8 @@ class SilentLogger:
         self,
         body: str,
         severity: SeverityNumber | None = None,
-        attributes: dict | None = None,
+        attributes: AttrDict={},
     ):
-        """Emit a log record directly to the OTel pipeline."""
         record = LogRecord(
             body=body,
             severity_number=severity or self._default_severity,
@@ -40,14 +40,14 @@ class SilentLogger:
         )
         self._logger.emit(record)
 
-    def INFO(self, body: str, **attrs):
-        self.emit(body, SeverityNumber.INFO, attrs or None)
+    def INFO(self, body: str, attributes: AttrDict={}):
+        self.emit(body, SeverityNumber.INFO, attributes)
 
-    def WARN(self, body: str, **attrs):
-        self.emit(body, SeverityNumber.WARN, attrs or None)
+    def WARN(self, body: str, attributes: AttrDict={}):
+        self.emit(body, SeverityNumber.WARN, attributes)
 
-    def ERROR(self, body: str, **attrs):
-        self.emit(body, SeverityNumber.ERROR, attrs or None)
+    def ERROR(self, body: str, attributes: AttrDict={}):
+        self.emit(body, SeverityNumber.ERROR, attributes)
 
-    def DEBUG(self, body: str, **attrs):
-        self.emit(body, SeverityNumber.DEBUG, attrs or None)
+    def DEBUG(self, body: str, attributes: AttrDict={}):
+        self.emit(body, SeverityNumber.DEBUG, attributes)

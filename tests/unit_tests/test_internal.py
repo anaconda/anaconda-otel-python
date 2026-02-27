@@ -866,6 +866,93 @@ class TestAnacondaMetrics:
             metrics = AnacondaMetrics(cfg, attr)
             assert metrics._cumulative_temporality == metrics._get_temporality()
 
+class TestSilentLogger:
+    """Tests for the SilentLogger class."""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = MagicMock()
+        provider.get_logger.return_value = MagicMock()
+        return provider
+
+    @pytest.fixture
+    def silent_logger(self, mock_provider):
+        from anaconda_opentelemetry.silent_logger import SilentLogger
+        return SilentLogger(mock_provider)
+
+    def test_init_defaults(self, mock_provider):
+        from anaconda_opentelemetry.silent_logger import SilentLogger
+        from opentelemetry._logs.severity import SeverityNumber
+        logger = SilentLogger(mock_provider)
+        mock_provider.get_logger.assert_called_with("silent_logger")
+        assert logger._default_severity == SeverityNumber.INFO
+
+    def test_init_custom_params(self, mock_provider):
+        from anaconda_opentelemetry.silent_logger import SilentLogger
+        from opentelemetry._logs.severity import SeverityNumber
+        logger = SilentLogger(mock_provider, logger_name="custom", default_severity=SeverityNumber.ERROR)
+        mock_provider.get_logger.assert_called_with("custom")
+        assert logger._default_severity == SeverityNumber.ERROR
+
+    def test_emit_default_severity(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        silent_logger.emit("test message")
+        mock_logger = mock_provider.get_logger.return_value
+        mock_logger.emit.assert_called_once()
+        record = mock_logger.emit.call_args[0][0]
+        assert record.body == "test message"
+        assert record.severity_number == SeverityNumber.INFO
+        assert record.attributes == {}
+
+    def test_emit_custom_severity_and_attributes(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        attrs = {"key": "value"}
+        silent_logger.emit("error msg", severity=SeverityNumber.ERROR, attributes=attrs)
+        mock_logger = mock_provider.get_logger.return_value
+        record = mock_logger.emit.call_args[0][0]
+        assert record.body == "error msg"
+        assert record.severity_number == SeverityNumber.ERROR
+        assert record.attributes == {"key": "value"}
+
+    def test_INFO(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        silent_logger.INFO("info message", attributes={"tag": "test"})
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == "info message"
+        assert record.severity_number == SeverityNumber.INFO
+        assert record.attributes == {"tag": "test"}
+
+    def test_WARN(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        silent_logger.WARN("warn message")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == "warn message"
+        assert record.severity_number == SeverityNumber.WARN
+        assert record.attributes == {}
+
+    def test_ERROR(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        silent_logger.ERROR("error message", attributes={"code": 500})
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == "error message"
+        assert record.severity_number == SeverityNumber.ERROR
+        assert record.attributes == {"code": 500}
+
+    def test_DEBUG(self, silent_logger, mock_provider):
+        from opentelemetry._logs.severity import SeverityNumber
+        silent_logger.DEBUG("debug message")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == "debug message"
+        assert record.severity_number == SeverityNumber.DEBUG
+        assert record.attributes == {}
+
+    def test_severity_helpers_default_empty_attributes(self, silent_logger, mock_provider):
+        """Verifies that helpers default to empty dict when no attributes given."""
+        silent_logger.INFO("msg")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.attributes == {}
+
+
 class MockHistogram(Histogram):
     def __init__(self):
         self.counter = 0

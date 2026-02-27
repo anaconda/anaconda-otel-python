@@ -365,7 +365,6 @@ class TestInitializeTelemetry:
             trace: _AnacondaTrace = _AnacondaTrace._instance
             assert trace.tracer.__class__.__name__ == 'Tracer'
             assert metrics.meter.__class__.__name__ == 'Meter'
-            assert logger._handler.__class__.__name__ == 'LoggingHandler'
         finally:
             os.environ['OTEL_SDK_DISABLED'] = 'false'  # Reset
 

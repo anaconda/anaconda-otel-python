@@ -13,7 +13,7 @@ tracing, as well as functions for initializing the telemetry system and recordin
 
 import logging, hashlib, re, socket, json
 from abc import ABC
-from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
+from typing import Dict, Iterator, Any, List, Optional
 from contextlib import contextmanager
 from dataclasses import fields
 
@@ -35,9 +35,7 @@ from .silent_logger import SilentLogger
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
-# Limited Dict for attributes in OTel
-Scalar = Union[str, bool, int, float]
-AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
+from .custom_types import Scalar, AttrDict
 
 
 class MetricsNotInitialized(RuntimeError):
