@@ -890,11 +890,6 @@ class TestAnacondaMetrics:
 class TestEventLogger:
     """Tests for the EventLogger class."""
 
-    @pytest.fixture(scope="class")
-    def SeverityNumber(self):
-        from opentelemetry._logs.severity import SeverityNumber
-        return SeverityNumber
-
     @pytest.fixture
     def mock_provider(self):
         provider = MagicMock()
@@ -906,34 +901,30 @@ class TestEventLogger:
         from anaconda_opentelemetry.event_logger import EventLogger
         return EventLogger(mock_provider)
 
-    def test_init_defaults(self, mock_provider, SeverityNumber):
+    def test_init_defaults(self, mock_provider):
         from anaconda_opentelemetry.event_logger import EventLogger
         logger = EventLogger(mock_provider)
         mock_provider.get_logger.assert_called_with("event_logger")
-        assert logger._default_severity == SeverityNumber.INFO
 
-    def test_init_custom_params(self, mock_provider, SeverityNumber):
+    def test_init_custom_params(self, mock_provider):
         from anaconda_opentelemetry.event_logger import EventLogger
-        logger = EventLogger(mock_provider, logger_name="custom", default_severity=SeverityNumber.ERROR)
+        logger = EventLogger(mock_provider, logger_name="custom")
         mock_provider.get_logger.assert_called_with("custom")
-        assert logger._default_severity == SeverityNumber.ERROR
 
-    def test_send_event_default_severity(self, event_logger, mock_provider, SeverityNumber):
+    def test_send_event(self, event_logger, mock_provider):
         event_logger._send_event("test message", "test.event")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "test message"
-        assert record.severity_number == SeverityNumber.INFO
         assert record.attributes[log_event_name_key] == "test.event"
 
-    def test_send_event_custom_severity_and_attributes(self, event_logger, mock_provider, SeverityNumber):
+    def test_send_event_with_attributes(self, event_logger, mock_provider):
         attrs = {"key": "value"}
-        event_logger._send_event("error msg", "error.event", severity=SeverityNumber.ERROR, attributes=attrs)
+        event_logger._send_event("error msg", "error.event", attributes=attrs)
         mock_logger = mock_provider.get_logger.return_value
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "error msg"
-        assert record.severity_number == SeverityNumber.ERROR
         assert record.attributes == {"key": "value", log_event_name_key: "error.event"}
 
     def test_send_event_missing_event_name(self, event_logger):

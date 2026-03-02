@@ -21,7 +21,6 @@ from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry._logs.severity import SeverityNumber
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry import trace
@@ -810,7 +809,7 @@ def get_telemetry_logger_handler() -> LoggingHandler:
         return _AnacondaLogger._instance._get_log_handler()
     return None  # No logger handler available, logging not initialized or not configured.
 
-def send_event(body: str, event_name: str, severity: Optional[SeverityNumber] = None, attributes: AttrDict={}) -> bool:
+def send_event(body: str, event_name: str, attributes: AttrDict={}) -> bool:
     """
     Sends a log event directly to the OpenTelemetry pipeline without using Python's logging module.
     This is useful when you want to export log telemetry but don't want the output mixing with
@@ -819,7 +818,6 @@ def send_event(body: str, event_name: str, severity: Optional[SeverityNumber] = 
     Params:
         body (str): the log message body
         event_name (str): mandatory event name added to attributes
-        severity (SeverityNumber): optional severity level, defaults to the logger's default
         attributes (AttrDict): optional attributes dict
     Returns:
         bool: True if the event was sent, False if logging was not initialized
@@ -832,7 +830,7 @@ def send_event(body: str, event_name: str, severity: Optional[SeverityNumber] = 
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
         event_logger = _AnacondaLogger._instance._get_event_logger()
-        event_logger._send_event(body, event_name, severity, attributes)
+        event_logger._send_event(body, event_name, attributes)
         return True
     return False
     

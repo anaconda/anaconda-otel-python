@@ -6,9 +6,7 @@ warnings.filterwarnings(
     message=".*LogRecord will be removed.*",
 )
 
-from typing import Optional
 from opentelemetry.sdk._logs import LoggerProvider, LogRecord
-from opentelemetry._logs.severity import SeverityNumber
 from .formatting import AttrDict, log_event_name_key
 
 
@@ -24,23 +22,19 @@ class EventLogger:
         self,
         provider: LoggerProvider,
         logger_name: str = "event_logger",
-        default_severity: SeverityNumber = SeverityNumber.INFO,
     ):
         self._logger = provider.get_logger(logger_name)
-        self._default_severity = default_severity
 
     def _send_event(
         self,
         body: str,
         event_name: str,
-        severity: Optional[SeverityNumber] = None,
         attributes: AttrDict={},
     ):
         # update attributes with event name - mandatory for event logs
         attributes.update({log_event_name_key: event_name})
         record = LogRecord(
             body=body,
-            severity_number=severity or self._default_severity,
             attributes=attributes,
         )
         self._logger.emit(record)
