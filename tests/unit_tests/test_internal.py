@@ -938,6 +938,29 @@ class TestEventLogger:
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.attributes == {log_event_name_key: "test.event"}
 
+    def test_send_event_body_string_passthrough(self, event_logger, mock_provider):
+        """Verifies that a string body is passed through unchanged."""
+        event_logger._send_event("plain text", "test.event")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == "plain text"
+        assert isinstance(record.body, str)
+
+    def test_send_event_body_dict_serialized(self, event_logger, mock_provider):
+        """Verifies that a dict body is JSON-serialized."""
+        body = {"status": "ok", "count": 42}
+        event_logger._send_event(body, "test.event")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == json.dumps(body)
+        assert isinstance(record.body, str)
+
+    def test_send_event_body_list_serialized(self, event_logger, mock_provider):
+        """Verifies that a list body is JSON-serialized."""
+        body = [1, "two", {"three": 3}]
+        event_logger._send_event(body, "test.event")
+        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
+        assert record.body == json.dumps(body)
+        assert isinstance(record.body, str)
+
 
 class MockHistogram(Histogram):
     def __init__(self):
