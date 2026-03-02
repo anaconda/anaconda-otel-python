@@ -8,7 +8,7 @@ import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
 import anaconda_opentelemetry.signals as signals_package
 from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
-    decrement_counter, get_trace, get_telemetry_logger_handler, MetricsNotInitialized, change_signal_endpoint
+    decrement_counter, get_trace, get_telemetry_logger_handler, send_event, MetricsNotInitialized, change_signal_endpoint
 from anaconda_opentelemetry.signals import __check_internet_status as check_internet
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -365,7 +365,6 @@ class TestInitializeTelemetry:
             trace: _AnacondaTrace = _AnacondaTrace._instance
             assert trace.tracer.__class__.__name__ == 'Tracer'
             assert metrics.meter.__class__.__name__ == 'Meter'
-            assert logger._handler.__class__.__name__ == 'LoggingHandler'
         finally:
             os.environ['OTEL_SDK_DISABLED'] = 'false'  # Reset
 
@@ -1157,6 +1156,37 @@ class TestLogging:
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
         assert get_telemetry_logger_handler() is not None
+
+class TestSendEvent:
+    _instance = None
+    _initialized: bool = False
+
+    def setup_method(self):
+        """Reset logger instance state before each test"""
+        _initialized = False
+        _instance = None
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_send_event_without_init(self):
+        with pytest.raises(RuntimeError):
+            send_event("test", "test.event")
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_send_event_without_logger(self):
+        cfg = Config(default_endpoint='http://localhost:4317')
+        attr = Attributes('test_service_name', '1.2.3')
+        initialize_telemetry(config=cfg, attributes=attr, signal_types=[])
+        assert send_event("test", "test.event") is False
+
+    @patch('anaconda_opentelemetry.signals.__ANACONDA_TELEMETRY_INITIALIZED', new=_initialized)
+    @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
+    def test_send_event_with_logger(self):
+        cfg = Config(default_endpoint='http://localhost:4317')
+        attr = Attributes('test_service_name', '1.2.3')
+        initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
+        assert send_event("test message", "test.event") is True
 
 class TestUpdateEndpoint:
     _instance = None

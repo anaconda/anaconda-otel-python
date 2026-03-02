@@ -13,7 +13,7 @@ tracing, as well as functions for initializing the telemetry system and recordin
 
 import logging, hashlib, re, socket, json
 from abc import ABC
-from typing import Dict, Iterator, Any, List, Union, Sequence, Optional
+from typing import Dict, Iterator, Any, List, Optional
 from contextlib import contextmanager
 from dataclasses import fields
 
@@ -31,12 +31,10 @@ from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
 from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
+from .event_logger import EventLogger
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
-
-# Limited Dict for attributes in OTel
-Scalar = Union[str, bool, int, float]
-AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
+from .formatting import AttrDict, log_event_name_key
 
 
 class MetricsNotInitialized(RuntimeError):
@@ -130,6 +128,8 @@ class _AnacondaLogger(_AnacondaCommon):
     # Singleton instance (internal only); provide a logger handler for OpenTelemetry log instrumentation
     _instance = None
 
+    _default_log_attributes = {log_event_name_key: "__LOG__"}
+
     def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
         self.log_level = self._get_log_level(config._get_logging_level())
@@ -169,8 +169,28 @@ class _AnacondaLogger(_AnacondaCommon):
         self.exporter = exporter
         self._processor = BatchLogRecordProcessor(self.exporter)
         self._provider.add_log_record_processor(self._processor)
-        self._handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
 
+    def _get_log_handler(self) -> LoggingHandler:
+        handler = LoggingHandler(level=self.log_level, logger_provider=self._provider)
+        handler.addFilter(self._set_default_attribute_filter())
+        return handler
+
+    def _set_default_attribute_filter(self) -> logging.Filter:
+        attrs = self._default_log_attributes
+        f = logging.Filter()
+        def _filter(record):
+            for k, v in attrs.items():
+                if not hasattr(record, k):
+                    setattr(record, k, v)
+            return True
+        f.filter = _filter
+        return f
+    
+    def _get_event_logger(self, logger_name: str = None) -> EventLogger:
+        if logger_name is None:
+            logger_name = f'{self.service_name}_event_logger'
+        return EventLogger(self._provider, logger_name=logger_name)
+        
     def _get_log_level(self, str_level: str)-> int:
         # Convert string from config file to logging level.
         levels = {
@@ -786,5 +806,31 @@ def get_telemetry_logger_handler() -> LoggingHandler:
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")  # Since init didn't happen this is not exported in OTel!!!
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
-        return _AnacondaLogger._instance._handler
+        return _AnacondaLogger._instance._get_log_handler()
     return None  # No logger handler available, logging not initialized or not configured.
+
+def send_event(body: str, event_name: str, attributes: AttrDict={}) -> bool:
+    """
+    Sends a log event directly to the OpenTelemetry pipeline without using Python's logging module.
+    This is useful when you want to export log telemetry but don't want the output mixing with
+    your application's output or developer logs.
+
+    Params:
+        body (str): the log message body
+        event_name (str): mandatory event name added to attributes
+        attributes (AttrDict): optional attributes dict
+    Returns:
+        bool: True if the event was sent, False if logging was not initialized
+    Raises:
+        RuntimeError: if `initialize_telemetry` has not been called
+    """
+    global __ANACONDA_TELEMETRY_INITIALIZED
+    if __ANACONDA_TELEMETRY_INITIALIZED is False:
+        logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")
+        raise RuntimeError("Anaconda telemetry system not initialized.")
+    if _AnacondaLogger._instance is not None:
+        event_logger = _AnacondaLogger._instance._get_event_logger()
+        event_logger._send_event(body, event_name, attributes)
+        return True
+    return False
+    
