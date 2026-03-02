@@ -830,7 +830,7 @@ def send_event(body: str, event_name: str, attributes: AttrDict={}) -> bool:
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
         event_logger = _AnacondaLogger._instance._get_event_logger()
-        event_logger._send_event(body, event_name, attributes)
+        event_logger._send_event(body, event_name, _AnacondaLogger._instance._process_attributes(attributes))
         return True
     return False
     

@@ -6,8 +6,9 @@ warnings.filterwarnings(
     message=".*LogRecord will be removed.*",
 )
 
+import json
 from opentelemetry.sdk._logs import LoggerProvider, LogRecord
-from .formatting import AttrDict, log_event_name_key
+from .formatting import AttrDict, EventPayload, log_event_name_key
 
 
 class EventLogger:
@@ -27,10 +28,12 @@ class EventLogger:
 
     def _send_event(
         self,
-        body: str,
+        body: EventPayload,
         event_name: str,
         attributes: AttrDict={},
     ):
+        if not isinstance(body, str):
+            body = json.dumps(body)
         # update attributes with event name - mandatory for event logs
         attributes.update({log_event_name_key: event_name})
         record = LogRecord(
