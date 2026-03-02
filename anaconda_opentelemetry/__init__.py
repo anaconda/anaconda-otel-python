@@ -14,5 +14,5 @@ from .signals import get_trace as get_trace
 from .signals import ASpan
 from .config import Configuration
 from .attributes import ResourceAttributes
-from .silent_logger import SilentLogger as SilentLogger
+from .event_logger import EventLogger as EventLogger
 from .formatting import AttrDict as AttrDict

@@ -887,8 +887,8 @@ class TestAnacondaMetrics:
             metrics = AnacondaMetrics(cfg, attr)
             assert metrics._cumulative_temporality == metrics._get_temporality()
 
-class TestSilentLogger:
-    """Tests for the SilentLogger class."""
+class TestEventLogger:
+    """Tests for the EventLogger class."""
 
     @pytest.fixture(scope="class")
     def SeverityNumber(self):
@@ -902,24 +902,24 @@ class TestSilentLogger:
         return provider
 
     @pytest.fixture
-    def silent_logger(self, mock_provider):
-        from anaconda_opentelemetry.silent_logger import SilentLogger
-        return SilentLogger(mock_provider)
+    def event_logger(self, mock_provider):
+        from anaconda_opentelemetry.event_logger import EventLogger
+        return EventLogger(mock_provider)
 
     def test_init_defaults(self, mock_provider, SeverityNumber):
-        from anaconda_opentelemetry.silent_logger import SilentLogger
-        logger = SilentLogger(mock_provider)
-        mock_provider.get_logger.assert_called_with("silent_logger")
+        from anaconda_opentelemetry.event_logger import EventLogger
+        logger = EventLogger(mock_provider)
+        mock_provider.get_logger.assert_called_with("event_logger")
         assert logger._default_severity == SeverityNumber.INFO
 
     def test_init_custom_params(self, mock_provider, SeverityNumber):
-        from anaconda_opentelemetry.silent_logger import SilentLogger
-        logger = SilentLogger(mock_provider, logger_name="custom", default_severity=SeverityNumber.ERROR)
+        from anaconda_opentelemetry.event_logger import EventLogger
+        logger = EventLogger(mock_provider, logger_name="custom", default_severity=SeverityNumber.ERROR)
         mock_provider.get_logger.assert_called_with("custom")
         assert logger._default_severity == SeverityNumber.ERROR
 
-    def test_sendEvent_default_severity(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger._sendEvent("test message", "test.event")
+    def test_send_event_default_severity(self, event_logger, mock_provider, SeverityNumber):
+        event_logger._send_event("test message", "test.event")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
         record = mock_logger.emit.call_args[0][0]
@@ -927,51 +927,23 @@ class TestSilentLogger:
         assert record.severity_number == SeverityNumber.INFO
         assert record.attributes[log_event_name_key] == "test.event"
 
-    def test_sendEvent_custom_severity_and_attributes(self, silent_logger, mock_provider, SeverityNumber):
+    def test_send_event_custom_severity_and_attributes(self, event_logger, mock_provider, SeverityNumber):
         attrs = {"key": "value"}
-        silent_logger._sendEvent("error msg", "error.event", severity=SeverityNumber.ERROR, attributes=attrs)
+        event_logger._send_event("error msg", "error.event", severity=SeverityNumber.ERROR, attributes=attrs)
         mock_logger = mock_provider.get_logger.return_value
         record = mock_logger.emit.call_args[0][0]
         assert record.body == "error msg"
         assert record.severity_number == SeverityNumber.ERROR
         assert record.attributes == {"key": "value", log_event_name_key: "error.event"}
 
-    def test_sendEvent_missing_event_name(self, silent_logger):
-        """Verifies that _sendEvent raises TypeError when event_name is not passed."""
+    def test_send_event_missing_event_name(self, event_logger):
+        """Verifies that _send_event raises TypeError when event_name is not passed."""
         with pytest.raises(TypeError):
-            silent_logger._sendEvent("message")
+            event_logger._send_event("message")
 
-    def test_INFO(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.INFO("info message", "info.event", attributes={"tag": "test"})
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == "info message"
-        assert record.severity_number == SeverityNumber.INFO
-        assert record.attributes == {"tag": "test", log_event_name_key: "info.event"}
-
-    def test_WARN(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.WARN("warn message", "warn.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == "warn message"
-        assert record.severity_number == SeverityNumber.WARN
-        assert record.attributes[log_event_name_key] == "warn.event"
-
-    def test_ERROR(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.ERROR("error message", "error.event", attributes={"code": 500})
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == "error message"
-        assert record.severity_number == SeverityNumber.ERROR
-        assert record.attributes == {"code": 500, log_event_name_key: "error.event"}
-
-    def test_DEBUG(self, silent_logger, mock_provider, SeverityNumber):
-        silent_logger.DEBUG("debug message", "debug.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == "debug message"
-        assert record.severity_number == SeverityNumber.DEBUG
-        assert record.attributes[log_event_name_key] == "debug.event"
-
-    def test_severity_helpers_default_empty_attributes(self, silent_logger, mock_provider):
-        """Verifies that helpers default to empty dict with event_name still injected."""
-        silent_logger.INFO("msg", "test.event")
+    def test_send_event_default_empty_attributes(self, event_logger, mock_provider):
+        """Verifies that _send_event defaults to empty dict with event_name still injected."""
+        event_logger._send_event("msg", "test.event")
         record = mock_provider.get_logger.return_value.emit.call_args[0][0]
         assert record.attributes == {log_event_name_key: "test.event"}
 

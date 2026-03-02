@@ -32,7 +32,7 @@ from opentelemetry.trace.status import StatusCode
 
 from .config import Configuration as Config
 from .exporter_shim import OTLPMetricExporterShim, OTLPSpanExporterShim, OTLPLogExporterShim
-from .silent_logger import SilentLogger
+from .event_logger import EventLogger
 from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 from .formatting import AttrDict, log_event_name_key
@@ -187,10 +187,10 @@ class _AnacondaLogger(_AnacondaCommon):
         f.filter = _filter
         return f
     
-    def _get_silent_logger(self, logger_name: str = None) -> SilentLogger:
+    def _get_event_logger(self, logger_name: str = None) -> EventLogger:
         if logger_name is None:
-            logger_name = f'{self.service_name}_silent_logger'
-        return SilentLogger(self._provider, logger_name=logger_name)
+            logger_name = f'{self.service_name}_event_logger'
+        return EventLogger(self._provider, logger_name=logger_name)
         
     def _get_log_level(self, str_level: str)-> int:
         # Convert string from config file to logging level.
@@ -831,8 +831,8 @@ def send_event(body: str, event_name: str, severity: Optional[SeverityNumber] = 
         logging.getLogger(__package__).error("Anaconda telemetry system not initialized.")
         raise RuntimeError("Anaconda telemetry system not initialized.")
     if _AnacondaLogger._instance is not None:
-        silent = _AnacondaLogger._instance._get_silent_logger()
-        silent._sendEvent(body, event_name, severity, attributes)
+        event_logger = _AnacondaLogger._instance._get_event_logger()
+        event_logger._send_event(body, event_name, severity, attributes)
         return True
     return False
     
