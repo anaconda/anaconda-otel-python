@@ -90,7 +90,7 @@ class TestOIDCAuthenticatorTokenValidity:
             expiry_buffer_seconds=30,
         )
         auth._access_token = "some-token"
-        auth._expires_at = time.time() - 10  # already expired
+        auth._expires_at = time.time() - 10
 
         assert auth._is_token_valid() == False
 
@@ -102,7 +102,7 @@ class TestOIDCAuthenticatorTokenValidity:
             expiry_buffer_seconds=30,
         )
         auth._access_token = "some-token"
-        auth._expires_at = time.time() + 20  # expires in 20s, but buffer is 30s
+        auth._expires_at = time.time() + 20
 
         assert auth._is_token_valid() == False
 
@@ -114,7 +114,7 @@ class TestOIDCAuthenticatorTokenValidity:
             expiry_buffer_seconds=30,
         )
         auth._access_token = "some-token"
-        auth._expires_at = time.time() + 60  # expires in 60s, buffer is 30s
+        auth._expires_at = time.time() + 60
 
         assert auth._is_token_valid() == True
 
@@ -164,7 +164,7 @@ class TestOIDCAuthenticatorGetToken:
         token2 = auth.get_token()
 
         assert token1 == token2 == "cached-token"
-        assert mock_urlopen.call_count == 1  # only one HTTP call
+        assert mock_urlopen.call_count == 1
 
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
     def test_refreshes_when_token_expired(self, mock_urlopen):
@@ -358,7 +358,7 @@ class TestOIDCAuthenticatorThreadSafety:
         def slow_urlopen(req):
             with original_lock:
                 call_count[0] += 1
-            time.sleep(0.05)  # simulate network latency
+            time.sleep(0.05)
             return _make_mock_response({
                 "access_token": "concurrent-token",
                 "expires_in": 3600,

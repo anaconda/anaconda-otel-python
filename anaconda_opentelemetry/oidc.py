@@ -87,7 +87,6 @@ class OIDCAuthenticator:
         )
 
     def _refresh(self) -> str:
-        """Fetches a new token from the token endpoint. Must be called under lock."""
         data = {
             "grant_type": "client_credentials",
             "client_id": self._client_id,
@@ -122,7 +121,7 @@ class OIDCAuthenticator:
         if expires_in is not None:
             self._expires_at = time.time() + int(expires_in)
         else:
-            # No expiry info — assume a short-lived token (5 minutes)
+            # 5 minute expiry
             self._expires_at = time.time() + 300
 
         self._access_token = access_token
