@@ -60,9 +60,21 @@ class _OTLPExporterMixin:
             return
         token = self._oidc_authenticator.get_token()
         bearer = f"Bearer {token}"
-        if bearer != self._last_token:
-            self._headers['authorization'] = bearer
-            self._last_token = bearer
+        if bearer == self._last_token:
+            return
+        self._headers['authorization'] = bearer
+        self._last_token = bearer
+
+        try:
+            new_exporter = self._exporter_class(**self._init_kwargs)
+        except Exception:
+            self._logger.error("Failed to recreate exporter after token refresh")
+            return
+
+        with self._lock:
+            old_exporter = self._exporter
+            old_exporter.shutdown()
+            self._exporter = new_exporter
 
     def export(self, *args, **kwargs):
         try:

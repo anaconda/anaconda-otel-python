@@ -8,7 +8,7 @@ sys.path.append("./")
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.oidc import OIDCAuthenticator
 
-import pytest, os, tempfile, re
+import pytest, os, json, tempfile, re
 from unittest.mock import patch, MagicMock, Mock
 from grpc import ChannelCredentials
 
@@ -402,3 +402,72 @@ class TestConfiguration:
 
         with pytest.raises(ValueError):
             cfg._change_signal_endpoint("metrics", "http://invalid port:8080")
+
+
+class TestConfigurationOIDC:
+    def _make_authenticator(self):
+        return OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+        )
+
+    def test_oidc_authenticator_stored(self):
+        auth = self._make_authenticator()
+        cfg = Config(default_endpoint="http://localhost:4317", oidc_authenticator=auth)
+        assert cfg._oidc_authenticator is auth
+
+    def test_no_oidc_authenticator_is_none(self):
+        cfg = Config(default_endpoint="http://localhost:4317")
+        assert cfg._oidc_authenticator is None
+
+    def test_mutual_exclusivity_direct_args(self):
+        auth = self._make_authenticator()
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            Config(default_endpoint="http://localhost:4317", default_auth_token="tok", oidc_authenticator=auth)
+
+    def test_mutual_exclusivity_oidc_with_env_auth_token(self):
+        auth = self._make_authenticator()
+        os.environ["ATEL_DEFAULT_AUTH_TOKEN"] = "env-token"
+        try:
+            with pytest.raises(ValueError, match="mutually exclusive"):
+                Config(default_endpoint="http://localhost:4317", oidc_authenticator=auth)
+        finally:
+            del os.environ["ATEL_DEFAULT_AUTH_TOKEN"]
+
+    def test_oidc_from_env_vars(self):
+        os.environ["ATEL_OIDC_TOKEN_ENDPOINT"] = "https://idp.example.com/oauth/token"
+        os.environ["ATEL_OIDC_CLIENT_ID"] = "env-client"
+        os.environ["ATEL_OIDC_CLIENT_SECRET"] = "env-secret"
+        try:
+            cfg = Config(default_endpoint="http://localhost:4317")
+            assert cfg._oidc_authenticator is not None
+            assert cfg._oidc_authenticator._client_id == "env-client"
+        finally:
+            del os.environ["ATEL_OIDC_TOKEN_ENDPOINT"]
+            del os.environ["ATEL_OIDC_CLIENT_ID"]
+            del os.environ["ATEL_OIDC_CLIENT_SECRET"]
+
+    def test_partial_oidc_env_vars_no_authenticator(self):
+        os.environ["ATEL_OIDC_TOKEN_ENDPOINT"] = "https://idp.example.com/oauth/token"
+        try:
+            cfg = Config(default_endpoint="http://localhost:4317")
+            assert cfg._oidc_authenticator is None
+        finally:
+            del os.environ["ATEL_OIDC_TOKEN_ENDPOINT"]
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_get_auth_token_delegates_to_oidc(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"access_token": "oidc-tok", "expires_in": 3600}).encode("utf-8")
+        mock_resp.__enter__ = Mock(return_value=mock_resp)
+        mock_resp.__exit__ = Mock(return_value=False)
+        mock_urlopen.return_value = mock_resp
+
+        auth = self._make_authenticator()
+        cfg = Config(default_endpoint="http://localhost:4317", oidc_authenticator=auth)
+
+        assert cfg._get_auth_token_default() == "oidc-tok"
+        assert cfg._get_auth_token_logging() == "oidc-tok"
+        assert cfg._get_auth_token_metrics() == "oidc-tok"
+        assert cfg._get_auth_token_tracing() == "oidc-tok"
