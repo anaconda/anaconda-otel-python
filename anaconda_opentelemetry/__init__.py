@@ -13,6 +13,7 @@ from .signals import decrement_counter as decrement_counter
 from .signals import get_trace as get_trace
 from .signals import ASpan
 from .config import Configuration
+from .oidc import OIDCAuthenticator
 from .attributes import ResourceAttributes
 from .event_logger import EventLogger as EventLogger
 from .formatting import AttrDict as AttrDict

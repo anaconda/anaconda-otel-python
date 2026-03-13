@@ -392,15 +392,156 @@ class TestMockExport:
         assert update_results[0] == True
 
     def test_export_handles_exception(self):
-        """Test that export catches and logs exceptions, returning False"""       
+        """Test that export catches and logs exceptions, returning False"""
         shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
-        
+
         shim._exporter = MagicMock()
         shim._exporter.export.side_effect = ConnectionError("Connection refused")
-        
+
         shim._logger = MagicMock()
-        
+
         result = shim.export([{"test": "data"}])
-        
+
         assert result == False
         shim._logger.error.assert_called_once_with("Failed to export: Connection refused")
+
+
+class TestSwapExporter:
+    def test_swap_exporter_replaces_exporter(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        result = shim._swap_exporter()
+
+        assert result == True
+        assert shim._exporter is not old_exporter
+        assert old_exporter.is_shutdown == True
+
+    def test_swap_exporter_with_batch_access_flushes(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        batch_access = Mock()
+
+        shim._swap_exporter(batch_access=batch_access)
+
+        batch_access.force_flush.assert_called_once()
+
+    def test_swap_exporter_without_batch_access_skips_flush(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        shim._swap_exporter()
+
+        assert old_exporter.is_shutdown == True
+
+    def test_swap_exporter_failure_keeps_old_exporter(self):
+        class FailOnSecondCreate:
+            _count = 0
+            def __init__(self, **kwargs):
+                FailOnSecondCreate._count += 1
+                if FailOnSecondCreate._count > 1:
+                    raise RuntimeError("fail")
+                self.kwargs = kwargs
+                self.is_shutdown = False
+            def shutdown(self):
+                self.is_shutdown = True
+
+        shim = _OTLPExporterMixin(FailOnSecondCreate, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        result = shim._swap_exporter()
+
+        assert result == False
+        assert shim._exporter is old_exporter
+        assert old_exporter.is_shutdown == False
+
+
+class TestRefreshHeaders:
+    def _make_mock_auth(self, token="token-1"):
+        auth = Mock()
+        auth.get_token.return_value = token
+        return auth
+
+    def test_no_authenticator_is_noop(self):
+        headers = {"authorization": "Bearer static"}
+        shim = _OTLPExporterMixin(MockExporter, headers=headers)
+        old_exporter = shim._exporter
+
+        shim._refresh_headers()
+
+        assert shim._exporter is old_exporter
+        assert headers["authorization"] == "Bearer static"
+
+    def test_no_headers_is_noop(self):
+        auth = self._make_mock_auth()
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth)
+
+        shim._refresh_headers()
+
+        auth.get_token.assert_not_called()
+
+    def test_same_token_does_not_swap(self):
+        auth = self._make_mock_auth("same-token")
+        headers = {"authorization": "Bearer same-token"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+        old_exporter = shim._exporter
+
+        shim._refresh_headers()
+
+        assert shim._exporter is old_exporter
+        auth.get_token.assert_called_once()
+
+    def test_new_token_swaps_exporter(self):
+        auth = self._make_mock_auth("new-token")
+        headers = {"authorization": "Bearer old-token"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+        old_exporter = shim._exporter
+
+        shim._refresh_headers()
+
+        assert shim._exporter is not old_exporter
+        assert old_exporter.is_shutdown == True
+        assert headers["authorization"] == "Bearer new-token"
+        assert shim._last_token == "Bearer new-token"
+
+    def test_new_exporter_receives_updated_headers(self):
+        auth = self._make_mock_auth("refreshed")
+        headers = {"authorization": "Bearer original"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+
+        shim._refresh_headers()
+
+        assert shim._exporter.kwargs["headers"]["authorization"] == "Bearer refreshed"
+
+    def test_multiple_refreshes(self):
+        auth = self._make_mock_auth("token-1")
+        headers = {"authorization": "Bearer initial"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+
+        shim._refresh_headers()
+        first_exporter = shim._exporter
+        assert headers["authorization"] == "Bearer token-1"
+
+        auth.get_token.return_value = "token-2"
+        shim._refresh_headers()
+        assert shim._exporter is not first_exporter
+        assert first_exporter.is_shutdown == True
+        assert headers["authorization"] == "Bearer token-2"
+
+    def test_export_triggers_refresh_and_uses_new_exporter(self):
+        auth = self._make_mock_auth("fresh-token")
+        headers = {"authorization": "Bearer stale-token"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+
+        result = shim.export(["data"])
+
+        assert result == "SUCCESS"
+        assert headers["authorization"] == "Bearer fresh-token"
+        assert shim._exporter.exported_items == [["data"]]
+
+    def test_authenticator_not_leaked_to_exporter_kwargs(self):
+        auth = self._make_mock_auth()
+        headers = {"authorization": "Bearer tok"}
+        shim = _OTLPExporterMixin(MockExporter, oidc_authenticator=auth, headers=headers)
+
+        assert "oidc_authenticator" not in shim._init_kwargs
+        assert "oidc_authenticator" not in shim._exporter.kwargs
