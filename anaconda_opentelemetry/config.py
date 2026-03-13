@@ -9,8 +9,10 @@ Anaconda Telemetry - Configuration Module
 This module provides the configuration setting from a file or a dictionary (or both)
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import re, os, grpc, warnings, functools
+
+from anaconda_opentelemetry.oidc import OIDCAuthenticator
 
 """
 Configuration class to supply settings for Anaconda Telemetry.
@@ -140,7 +142,8 @@ class Configuration:
     ]
 
     def __init__(self, default_endpoint: str = None, default_auth_token: str = None,
-                 default_private_ca_cert_file: str = None, config_dict: Dict[str, Any] = {}):
+                 default_private_ca_cert_file: str = None, config_dict: Dict[str, Any] = {},
+                 oidc_authenticator: Optional[OIDCAuthenticator] = None):
         """
         Creates the configuration object passed to initialize_telemetry.
 
@@ -149,14 +152,23 @@ class Configuration:
             default_auth_token (str): The default auth token use for the default_endpoint or None.
             default_private_ca_cert_file (str): File name for the private cert file if used or None. Not used frequently.
             config_dict (Dict[str,any]): An initialization map to configure the object in bulk or {}.
+            oidc_authenticator (OIDCAuthenticator): Optional OIDC authenticator for dynamic token management. Mutually exclusive with default_auth_token.
 
         Raises:
             ValueError: If there is no `default_endpoint` value passed to its arguments or in the `config_dict` kwarg,
                         and no `ATEL_DEFAULT_ENDPOINT` environment variable set.
             ValueError: Non integer value set for `ATEL_METRICS_EXPORT_INTERVAL_MS_NAME`
+            ValueError: If both `default_auth_token` and `oidc_authenticator` are provided.
         """
         self._config: Dict[str, Any] = {}
         self._config.update(config_dict)
+
+        if default_auth_token is not None and oidc_authenticator is not None:
+            raise ValueError("default_auth_token and oidc_authenticator are mutually exclusive")
+
+        self._oidc_authenticator: Optional[OIDCAuthenticator] = oidc_authenticator
+        if self._oidc_authenticator is None:
+            self._oidc_authenticator = self._build_oidc_authenticator_from_env()
 
         if default_endpoint is not None:
             endpoint = self._Endpoint(default_endpoint)
@@ -174,6 +186,10 @@ class Configuration:
             env_value = os.environ.get(env_name, None)
             if env_value is not None:
                 self._config[base_name] = env_value.strip()
+
+        # Validate mutual exclusivity with env-var-sourced auth token
+        if self._oidc_authenticator is not None and self.DEFAULT_AUTH_TOKEN_NAME in self._config:
+            raise ValueError("default_auth_token and oidc_authenticator are mutually exclusive")
 
         # Ensure default endpoint is set
         if self.DEFAULT_ENDPOINT_NAME not in self._config.keys():
@@ -209,8 +225,10 @@ class Configuration:
 
     def set_logging_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the logging endpoint. If passed in a dict in the constructor, use predefined name
-        LOGGING_ENDPOINT_NAME. if not set, the default endpoint will be used.
+        Sets the logging endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name LOGGING_ENDPOINT_NAME. If not set,
+        the default endpoint will be used.
 
         Args:
             endpoint (str): Logging endpoint in the form '<IPv4|domain_name>:<port>'.
@@ -235,8 +253,10 @@ class Configuration:
 
     def set_tracing_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the tracing endpoint. If passed in a dict in the constructor, use predefined name
-        TRACING_ENDPOINT_NAME. If not set, the default endpoint is used.
+        Sets the tracing endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name TRACING_ENDPOINT_NAME. If not set,
+        the default endpoint is used.
 
         Args:
             endpoint (str): Tracing endpoint in the form '<IPv4|domain_name>:<port>'.
@@ -260,8 +280,10 @@ class Configuration:
 
     def set_metrics_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the metrics endpoint. If passed in a dict in the constructor, use predefined name
-        METRICS_ENDPOINT_NAME. If not set, the default endpoint will be used.
+        Sets the metrics endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name METRICS_ENDPOINT_NAME. If not set,
+        the default endpoint will be used.
 
         Args:
             endpoint (str): Metrics endpoint in the form '<IPv4|domain_name>:<port>'.
@@ -687,7 +709,24 @@ class Configuration:
     def _get_console_exporter(self) -> bool:
         return self._config.get(self.USE_CONSOLE_EXPORTER_NAME, False)
 
+    def _build_oidc_authenticator_from_env(self) -> Optional[OIDCAuthenticator]:
+        oidc_endpoint = os.environ.get(f"{self.__PREFIX__}OIDC_TOKEN_ENDPOINT")
+        oidc_client_id = os.environ.get(f"{self.__PREFIX__}OIDC_CLIENT_ID")
+        oidc_client_secret = os.environ.get(f"{self.__PREFIX__}OIDC_CLIENT_SECRET")
+        if not (oidc_endpoint and oidc_client_id and oidc_client_secret):
+            return None
+        oidc_scopes_raw = os.environ.get(f"{self.__PREFIX__}OIDC_SCOPES")
+        oidc_scopes = [s.strip() for s in oidc_scopes_raw.split(",") if s.strip()] if oidc_scopes_raw else None
+        return OIDCAuthenticator(
+            token_endpoint=oidc_endpoint.strip(),
+            client_id=oidc_client_id.strip(),
+            client_secret=oidc_client_secret.strip(),
+            scopes=oidc_scopes,
+        )
+
     def _get_auth_token_default(self) -> str:
+        if self._oidc_authenticator is not None:
+            return self._oidc_authenticator.get_token()
         return self._config.get(self.DEFAULT_AUTH_TOKEN_NAME, None)
 
     def _get_auth_token_logging(self) -> str:

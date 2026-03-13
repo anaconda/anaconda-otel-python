@@ -152,6 +152,7 @@ class _AnacondaLogger(_AnacondaCommon):
                 insecure = not config._get_TLS_logging()
                 exporter = OTLPLogExporterShim(
                     OTLPLogExportergRPC,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.logger_endpoint,
                     insecure=insecure,
                     credentials=config._get_ca_cert_logging() if not insecure else None,
@@ -161,6 +162,7 @@ class _AnacondaLogger(_AnacondaCommon):
                 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
                 exporter = OTLPLogExporterShim(
                     OTLPLogExporterHTTP,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.logger_endpoint,
                     certificate_file=config._get_ca_cert_logging(),
                     headers=headers
@@ -271,6 +273,7 @@ class _AnacondaMetrics(_AnacondaCommon):
                 insecure = not config._get_TLS_metrics()
                 exporter = OTLPMetricExporterShim(
                     OTLPMetricExportergRPC,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.metrics_endpoint,
                     insecure=insecure,
                     credentials=config._get_ca_cert_metrics() if not insecure else None,
@@ -281,6 +284,7 @@ class _AnacondaMetrics(_AnacondaCommon):
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
                 exporter = OTLPMetricExporterShim(
                     OTLPMetricExporterHTTP,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.metrics_endpoint,
                     certificate_file=config._get_ca_cert_metrics(),
                     headers=headers,
@@ -480,6 +484,7 @@ class _AnacondaTrace(_AnacondaCommon):
                 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter as OTLPSpanExportergRPC
                 exporter = OTLPSpanExporterShim(
                     OTLPSpanExportergRPC,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.tracing_endpoint,
                     insecure=insecure,
                     credentials=config._get_ca_cert_tracing() if not insecure else None,
@@ -489,6 +494,7 @@ class _AnacondaTrace(_AnacondaCommon):
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
                 exporter = OTLPSpanExporterShim(
                     OTLPSpanExporterHTTP,
+                    oidc_authenticator=config._oidc_authenticator,
                     endpoint=self.tracing_endpoint,
                     certificate_file=config._get_ca_cert_tracing(),
                     headers=headers
