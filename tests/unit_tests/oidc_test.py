@@ -391,8 +391,6 @@ class TestOIDCAuthenticatorThreadSafety:
         assert len(errors) == 0
         assert all(r == "concurrent-token" for r in results)
         assert len(results) == 10
-        # Double-checked locking should limit HTTP calls — at most a small number
-        # (first thread fetches, others wait on lock then see valid token)
         assert call_count[0] <= 2
 
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
@@ -426,5 +424,4 @@ class TestOIDCAuthenticatorThreadSafety:
             t.join()
 
         assert len(results) == 5
-        # Each force_refresh should make its own HTTP call
         assert mock_urlopen.call_count == 5
