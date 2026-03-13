@@ -6,8 +6,10 @@ import sys
 sys.path.append("./")
 
 from anaconda_opentelemetry.config import Configuration as Config
+from anaconda_opentelemetry.oidc import OIDCAuthenticator
 
 import pytest, os, tempfile, re
+from unittest.mock import patch, MagicMock, Mock
 from grpc import ChannelCredentials
 
 class TestConfiguration:
