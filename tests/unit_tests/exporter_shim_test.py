@@ -152,7 +152,7 @@ class TestOTLPExporterMixin:
             "http://invalid:8080"
         )
         
-        assert result is None
+        assert result == False
         assert mixin._state == ExporterState.READY
         assert mixin._exporter is old_exporter
         batch_access.force_flush.assert_not_called()

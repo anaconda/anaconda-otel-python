@@ -27,6 +27,24 @@ class _OTLPExporterMixin:
         self._exporter = exporter_class(**kwargs)
         self._state = ExporterState.READY
     
+    def _swap_exporter(self, batch_access=None):
+        try:
+            new_exporter = self._exporter_class(**self._init_kwargs)
+        except Exception:
+            with self._lock:
+                self._state = ExporterState.READY
+            return False
+
+        with self._lock:
+            old_exporter = self._exporter
+            if batch_access is not None:
+                batch_access.force_flush()
+            old_exporter.shutdown()
+            self._exporter = new_exporter
+            self._state = ExporterState.READY
+
+        return True
+
     def change_signal_endpoint(self, batch_access, config, new_endpoint, auth_token=None):
 
         endpoint = config._change_signal_endpoint(
@@ -39,23 +57,9 @@ class _OTLPExporterMixin:
         with self._lock:
             self._state = ExporterState.UPDATING
 
-        try:
-            new_exporter = self._exporter_class(**self._init_kwargs)
-        except:
-            with self._lock:
-                self._state = ExporterState.READY
-            return
-        
-        with self._lock:
-            old_exporter = self._exporter
-            batch_access.force_flush()
-            old_exporter.shutdown()
-            self._exporter = new_exporter
-            self._state = ExporterState.READY
+        return self._swap_exporter(batch_access=batch_access)
 
-        return True
-    
-    def _refresh_headers_if_needed(self):
+    def _refresh_headers(self):
         if self._oidc_authenticator is None or self._headers is None:
             return
         token = self._oidc_authenticator.get_token()
@@ -64,21 +68,11 @@ class _OTLPExporterMixin:
             return
         self._headers['authorization'] = bearer
         self._last_token = bearer
-
-        try:
-            new_exporter = self._exporter_class(**self._init_kwargs)
-        except Exception:
-            self._logger.error("Failed to recreate exporter after token refresh")
-            return
-
-        with self._lock:
-            old_exporter = self._exporter
-            old_exporter.shutdown()
-            self._exporter = new_exporter
+        self._swap_exporter()
 
     def export(self, *args, **kwargs):
         try:
-            self._refresh_headers_if_needed()
+            self._refresh_headers()
             return self._exporter.export(*args, **kwargs)
         except Exception as exception:
             self._logger.error(f"Failed to export: {exception}")
