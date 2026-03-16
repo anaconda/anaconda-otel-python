@@ -1,11 +1,8 @@
 import threading, logging
 from enum import Enum
-from typing import Optional
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk._logs.export import LogExporter
-
-from anaconda_opentelemetry.oidc import OIDCAuthenticator
 
 
 class ExporterState(Enum):
@@ -16,14 +13,11 @@ class ExporterState(Enum):
 class _OTLPExporterMixin:
     """Mixin that provides common functionality for all OTLP exporter shims"""
 
-    def __init__(self, exporter_class, oidc_authenticator: Optional[OIDCAuthenticator] = None, **kwargs):
+    def __init__(self, exporter_class, **kwargs):
         self._logger = logging.getLogger('exporter_shim_logger')
         self._lock = threading.Lock()
         self._exporter_class = exporter_class
-        self._oidc_authenticator = oidc_authenticator
         self._init_kwargs = kwargs
-        self._headers = kwargs.get('headers')
-        self._last_token: Optional[str] = self._headers.get('authorization') if self._headers else None
         self._exporter = exporter_class(**kwargs)
         self._state = ExporterState.READY
     
@@ -59,20 +53,8 @@ class _OTLPExporterMixin:
 
         return self._swap_exporter(batch_access=batch_access)
 
-    def _refresh_headers(self):
-        if self._oidc_authenticator is None or self._headers is None:
-            return
-        token = self._oidc_authenticator.get_token()
-        bearer = f"Bearer {token}"
-        if bearer == self._last_token:
-            return
-        self._headers['authorization'] = bearer
-        self._last_token = bearer
-        self._swap_exporter()
-
     def export(self, *args, **kwargs):
         try:
-            self._refresh_headers()
             return self._exporter.export(*args, **kwargs)
         except Exception as exception:
             self._logger.error(f"Failed to export: {exception}")
