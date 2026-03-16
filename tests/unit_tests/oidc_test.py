@@ -5,10 +5,31 @@
 import sys
 sys.path.append("./")
 
-import pytest, json, threading, time
+import pytest, json, time
 from unittest.mock import patch, MagicMock, Mock
 
-from anaconda_opentelemetry.oidc import OIDCAuthenticator
+from anaconda_opentelemetry.oidc import OIDCAuthenticator, TokenSet, AuthError, _validate_token_response, _validate_client_credentials_response
+
+
+def _make_mock_response(body, status=200):
+    mock_response = MagicMock()
+    mock_response.read.return_value = json.dumps(body).encode("utf-8")
+    mock_response.__enter__ = Mock(return_value=mock_response)
+    mock_response.__exit__ = Mock(return_value=False)
+    return mock_response
+
+
+def _make_mock_http_error(code, body=None):
+    import urllib.error
+    error = urllib.error.HTTPError(
+        url="https://idp.example.com/oauth/token",
+        code=code,
+        msg="Error",
+        hdrs={},
+        fp=None,
+    )
+    error.read = Mock(return_value=json.dumps(body or {}).encode("utf-8"))
+    return error
 
 
 class TestOIDCAuthenticatorInit:
@@ -23,9 +44,6 @@ class TestOIDCAuthenticatorInit:
         assert auth._client_id == "my-client"
         assert auth._client_secret == "my-secret"
         assert auth._scopes is None
-        assert auth._expiry_buffer_seconds == 30
-        assert auth._access_token is None
-        assert auth._expires_at == 0.0
 
     def test_initialization_with_scopes(self):
         auth = OIDCAuthenticator(
@@ -37,22 +55,26 @@ class TestOIDCAuthenticatorInit:
 
         assert auth._scopes == ["openid", "telemetry"]
 
-    def test_initialization_with_custom_expiry_buffer(self):
+    def test_initialization_without_client_secret(self):
         auth = OIDCAuthenticator(
             token_endpoint="https://idp.example.com/oauth/token",
             client_id="my-client",
-            client_secret="my-secret",
-            expiry_buffer_seconds=60,
         )
 
-        assert auth._expiry_buffer_seconds == 60
+        assert auth._client_secret is None
 
     def test_missing_token_endpoint_raises(self):
         with pytest.raises(ValueError, match="token_endpoint is required"):
             OIDCAuthenticator(
                 token_endpoint="",
                 client_id="my-client",
-                client_secret="my-secret",
+            )
+
+    def test_invalid_token_endpoint_scheme_raises(self):
+        with pytest.raises(ValueError, match="http or https scheme"):
+            OIDCAuthenticator(
+                token_endpoint="ftp://idp.example.com/oauth/token",
+                client_id="my-client",
             )
 
     def test_missing_client_id_raises(self):
@@ -60,11 +82,10 @@ class TestOIDCAuthenticatorInit:
             OIDCAuthenticator(
                 token_endpoint="https://idp.example.com/oauth/token",
                 client_id="",
-                client_secret="my-secret",
             )
 
-    def test_missing_client_secret_raises(self):
-        with pytest.raises(ValueError, match="client_secret is required"):
+    def test_empty_client_secret_raises(self):
+        with pytest.raises(ValueError, match="client_secret cannot be empty"):
             OIDCAuthenticator(
                 token_endpoint="https://idp.example.com/oauth/token",
                 client_id="my-client",
@@ -72,66 +93,13 @@ class TestOIDCAuthenticatorInit:
             )
 
 
-class TestOIDCAuthenticatorTokenValidity:
-    def test_no_token_is_invalid(self):
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="id",
-            client_secret="secret",
-        )
-
-        assert auth._is_token_valid() == False
-
-    def test_expired_token_is_invalid(self):
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="id",
-            client_secret="secret",
-            expiry_buffer_seconds=30,
-        )
-        auth._access_token = "some-token"
-        auth._expires_at = time.time() - 10
-
-        assert auth._is_token_valid() == False
-
-    def test_token_within_buffer_is_invalid(self):
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="id",
-            client_secret="secret",
-            expiry_buffer_seconds=30,
-        )
-        auth._access_token = "some-token"
-        auth._expires_at = time.time() + 20
-
-        assert auth._is_token_valid() == False
-
-    def test_token_outside_buffer_is_valid(self):
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="id",
-            client_secret="secret",
-            expiry_buffer_seconds=30,
-        )
-        auth._access_token = "some-token"
-        auth._expires_at = time.time() + 60
-
-        assert auth._is_token_valid() == True
-
-
-def _make_mock_response(body, status=200):
-    mock_response = MagicMock()
-    mock_response.read.return_value = json.dumps(body).encode("utf-8")
-    mock_response.__enter__ = Mock(return_value=mock_response)
-    mock_response.__exit__ = Mock(return_value=False)
-    return mock_response
-
-
-class TestOIDCAuthenticatorGetToken:
+class TestClientCredentialsGrant:
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_fetches_token_on_first_call(self, mock_urlopen):
+    def test_successful_client_credentials(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
-            "access_token": "fresh-token",
+            "access_token": "cc-token",
+            "refresh_token": "",
+            "token_type": "Bearer",
             "expires_in": 3600,
         })
 
@@ -141,122 +109,18 @@ class TestOIDCAuthenticatorGetToken:
             client_secret="my-secret",
         )
 
-        token = auth.get_token()
+        token_set = auth.client_credentials_grant()
 
-        assert token == "fresh-token"
-        assert auth._access_token == "fresh-token"
-        mock_urlopen.assert_called_once()
+        assert isinstance(token_set, TokenSet)
+        assert token_set.access_token == "cc-token"
+        assert token_set.token_type == "Bearer"
+        assert token_set.access_token_expires_at > time.time()
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_returns_cached_token_when_valid(self, mock_urlopen):
-        mock_urlopen.return_value = _make_mock_response({
-            "access_token": "cached-token",
-            "expires_in": 3600,
-        })
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-        )
-
-        token1 = auth.get_token()
-        token2 = auth.get_token()
-
-        assert token1 == token2 == "cached-token"
-        assert mock_urlopen.call_count == 1
-
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_refreshes_when_token_expired(self, mock_urlopen):
-        mock_urlopen.return_value = _make_mock_response({
-            "access_token": "new-token",
-            "expires_in": 3600,
-        })
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-            expiry_buffer_seconds=30,
-        )
-
-        # Simulate an expired cached token
-        auth._access_token = "old-token"
-        auth._expires_at = time.time() - 10
-
-        token = auth.get_token()
-
-        assert token == "new-token"
-        mock_urlopen.assert_called_once()
-
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_defaults_expiry_when_missing_expires_in(self, mock_urlopen):
-        mock_urlopen.return_value = _make_mock_response({
-            "access_token": "no-expiry-token",
-        })
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-        )
-
-        before = time.time()
-        auth.get_token()
-        after = time.time()
-
-        # Should default to 300s (5 minutes)
-        assert auth._expires_at >= before + 300
-        assert auth._expires_at <= after + 300
-
-
-class TestOIDCAuthenticatorGetHeaders:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_returns_bearer_headers(self, mock_urlopen):
-        mock_urlopen.return_value = _make_mock_response({
-            "access_token": "header-token",
-            "expires_in": 3600,
-        })
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-        )
-
-        headers = auth.get_headers()
-
-        assert headers == {"authorization": "Bearer header-token"}
-
-
-class TestOIDCAuthenticatorForceRefresh:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_force_refresh_fetches_new_token(self, mock_urlopen):
-        responses = [
-            _make_mock_response({"access_token": "token-1", "expires_in": 3600}),
-            _make_mock_response({"access_token": "token-2", "expires_in": 3600}),
-        ]
-        mock_urlopen.side_effect = responses
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-        )
-
-        token1 = auth.get_token()
-        token2 = auth.force_refresh()
-
-        assert token1 == "token-1"
-        assert token2 == "token-2"
-        assert mock_urlopen.call_count == 2
-
-
-class TestOIDCAuthenticatorRequestFormat:
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
     def test_sends_correct_request_without_scopes(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
+            "token_type": "Bearer",
             "expires_in": 3600,
         })
 
@@ -265,7 +129,7 @@ class TestOIDCAuthenticatorRequestFormat:
             client_id="my-client",
             client_secret="my-secret",
         )
-        auth.get_token()
+        auth.client_credentials_grant()
 
         request = mock_urlopen.call_args[0][0]
         assert request.full_url == "https://idp.example.com/oauth/token"
@@ -282,6 +146,7 @@ class TestOIDCAuthenticatorRequestFormat:
     def test_sends_correct_request_with_scopes(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
+            "token_type": "Bearer",
             "expires_in": 3600,
         })
 
@@ -291,50 +156,24 @@ class TestOIDCAuthenticatorRequestFormat:
             client_secret="my-secret",
             scopes=["openid", "telemetry"],
         )
-        auth.get_token()
+        auth.client_credentials_grant()
 
         body = mock_urlopen.call_args[0][0].data.decode("utf-8")
         assert "scope=openid+telemetry" in body
 
-
-class TestOIDCAuthenticatorErrorHandling:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_http_error_raises(self, mock_urlopen):
-        import urllib.error
-        mock_urlopen.side_effect = urllib.error.HTTPError(
-            url="https://idp.example.com/oauth/token",
-            code=401,
-            msg="Unauthorized",
-            hdrs={},
-            fp=None,
-        )
-
+    def test_requires_client_secret(self):
         auth = OIDCAuthenticator(
             token_endpoint="https://idp.example.com/oauth/token",
             client_id="my-client",
-            client_secret="my-secret",
         )
 
-        with pytest.raises(urllib.error.HTTPError):
-            auth.get_token()
+        with pytest.raises(ValueError, match="client_secret is required"):
+            auth.client_credentials_grant()
 
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_url_error_raises(self, mock_urlopen):
-        import urllib.error
-        mock_urlopen.side_effect = urllib.error.URLError("Connection refused")
-
-        auth = OIDCAuthenticator(
-            token_endpoint="https://idp.example.com/oauth/token",
-            client_id="my-client",
-            client_secret="my-secret",
-        )
-
-        with pytest.raises(urllib.error.URLError):
-            auth.get_token()
-
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_missing_access_token_in_response_raises(self, mock_urlopen):
+    def test_client_credentials_no_refresh_token_in_response(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
+            "access_token": "cc-token",
             "token_type": "Bearer",
             "expires_in": 3600,
         })
@@ -345,26 +184,87 @@ class TestOIDCAuthenticatorErrorHandling:
             client_secret="my-secret",
         )
 
-        with pytest.raises(ValueError, match="missing 'access_token'"):
-            auth.get_token()
+        token_set = auth.client_credentials_grant()
+        assert token_set.access_token == "cc-token"
+        assert token_set.refresh_token == ""
 
 
-class TestOIDCAuthenticatorThreadSafety:
+class TestAuthenticate:
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_concurrent_get_token_calls(self, mock_urlopen):
-        call_count = [0]
-        original_lock = threading.Lock()
+    def test_successful_password_grant(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "user-token",
+            "refresh_token": "refresh-tok",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_expires_in": 86400,
+        })
 
-        def slow_urlopen(req):
-            with original_lock:
-                call_count[0] += 1
-            time.sleep(0.05)
-            return _make_mock_response({
-                "access_token": "concurrent-token",
-                "expires_in": 3600,
-            })
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
 
-        mock_urlopen.side_effect = slow_urlopen
+        token_set = auth.authenticate("user", "pass")
+
+        assert token_set.access_token == "user-token"
+        assert token_set.refresh_token == "refresh-tok"
+        assert token_set.refresh_token_expires_at is not None
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_sends_correct_password_grant_request(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "tok",
+            "refresh_token": "ref",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+            scopes=["openid"],
+        )
+        auth.authenticate("myuser", "mypass")
+
+        body = mock_urlopen.call_args[0][0].data.decode("utf-8")
+        assert "grant_type=password" in body
+        assert "username=myuser" in body
+        assert "password=mypass" in body
+        assert "client_id=my-client" in body
+        assert "client_secret=my-secret" in body
+        assert "scope=openid" in body
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_password_grant_without_client_secret(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "tok",
+            "refresh_token": "ref",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
+        auth.authenticate("user", "pass")
+
+        body = mock_urlopen.call_args[0][0].data.decode("utf-8")
+        assert "client_secret" not in body
+
+
+class TestRefreshToken:
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_successful_refresh(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "new-token",
+            "refresh_token": "new-refresh",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_expires_in": 86400,
+        })
 
         auth = OIDCAuthenticator(
             token_endpoint="https://idp.example.com/oauth/token",
@@ -372,39 +272,215 @@ class TestOIDCAuthenticatorThreadSafety:
             client_secret="my-secret",
         )
 
-        results = []
-        errors = []
+        current = TokenSet(
+            access_token="old",
+            refresh_token="old-refresh",
+            access_token_expires_at=time.time() - 10,
+            refresh_token_expires_at=time.time() + 86400,
+            token_type="Bearer",
+            scope=None,
+        )
 
-        def fetch_token():
-            try:
-                token = auth.get_token()
-                results.append(token)
-            except Exception as e:
-                errors.append(e)
-
-        threads = [threading.Thread(target=fetch_token) for _ in range(10)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        assert len(errors) == 0
-        assert all(r == "concurrent-token" for r in results)
-        assert len(results) == 10
-        assert call_count[0] <= 2
+        token_set = auth.refresh_token(current)
+        assert token_set.access_token == "new-token"
+        assert token_set.refresh_token == "new-refresh"
 
     @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
-    def test_concurrent_force_refresh(self, mock_urlopen):
-        token_counter = [0]
+    def test_sends_correct_refresh_request(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "tok",
+            "refresh_token": "ref",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        })
 
-        def sequential_urlopen(req):
-            token_counter[0] += 1
-            return _make_mock_response({
-                "access_token": f"token-{token_counter[0]}",
-                "expires_in": 3600,
-            })
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+            scopes=["openid"],
+        )
 
-        mock_urlopen.side_effect = sequential_urlopen
+        current = TokenSet(
+            access_token="old",
+            refresh_token="the-refresh-token",
+            access_token_expires_at=time.time() + 100,
+            refresh_token_expires_at=time.time() + 86400,
+            token_type="Bearer",
+            scope=None,
+        )
+
+        auth.refresh_token(current)
+
+        body = mock_urlopen.call_args[0][0].data.decode("utf-8")
+        assert "grant_type=refresh_token" in body
+        assert "refresh_token=the-refresh-token" in body
+        assert "client_id=my-client" in body
+        assert "client_secret=my-secret" in body
+        assert "scope=openid" in body
+
+    def test_expired_refresh_token_raises_locally(self):
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
+
+        current = TokenSet(
+            access_token="old",
+            refresh_token="expired-refresh",
+            access_token_expires_at=time.time() - 100,
+            refresh_token_expires_at=time.time() - 10,
+            token_type="Bearer",
+            scope=None,
+        )
+
+        with pytest.raises(AuthError, match="Refresh token has expired"):
+            auth.refresh_token(current)
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_none_refresh_expiry_skips_local_check(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "tok",
+            "refresh_token": "ref",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
+
+        current = TokenSet(
+            access_token="old",
+            refresh_token="ref",
+            access_token_expires_at=time.time() - 100,
+            refresh_token_expires_at=None,
+            token_type="Bearer",
+            scope=None,
+        )
+
+        token_set = auth.refresh_token(current)
+        assert token_set.access_token == "tok"
+
+
+class TestTokenSetParsing:
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_all_fields_mapped(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_expires_in": 86400,
+            "scope": "openid profile",
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
+
+        before = time.time()
+        ts = auth.authenticate("u", "p")
+        after = time.time()
+
+        assert ts.access_token == "at"
+        assert ts.refresh_token == "rt"
+        assert ts.token_type == "Bearer"
+        assert ts.scope == "openid profile"
+        assert before + 3600 <= ts.access_token_expires_at <= after + 3600
+        assert before + 86400 <= ts.refresh_token_expires_at <= after + 86400
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_no_refresh_expires_in(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+        )
+
+        ts = auth.authenticate("u", "p")
+        assert ts.refresh_token_expires_at is None
+
+
+class TestResponseValidation:
+    def test_valid_full_response(self):
+        assert _validate_token_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }) is True
+
+    def test_missing_access_token(self):
+        assert _validate_token_response({
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }) is False
+
+    def test_missing_refresh_token(self):
+        assert _validate_token_response({
+            "access_token": "at",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }) is False
+
+    def test_missing_expires_in(self):
+        assert _validate_token_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+        }) is False
+
+    def test_invalid_expires_in(self):
+        assert _validate_token_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": -1,
+        }) is False
+
+    def test_invalid_refresh_expires_in(self):
+        assert _validate_token_response({
+            "access_token": "at",
+            "refresh_token": "rt",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_expires_in": -1,
+        }) is False
+
+    def test_not_a_dict(self):
+        assert _validate_token_response("not a dict") is False
+
+    def test_valid_client_credentials_response(self):
+        assert _validate_client_credentials_response({
+            "access_token": "at",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }) is True
+
+    def test_client_credentials_missing_access_token(self):
+        assert _validate_client_credentials_response({
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }) is False
+
+
+class TestErrorHandling:
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_http_error_raises_auth_error(self, mock_urlopen):
+        mock_urlopen.side_effect = _make_mock_http_error(401, {
+            "error": "invalid_client",
+            "error_description": "Bad credentials",
+        })
 
         auth = OIDCAuthenticator(
             token_endpoint="https://idp.example.com/oauth/token",
@@ -412,16 +488,63 @@ class TestOIDCAuthenticatorThreadSafety:
             client_secret="my-secret",
         )
 
-        results = []
+        with pytest.raises(AuthError) as exc_info:
+            auth.client_credentials_grant()
 
-        def refresh():
-            results.append(auth.force_refresh())
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.server_error == "invalid_client"
+        assert exc_info.value.server_error_description == "Bad credentials"
 
-        threads = [threading.Thread(target=refresh) for _ in range(5)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_url_error_raises_auth_error(self, mock_urlopen):
+        import urllib.error
+        mock_urlopen.side_effect = urllib.error.URLError("Connection refused")
 
-        assert len(results) == 5
-        assert mock_urlopen.call_count == 5
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+        )
+
+        with pytest.raises(AuthError, match="Network request to token endpoint failed"):
+            auth.client_credentials_grant()
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_invalid_response_structure_raises_auth_error(self, mock_urlopen):
+        mock_urlopen.return_value = _make_mock_response({
+            "token_type": "Bearer",
+        })
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+        )
+
+        with pytest.raises(AuthError, match="invalid response structure"):
+            auth.client_credentials_grant()
+
+    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    def test_http_error_with_non_json_body(self, mock_urlopen):
+        import urllib.error
+        error = urllib.error.HTTPError(
+            url="https://idp.example.com/oauth/token",
+            code=500,
+            msg="Server Error",
+            hdrs={},
+            fp=None,
+        )
+        error.read = Mock(return_value=b"not json")
+        mock_urlopen.side_effect = error
+
+        auth = OIDCAuthenticator(
+            token_endpoint="https://idp.example.com/oauth/token",
+            client_id="my-client",
+            client_secret="my-secret",
+        )
+
+        with pytest.raises(AuthError) as exc_info:
+            auth.client_credentials_grant()
+
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.server_error is None
