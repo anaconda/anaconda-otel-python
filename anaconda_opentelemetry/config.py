@@ -209,8 +209,10 @@ class Configuration:
 
     def set_logging_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the logging endpoint. If passed in a dict in the constructor, use predefined name
-        LOGGING_ENDPOINT_NAME. if not set, the default endpoint will be used.
+        Sets the logging endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name LOGGING_ENDPOINT_NAME. If not set,
+        the default endpoint will be used.
 
         Args:
             endpoint (str): Logging endpoint in the form '<IPv4|domain_name>:<port>'.
@@ -235,8 +237,10 @@ class Configuration:
 
     def set_tracing_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the tracing endpoint. If passed in a dict in the constructor, use predefined name
-        TRACING_ENDPOINT_NAME. If not set, the default endpoint is used.
+        Sets the tracing endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name TRACING_ENDPOINT_NAME. If not set,
+        the default endpoint is used.
 
         Args:
             endpoint (str): Tracing endpoint in the form '<IPv4|domain_name>:<port>'.
@@ -260,8 +264,10 @@ class Configuration:
 
     def set_metrics_endpoint(self, endpoint: str, auth_token: str = None, cert_ca_file: str = None):
         """
-        Sets the metrics endpoint. If passed in a dict in the constructor, use predefined name
-        METRICS_ENDPOINT_NAME. If not set, the default endpoint will be used.
+        Sets the metrics endpoint. Intended for usage prior to calling initialize_telemetry(). If this method is
+        called after the initialize_telemetry() call, it will not work. The change_signal_endpoint must be used.
+        If passed in a dict in the constructor, use predefined name METRICS_ENDPOINT_NAME. If not set,
+        the default endpoint will be used.
 
         Args:
             endpoint (str): Metrics endpoint in the form '<IPv4|domain_name>:<port>'.
