@@ -898,16 +898,16 @@ class TestEventLogger:
 
     @pytest.fixture
     def event_logger(self, mock_provider):
-        from anaconda_opentelemetry.event_logger import EventLogger
+        from anaconda_opentelemetry.logging import EventLogger
         return EventLogger(mock_provider)
 
     def test_init_defaults(self, mock_provider):
-        from anaconda_opentelemetry.event_logger import EventLogger
+        from anaconda_opentelemetry.logging import EventLogger
         logger = EventLogger(mock_provider)
         mock_provider.get_logger.assert_called_with("event_logger")
 
     def test_init_custom_params(self, mock_provider):
-        from anaconda_opentelemetry.event_logger import EventLogger
+        from anaconda_opentelemetry.logging import EventLogger
         logger = EventLogger(mock_provider, logger_name="custom")
         mock_provider.get_logger.assert_called_with("custom")
 
