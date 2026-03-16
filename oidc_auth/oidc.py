@@ -134,7 +134,7 @@ class OIDCAuthenticator:
         self._client_secret = client_secret
         self._scopes = scopes
 
-        self._logger = logging.getLogger("anaconda_opentelemetry.oidc")
+        self._logger = logging.getLogger("oidc_auth.oidc")
 
     def authenticate(self, username: str, password: str) -> TokenSet:
         """

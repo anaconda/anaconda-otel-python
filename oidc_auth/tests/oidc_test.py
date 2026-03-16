@@ -2,13 +2,10 @@
 # SPDX-FileCopyrightText: 2025 Anaconda, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-import sys
-sys.path.append("./")
-
 import pytest, json, time
 from unittest.mock import patch, MagicMock, Mock
 
-from anaconda_opentelemetry.oidc import OIDCAuthenticator, TokenSet, AuthError, _validate_token_response, _validate_client_credentials_response
+from oidc_auth.oidc import OIDCAuthenticator, TokenSet, AuthError, _validate_token_response, _validate_client_credentials_response
 
 
 def _make_mock_response(body, status=200):
@@ -94,7 +91,7 @@ class TestOIDCAuthenticatorInit:
 
 
 class TestClientCredentialsGrant:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_successful_client_credentials(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "cc-token",
@@ -116,7 +113,7 @@ class TestClientCredentialsGrant:
         assert token_set.token_type == "Bearer"
         assert token_set.access_token_expires_at > time.time()
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_sends_correct_request_without_scopes(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -142,7 +139,7 @@ class TestClientCredentialsGrant:
         assert "client_secret=my-secret" in body
         assert "scope" not in body
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_sends_correct_request_with_scopes(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -170,7 +167,7 @@ class TestClientCredentialsGrant:
         with pytest.raises(ValueError, match="client_secret is required"):
             auth.client_credentials_grant()
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_client_credentials_no_refresh_token_in_response(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "cc-token",
@@ -190,7 +187,7 @@ class TestClientCredentialsGrant:
 
 
 class TestAuthenticate:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_successful_password_grant(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "user-token",
@@ -211,7 +208,7 @@ class TestAuthenticate:
         assert token_set.refresh_token == "refresh-tok"
         assert token_set.refresh_token_expires_at is not None
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_sends_correct_password_grant_request(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -236,7 +233,7 @@ class TestAuthenticate:
         assert "client_secret=my-secret" in body
         assert "scope=openid" in body
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_password_grant_without_client_secret(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -256,7 +253,7 @@ class TestAuthenticate:
 
 
 class TestRefreshToken:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_successful_refresh(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "new-token",
@@ -285,7 +282,7 @@ class TestRefreshToken:
         assert token_set.access_token == "new-token"
         assert token_set.refresh_token == "new-refresh"
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_sends_correct_refresh_request(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -337,7 +334,7 @@ class TestRefreshToken:
         with pytest.raises(AuthError, match="Refresh token has expired"):
             auth.refresh_token(current)
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_none_refresh_expiry_skips_local_check(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "tok",
@@ -365,7 +362,7 @@ class TestRefreshToken:
 
 
 class TestTokenSetParsing:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_all_fields_mapped(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "at",
@@ -392,7 +389,7 @@ class TestTokenSetParsing:
         assert before + 3600 <= ts.access_token_expires_at <= after + 3600
         assert before + 86400 <= ts.refresh_token_expires_at <= after + 86400
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_no_refresh_expires_in(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "access_token": "at",
@@ -475,7 +472,7 @@ class TestResponseValidation:
 
 
 class TestErrorHandling:
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_http_error_raises_auth_error(self, mock_urlopen):
         mock_urlopen.side_effect = _make_mock_http_error(401, {
             "error": "invalid_client",
@@ -495,7 +492,7 @@ class TestErrorHandling:
         assert exc_info.value.server_error == "invalid_client"
         assert exc_info.value.server_error_description == "Bad credentials"
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_url_error_raises_auth_error(self, mock_urlopen):
         import urllib.error
         mock_urlopen.side_effect = urllib.error.URLError("Connection refused")
@@ -509,7 +506,7 @@ class TestErrorHandling:
         with pytest.raises(AuthError, match="Network request to token endpoint failed"):
             auth.client_credentials_grant()
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_invalid_response_structure_raises_auth_error(self, mock_urlopen):
         mock_urlopen.return_value = _make_mock_response({
             "token_type": "Bearer",
@@ -524,7 +521,7 @@ class TestErrorHandling:
         with pytest.raises(AuthError, match="invalid response structure"):
             auth.client_credentials_grant()
 
-    @patch("anaconda_opentelemetry.oidc.urllib.request.urlopen")
+    @patch("oidc_auth.oidc.urllib.request.urlopen")
     def test_http_error_with_non_json_body(self, mock_urlopen):
         import urllib.error
         error = urllib.error.HTTPError(

@@ -1,6 +1,6 @@
 # Authentication
 
-There are two ways to authenticate with a telemetry collector via this package: a static API token or OIDC.
+There are two ways to authenticate with a telemetry collector via this package: a static API token or OIDC client credentials.
 
 ## Static Token
 
@@ -34,7 +34,7 @@ cfg.set_auth_token_tracing("tracing-token")
 Use `OIDCAuthenticator` for token fetching via OAuth2. It supports two grant types: `client_credentials` (machine-to-machine) and `password` (Resource Owner Password Credentials). The authenticator is stateless — each call makes a network request and returns a fresh `TokenSet`. The caller is responsible for caching tokens and deciding when to refresh.
 
 ```python
-from anaconda_opentelemetry import OIDCAuthenticator, TokenSet
+from oidc_auth import OIDCAuthenticator, TokenSet
 ```
 
 ### Constructor
@@ -95,7 +95,7 @@ All grant methods return a `TokenSet` dataclass:
 All methods raise `AuthError` on failure, which includes structured error details:
 
 ```python
-from anaconda_opentelemetry import AuthError
+from oidc_auth import AuthError
 
 try:
     token_set = auth.client_credentials_grant()
@@ -108,7 +108,8 @@ except AuthError as e:
 ### Example: Using with Configuration
 
 ```python
-from anaconda_opentelemetry import Configuration, OIDCAuthenticator
+from anaconda_opentelemetry import Configuration
+from oidc_auth import OIDCAuthenticator
 
 auth = OIDCAuthenticator(
     token_endpoint="https://idp.example.com/oauth/token",
