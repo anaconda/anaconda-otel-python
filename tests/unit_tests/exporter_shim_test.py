@@ -152,7 +152,7 @@ class TestOTLPExporterMixin:
             "http://invalid:8080"
         )
         
-        assert result is None
+        assert result == False
         assert mixin._state == ExporterState.READY
         assert mixin._exporter is old_exporter
         batch_access.force_flush.assert_not_called()
@@ -392,15 +392,66 @@ class TestMockExport:
         assert update_results[0] == True
 
     def test_export_handles_exception(self):
-        """Test that export catches and logs exceptions, returning False"""       
+        """Test that export catches and logs exceptions, returning False"""
         shim = OTLPMetricExporterShim(MockMetricExporter, endpoint="http://localhost:4317")
-        
+
         shim._exporter = MagicMock()
         shim._exporter.export.side_effect = ConnectionError("Connection refused")
-        
+
         shim._logger = MagicMock()
-        
+
         result = shim.export([{"test": "data"}])
-        
+
         assert result == False
         shim._logger.error.assert_called_once_with("Failed to export: Connection refused")
+
+
+class TestSwapExporter:
+    def test_swap_exporter_replaces_exporter(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        result = shim._swap_exporter()
+
+        assert result == True
+        assert shim._exporter is not old_exporter
+        assert old_exporter.is_shutdown == True
+
+    def test_swap_exporter_with_batch_access_flushes(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        batch_access = Mock()
+
+        shim._swap_exporter(batch_access=batch_access)
+
+        batch_access.force_flush.assert_called_once()
+
+    def test_swap_exporter_without_batch_access_skips_flush(self):
+        shim = _OTLPExporterMixin(MockExporter, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        shim._swap_exporter()
+
+        assert old_exporter.is_shutdown == True
+
+    def test_swap_exporter_failure_keeps_old_exporter(self):
+        class FailOnSecondCreate:
+            _count = 0
+            def __init__(self, **kwargs):
+                FailOnSecondCreate._count += 1
+                if FailOnSecondCreate._count > 1:
+                    raise RuntimeError("fail")
+                self.kwargs = kwargs
+                self.is_shutdown = False
+            def shutdown(self):
+                self.is_shutdown = True
+
+        shim = _OTLPExporterMixin(FailOnSecondCreate, endpoint="http://localhost:4317")
+        old_exporter = shim._exporter
+
+        result = shim._swap_exporter()
+
+        assert result == False
+        assert shim._exporter is old_exporter
+        assert old_exporter.is_shutdown == False
+
+

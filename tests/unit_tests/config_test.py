@@ -7,7 +7,8 @@ sys.path.append("./")
 
 from anaconda_opentelemetry.config import Configuration as Config
 
-import pytest, os, tempfile, re
+import pytest, os, json, tempfile, re
+from unittest.mock import patch, MagicMock, Mock
 from grpc import ChannelCredentials
 
 class TestConfiguration:
@@ -400,3 +401,5 @@ class TestConfiguration:
 
         with pytest.raises(ValueError):
             cfg._change_signal_endpoint("metrics", "http://invalid port:8080")
+
+
