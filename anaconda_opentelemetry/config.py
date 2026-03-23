@@ -85,6 +85,7 @@ class Configuration:
     METRICS_CA_CERT_NAME            = 'metrics_credentials'
     SKIP_INTERNET_CHECK_NAME        = 'skip_internet_check'
     USE_CUMULATIVE_METRICS_NAME     = 'use_cumulative_metrics'
+    PROXY_URL_NAME                  = 'proxy_url'
 
     _base_names: List[str] = [
         DEFAULT_ENDPOINT_NAME,
@@ -105,7 +106,8 @@ class Configuration:
         TRACING_CA_CERT_NAME,
         METRICS_CA_CERT_NAME,
         SKIP_INTERNET_CHECK_NAME,
-        USE_CUMULATIVE_METRICS_NAME
+        USE_CUMULATIVE_METRICS_NAME,
+        PROXY_URL_NAME
     ]
 
     _endpoint_names: List[str] = [
@@ -547,6 +549,37 @@ class Configuration:
         """
         self._config[self.USE_CUMULATIVE_METRICS_NAME] = value
         return self
+
+    def set_proxy_url(self, proxy_url: str):
+        """
+        Sets the proxy URL to use for HTTP OTLP exporters. This applies to all HTTP-based
+        signal exporters (logging, tracing, metrics). gRPC exporters are not affected.
+        If passed in a dict in the constructor, use predefined name PROXY_URL_NAME.
+        The environment variable is 'ATEL_PROXY_URL'.
+
+        Args:
+            proxy_url (str): The proxy URL (e.g. 'http://proxy.example.com:8080').
+
+        Returns:
+            Self
+        """
+        self._config[self.PROXY_URL_NAME] = proxy_url
+        return self
+
+    def _get_proxy_url(self) -> str:
+        return self._config.get(self.PROXY_URL_NAME, None)
+
+    def _create_proxy_session(self):
+        proxy_url = self._get_proxy_url()
+        if proxy_url is None:
+            return None
+        import requests
+        session = requests.Session()
+        session.proxies = {
+            'http': proxy_url,
+            'https': proxy_url
+        }
+        return session
 
     class _Endpoint:
         def __init__(self, endpoint: str):
