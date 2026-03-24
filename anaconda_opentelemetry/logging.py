@@ -96,14 +96,7 @@ class _AnacondaLogger(_AnacondaCommon):
                 )
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
-                http_kwargs = dict(
-                    endpoint=self.logger_endpoint,
-                    certificate_file=config._get_ca_cert_logging(),
-                    headers=headers
-                )
-                session = config._create_proxy_session()
-                if session is not None:
-                    http_kwargs['session'] = session
+                http_kwargs = self._build_http_exporter_kwargs('logging', self.logger_endpoint, headers)
                 exporter = OTLPLogExporterShim(
                     OTLPLogExporterHTTP,
                     **http_kwargs

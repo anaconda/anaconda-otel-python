@@ -85,6 +85,19 @@ class _AnacondaCommon:
 
         return hashed
 
+    def _build_http_exporter_kwargs(self, signal: str, endpoint: str, headers: Dict[str, str], **extra_kwargs) -> Dict:
+        get_ca_cert = getattr(self._config, f"_get_ca_cert_{signal}")
+        kwargs = dict(
+            endpoint=endpoint,
+            certificate_file=get_ca_cert(),
+            headers=headers,
+            **extra_kwargs
+        )
+        session = self._config._create_proxy_session()
+        if session is not None:
+            kwargs['session'] = session
+        return kwargs
+
     def _process_attributes(self, attributes: AttrDict={}):
         # ensure attributes are of type AttrDict
         if not isinstance(attributes, Dict):

@@ -581,6 +581,7 @@ class Configuration:
         }
         return session
 
+
     class _Endpoint:
         def __init__(self, endpoint: str):
             # Properties:

@@ -144,14 +144,7 @@ class _AnacondaTrace(_AnacondaCommon):
                 )
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
-                http_kwargs = dict(
-                    endpoint=self.tracing_endpoint,
-                    certificate_file=config._get_ca_cert_tracing(),
-                    headers=headers
-                )
-                session = config._create_proxy_session()
-                if session is not None:
-                    http_kwargs['session'] = session
+                http_kwargs = self._build_http_exporter_kwargs('tracing', self.tracing_endpoint, headers)
                 exporter = OTLPSpanExporterShim(
                     OTLPSpanExporterHTTP,
                     **http_kwargs
