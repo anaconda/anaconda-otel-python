@@ -962,6 +962,181 @@ class TestEventLogger:
         assert isinstance(record.body, str)
 
 
+class TestProxyConfig:
+
+    def test_set_proxy_url(self):
+        config = Config(default_endpoint="http://localhost:4317")
+        result = config.set_proxy_url("http://proxy.example.com:8080")
+        assert result is config  # returns self for chaining
+        assert config._get_proxy_url() == "http://proxy.example.com:8080"
+
+    def test_get_proxy_url_default_none(self):
+        config = Config(default_endpoint="http://localhost:4317")
+        assert config._get_proxy_url() is None
+
+    def test_proxy_url_from_env(self):
+        os.environ['ATEL_PROXY_URL'] = 'http://env-proxy:9090'
+        try:
+            config = Config(default_endpoint="http://localhost:4317")
+            assert config._get_proxy_url() == 'http://env-proxy:9090'
+        finally:
+            del os.environ['ATEL_PROXY_URL']
+
+    def test_create_proxy_session_returns_none_without_proxy(self):
+        config = Config(default_endpoint="http://localhost:4317")
+        assert config._create_proxy_session() is None
+
+    def test_create_proxy_session_returns_session_with_proxy(self):
+        import requests
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_proxy_url("http://proxy.example.com:8080")
+        session = config._create_proxy_session()
+        assert isinstance(session, requests.Session)
+        assert session.proxies['http'] == "http://proxy.example.com:8080"
+        assert session.proxies['https'] == "http://proxy.example.com:8080"
+
+    def test_proxy_url_from_config_dict(self):
+        config = Config(
+            default_endpoint="http://localhost:4317",
+            config_dict={'proxy_url': 'http://dict-proxy:1234'}
+        )
+        assert config._get_proxy_url() == 'http://dict-proxy:1234'
+
+    def test_env_proxy_overrides_config_dict(self):
+        os.environ['ATEL_PROXY_URL'] = 'http://env-proxy:9090'
+        try:
+            config = Config(
+                default_endpoint="http://localhost:4317",
+                config_dict={'proxy_url': 'http://dict-proxy:1234'}
+            )
+            assert config._get_proxy_url() == 'http://env-proxy:9090'
+        finally:
+            del os.environ['ATEL_PROXY_URL']
+
+
+class TestBuildHttpExporterKwargs:
+
+    @pytest.fixture
+    def common_instance(self):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(True)
+        attributes = Attributes(service_name='test-name', service_version='0.0.0')
+        return AnacondaTelBase(config, attributes)
+
+    def test_basic_kwargs_no_proxy(self, common_instance):
+        kwargs = common_instance._build_http_exporter_kwargs(
+            'logging', 'http://localhost:4317/v1/logs', {'authorization': 'Bearer token'}
+        )
+        assert kwargs['endpoint'] == 'http://localhost:4317/v1/logs'
+        assert kwargs['headers'] == {'authorization': 'Bearer token'}
+        assert 'certificate_file' in kwargs
+        assert 'session' not in kwargs
+
+    def test_kwargs_with_proxy(self, common_instance):
+        import requests
+        common_instance._config.set_proxy_url('http://proxy:8080')
+        kwargs = common_instance._build_http_exporter_kwargs(
+            'tracing', 'http://localhost:4317/v1/traces', {}
+        )
+        assert 'session' in kwargs
+        assert isinstance(kwargs['session'], requests.Session)
+        assert kwargs['session'].proxies['http'] == 'http://proxy:8080'
+        assert kwargs['session'].proxies['https'] == 'http://proxy:8080'
+
+    def test_kwargs_with_extra_kwargs(self, common_instance):
+        kwargs = common_instance._build_http_exporter_kwargs(
+            'metrics', 'http://localhost:4317/v1/metrics', {},
+            preferred_temporality={'Counter': 'DELTA'}
+        )
+        assert kwargs['preferred_temporality'] == {'Counter': 'DELTA'}
+        assert kwargs['endpoint'] == 'http://localhost:4317/v1/metrics'
+
+    def test_kwargs_correct_ca_cert_per_signal(self):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(True)
+        attributes = Attributes(service_name='test-name', service_version='0.0.0')
+        instance = AnacondaTelBase(config, attributes)
+
+        for signal in ['logging', 'tracing', 'metrics']:
+            kwargs = instance._build_http_exporter_kwargs(signal, 'http://localhost', {})
+            get_ca_cert = getattr(config, f"_get_ca_cert_{signal}")
+            assert kwargs['certificate_file'] == get_ca_cert()
+
+    def test_kwargs_empty_headers(self, common_instance):
+        kwargs = common_instance._build_http_exporter_kwargs(
+            'logging', 'http://localhost:4317/v1/logs', {}
+        )
+        assert kwargs['headers'] == {}
+
+
+class TestProxyInSignalSetup:
+
+    @patch('opentelemetry.exporter.otlp.proto.http._log_exporter.OTLPLogExporter')
+    def test_logging_http_with_proxy(self, mock_exporter):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config.set_proxy_url("http://proxy:8080")
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        logger = AnacondaLogger(config, attr)
+        call_kwargs = mock_exporter.call_args
+        assert 'session' in call_kwargs.kwargs or 'session' in dict(zip(
+            mock_exporter.call_args_list[0].args, mock_exporter.call_args_list[0].kwargs
+        ))
+        # Verify session was passed through the shim's init_kwargs
+        assert 'session' in logger.exporter._init_kwargs
+        assert logger.exporter._init_kwargs['session'].proxies['http'] == 'http://proxy:8080'
+
+    @patch('opentelemetry.exporter.otlp.proto.http._log_exporter.OTLPLogExporter')
+    def test_logging_http_without_proxy(self, mock_exporter):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        logger = AnacondaLogger(config, attr)
+        assert 'session' not in logger.exporter._init_kwargs
+
+    @patch('opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter')
+    def test_tracing_http_with_proxy(self, mock_exporter):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config.set_proxy_url("http://proxy:8080")
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        with patch('opentelemetry.trace.set_tracer_provider'):
+            tracer = AnacondaTrace(config, attr)
+        assert 'session' in tracer.exporter._init_kwargs
+        assert tracer.exporter._init_kwargs['session'].proxies['https'] == 'http://proxy:8080'
+
+    @patch('opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter')
+    def test_tracing_http_without_proxy(self, mock_exporter):
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        with patch('opentelemetry.trace.set_tracer_provider'):
+            tracer = AnacondaTrace(config, attr)
+        assert 'session' not in tracer.exporter._init_kwargs
+
+    @patch('opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter')
+    def test_metrics_http_with_proxy(self, mock_exporter):
+        mock_exporter.__name__ = 'OTLPMetricExporter'
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config.set_proxy_url("http://proxy:8080")
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        with patch('opentelemetry.metrics.set_meter_provider'):
+            metrics = AnacondaMetrics(config, attr)
+        assert 'session' in metrics.exporter._init_kwargs
+        assert metrics.exporter._init_kwargs['session'].proxies['http'] == 'http://proxy:8080'
+
+    @patch('opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter')
+    def test_metrics_http_without_proxy(self, mock_exporter):
+        mock_exporter.__name__ = 'OTLPMetricExporter'
+        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        with patch('opentelemetry.metrics.set_meter_provider'):
+            metrics = AnacondaMetrics(config, attr)
+        assert 'session' not in metrics.exporter._init_kwargs
+
+    @patch('opentelemetry.exporter.otlp.proto.grpc._log_exporter.OTLPLogExporter')
+    def test_grpc_not_affected_by_proxy(self, mock_exporter):
+        config = Config(default_endpoint="grpc://localhost:4317").set_console_exporter(False)
+        config.set_proxy_url("http://proxy:8080")
+        attr = Attributes(service_name='test-name', service_version='0.0.0')
+        logger = AnacondaLogger(config, attr)
+        assert 'session' not in logger.exporter._init_kwargs
+
+
 class MockHistogram(Histogram):
     def __init__(self):
         self.counter = 0

@@ -88,12 +88,13 @@ class _AnacondaMetrics(_AnacondaCommon):
                 )
             else:  # HTTP
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
+                http_kwargs = self._build_http_exporter_kwargs(
+                    'metrics', self.metrics_endpoint, headers,
+                    preferred_temporality=self._get_temporality()
+                )
                 exporter = OTLPMetricExporterShim(
                     OTLPMetricExporterHTTP,
-                    endpoint=self.metrics_endpoint,
-                    certificate_file=config._get_ca_cert_metrics(),
-                    headers=headers,
-                    preferred_temporality=self._get_temporality()
+                    **http_kwargs
                 )
 
         self.exporter = exporter
