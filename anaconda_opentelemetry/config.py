@@ -55,6 +55,7 @@ class Configuration:
     - TLS_PRIVATE_CA_CERT_FILE_NAME - File name for the TLS private CA certificate in the configuration files or dictionaries passed into this class.
     - SKIP_INTERNET_CHECK_NAME - If you are running in an environment that does not have access to the internet, set this to True.
     - USE_CUMULATIVE_METRICS_NAME - If aggregating data in the client is required for Counter, or Histogram set this to a True state.
+    - PROXY_URL_NAME - Used to set the proxy for telemetry exporters in this package
 
     To initializes the Configuration instance.
 
