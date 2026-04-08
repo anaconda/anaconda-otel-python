@@ -915,17 +915,17 @@ class TestEventLogger:
         event_logger._send_event("test message", "test.event")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
-        record = mock_logger.emit.call_args[0][0]
-        assert record.body == "test message"
-        assert record.attributes[log_event_name_key] == "test.event"
+        kwargs = mock_logger.emit.call_args.kwargs
+        assert kwargs["body"] == "test message"
+        assert kwargs["attributes"][log_event_name_key] == "test.event"
 
     def test_send_event_with_attributes(self, event_logger, mock_provider):
         attrs = {"key": "value"}
         event_logger._send_event("error msg", "error.event", attributes=attrs)
         mock_logger = mock_provider.get_logger.return_value
-        record = mock_logger.emit.call_args[0][0]
-        assert record.body == "error msg"
-        assert record.attributes == {"key": "value", log_event_name_key: "error.event"}
+        kwargs = mock_logger.emit.call_args.kwargs
+        assert kwargs["body"] == "error msg"
+        assert kwargs["attributes"] == {"key": "value", log_event_name_key: "error.event"}
 
     def test_send_event_missing_event_name(self, event_logger):
         """Verifies that _send_event raises TypeError when event_name is not passed."""
@@ -935,31 +935,31 @@ class TestEventLogger:
     def test_send_event_default_empty_attributes(self, event_logger, mock_provider):
         """Verifies that _send_event defaults to empty dict with event_name still injected."""
         event_logger._send_event("msg", "test.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.attributes == {log_event_name_key: "test.event"}
+        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
+        assert kwargs["attributes"] == {log_event_name_key: "test.event"}
 
     def test_send_event_body_string_passthrough(self, event_logger, mock_provider):
         """Verifies that a string body is passed through unchanged."""
         event_logger._send_event("plain text", "test.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == "plain text"
-        assert isinstance(record.body, str)
+        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
+        assert kwargs["body"] == "plain text"
+        assert isinstance(kwargs["body"], str)
 
     def test_send_event_body_dict_serialized(self, event_logger, mock_provider):
         """Verifies that a dict body is JSON-serialized."""
         body = {"status": "ok", "count": 42}
         event_logger._send_event(body, "test.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == json.dumps(body)
-        assert isinstance(record.body, str)
+        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
+        assert kwargs["body"] == json.dumps(body)
+        assert isinstance(kwargs["body"], str)
 
     def test_send_event_body_list_serialized(self, event_logger, mock_provider):
         """Verifies that a list body is JSON-serialized."""
         body = [1, "two", {"three": 3}]
         event_logger._send_event(body, "test.event")
-        record = mock_provider.get_logger.return_value.emit.call_args[0][0]
-        assert record.body == json.dumps(body)
-        assert isinstance(record.body, str)
+        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
+        assert kwargs["body"] == json.dumps(body)
+        assert isinstance(kwargs["body"], str)
 
 
 class TestProxyConfig:
