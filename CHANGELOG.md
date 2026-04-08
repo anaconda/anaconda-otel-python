@@ -2,6 +2,46 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.1.0] (2026-02-04)
+
+### Added
+
+- Added EventLogger - simple python event logger for log structured data that does not qualify as developer logging
+- Native OIDC authenticator support
+- Proxy support for exporters (exporter session respects proxy)
+
+### Changed
+- Added processing for EventLogger to handle string payloads and JSON
+- File structure of some signal modules. No impact to usage
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Fixed LogRecord usage which was causing ResourceAttributes to be omitted from EventLogger logs
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+- EventLogger Implementation [#47](https://github.com/anaconda/anaconda-otel-python/pull/47)
+- process JSON in EventLogger [#48](https://github.com/anaconda/anaconda-otel-python/pull/48)
+- Reorganize files [#49](https://github.com/anaconda/anaconda-otel-python/pull/49)
+- Native OIDC Authenticator [#51](https://github.com/anaconda/anaconda-otel-python/pull/51)
+- [feat] Proxy support for exporters [#54](https://github.com/anaconda/anaconda-otel-python/pull/54)
+- [fix] service.name resource attribute lost during log event emission [#58](https://github.com/anaconda/anaconda-otel-python/pull/58)
+
 ## [v1.0.1] (2026-02-04)
 
 ### Added
