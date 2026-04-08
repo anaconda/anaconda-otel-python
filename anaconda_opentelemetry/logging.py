@@ -54,11 +54,7 @@ class EventLogger:
             body = json.dumps(body)
         # update attributes with event name - mandatory for event logs
         attributes.update({log_event_name_key: event_name})
-        record = LogRecord(
-            body=body,
-            attributes=attributes,
-        )
-        self._logger.emit(record)
+        self._logger.emit(body=body, attributes=attributes)
 
 
 class _AnacondaLogger(_AnacondaCommon):
