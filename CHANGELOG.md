@@ -2,13 +2,6 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
-## [v1.1.0-alpha-test] (2026-02-04)
-
-### Added
-
-- Hello! Test!
-
-
 ## [v1.1.0] (2026-02-04)
 
 ### Added

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.1.0)'
+        description: 'Release version (e.g. v1.1.0)'
         required: true
         type: string
 
@@ -20,27 +20,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: fix-release-gha
+          ref: main
           fetch-depth: 0
 
-      - name: Strip leading v if present
+      - name: Parse version
         id: version
         run: |
           VERSION="${{ inputs.version }}"
-          VERSION="${VERSION#v}"
-          echo "clean=${VERSION}" >> "$GITHUB_OUTPUT"
+          # Ensure version has v prefix for tags/changelog
+          if [[ "$VERSION" != v* ]]; then
+            VERSION="v${VERSION}"
+          fi
+          echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
+          # Strip v for __SDK_VERSION__
+          echo "sdk=${VERSION#v}" >> "$GITHUB_OUTPUT"
 
       - name: Update __SDK_VERSION__ in __version__.py
         run: |
-          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.version.outputs.clean }}\"/" anaconda_opentelemetry/__version__.py
+          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.version.outputs.sdk }}\"/" anaconda_opentelemetry/__version__.py
 
       - name: Parse changelog for release notes
-        id: notes
         run: |
-          VERSION="${{ steps.version.outputs.clean }}"
+          TAG="${{ steps.version.outputs.tag }}"
 
           # Extract the section for this version from CHANGELOG.md
-          SECTION=$(awk -v ver="$VERSION" '
+          SECTION=$(awk -v ver="$TAG" '
             BEGIN { found=0 }
             /^## \[v/ {
               if (found) exit
@@ -51,7 +55,7 @@ jobs:
           ' CHANGELOG.md)
 
           if [ -z "$SECTION" ]; then
-            echo "::error::No changelog entry found for version ${VERSION}"
+            echo "::error::No changelog entry found for version ${TAG}"
             exit 1
           fi
 
@@ -127,17 +131,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="release/v${{ steps.version.outputs.clean }}"
+          BRANCH="release/${{ steps.version.outputs.tag }}"
 
           git checkout -b "$BRANCH"
           git add anaconda_opentelemetry/__version__.py
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.clean }}"
+          git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.sdk }}"
           git push origin "$BRANCH"
 
-          git checkout fix-release-gha
+          git checkout main
           git merge "$BRANCH"
-          git push origin fix-release-gha
+          git push origin main
 
           git push origin --delete "$BRANCH"
 
@@ -145,8 +149,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${{ steps.version.outputs.clean }}" \
-            --title "v${{ steps.version.outputs.clean }}" \
-            --target fix-release-gha \
-            --latest=false \
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --target main \
             --notes-file /tmp/release_notes.md
