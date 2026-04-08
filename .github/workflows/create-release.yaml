@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: testing
+          fetch-depth: 0
+
+      - name: Strip leading v if present
+        id: version
+        run: |
+          VERSION="${{ inputs.version }}"
+          VERSION="${VERSION#v}"
+          echo "clean=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Update __SDK_VERSION__ in __version__.py
+        run: |
+          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.version.outputs.clean }}\"/" anaconda_opentelemetry/__version__.py
+
+      - name: Parse changelog for release notes
+        id: notes
+        run: |
+          VERSION="${{ steps.version.outputs.clean }}"
+
+          # Extract the section for this version from CHANGELOG.md
+          SECTION=$(awk -v ver="$VERSION" '
+            BEGIN { found=0 }
+            /^## \[v/ {
+              if (found) exit
+              if (index($0, ver)) found=1
+              next
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$SECTION" ]; then
+            echo "::error::No changelog entry found for version ${VERSION}"
+            exit 1
+          fi
+
+          # Extract Breaking Changes
+          BREAKING=$(echo "$SECTION" | awk '
+            BEGIN { found=0 }
+            /^### !!! Breaking Changes/ { found=1; next }
+            /^###/ { if (found) exit }
+            found && /^- / { print }
+          ')
+
+          # Extract Added section
+          ADDED=$(echo "$SECTION" | awk '
+            BEGIN { found=0 }
+            /^### Added/ { found=1; next }
+            /^###/ { if (found) exit }
+            found && /^- / && !/N\/A/ { print }
+          ')
+
+          # Extract Changed section
+          CHANGED=$(echo "$SECTION" | awk '
+            BEGIN { found=0 }
+            /^### Changed/ { found=1; next }
+            /^###/ { if (found) exit }
+            found && /^- / && !/N\/A/ { print }
+          ')
+
+          # Extract Fixed section
+          FIXED=$(echo "$SECTION" | awk '
+            BEGIN { found=0 }
+            /^### Fixed/ { found=1; next }
+            /^###/ { if (found) exit }
+            found && /^- / && !/N\/A/ { print }
+          ')
+
+          # Build release notes
+          NOTES=""
+
+          if [ -n "$BREAKING" ]; then
+            NOTES="### Breaking Changes
+          ${BREAKING}
+
+          "
+          fi
+
+          if [ -n "$ADDED" ]; then
+            NOTES="${NOTES}### Added
+          ${ADDED}
+
+          "
+          fi
+
+          if [ -n "$CHANGED" ]; then
+            NOTES="${NOTES}### Changed
+          ${CHANGED}
+
+          "
+          fi
+
+          if [ -n "$FIXED" ]; then
+            NOTES="${NOTES}### Fixed
+          ${FIXED}
+
+          "
+          fi
+
+          NOTES="${NOTES}[Full changelog](https://github.com/anaconda/anaconda-otel-python/blob/main/CHANGELOG.md)"
+
+          echo "$NOTES" > /tmp/release_notes.md
+
+      - name: Create branch, commit, and merge version update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="release/v${{ steps.version.outputs.clean }}"
+
+          git checkout -b "$BRANCH"
+          git add anaconda_opentelemetry/__version__.py
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.clean }}"
+          git push origin "$BRANCH"
+
+          git checkout testing
+          git merge "$BRANCH"
+          git push origin testing
+
+          git push origin --delete "$BRANCH"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.clean }}" \
+            --title "v${{ steps.version.outputs.clean }}" \
+            --target testing \
+            --latest=false \
+            --notes-file /tmp/release_notes.md
