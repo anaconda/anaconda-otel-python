@@ -1,4 +1,4 @@
-name: Release
+name: Create Release
 
 on:
   workflow_dispatch:
@@ -21,29 +21,20 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
-          fetch-depth: 0
 
       - name: Parse version
         id: version
         run: |
           VERSION="${{ inputs.version }}"
-          # Ensure version has v prefix for tags/changelog
           if [[ "$VERSION" != v* ]]; then
             VERSION="v${VERSION}"
           fi
           echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
-          # Strip v for __SDK_VERSION__
-          echo "sdk=${VERSION#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Update __SDK_VERSION__ in __version__.py
-        run: |
-          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.version.outputs.sdk }}\"/" anaconda_opentelemetry/__version__.py
 
       - name: Parse changelog for release notes
         run: |
           TAG="${{ steps.version.outputs.tag }}"
 
-          # Extract the section for this version from CHANGELOG.md
           SECTION=$(awk -v ver="$TAG" '
             BEGIN { found=0 }
             /^## \[v/ {
@@ -59,7 +50,6 @@ jobs:
             exit 1
           fi
 
-          # Extract Breaking Changes
           BREAKING=$(echo "$SECTION" | awk '
             BEGIN { found=0 }
             /^### !!! Breaking Changes/ { found=1; next }
@@ -67,7 +57,6 @@ jobs:
             found && /^- / { print }
           ')
 
-          # Extract Added section
           ADDED=$(echo "$SECTION" | awk '
             BEGIN { found=0 }
             /^### Added/ { found=1; next }
@@ -75,7 +64,6 @@ jobs:
             found && /^- / && !/N\/A/ { print }
           ')
 
-          # Extract Changed section
           CHANGED=$(echo "$SECTION" | awk '
             BEGIN { found=0 }
             /^### Changed/ { found=1; next }
@@ -83,7 +71,6 @@ jobs:
             found && /^- / && !/N\/A/ { print }
           ')
 
-          # Extract Fixed section
           FIXED=$(echo "$SECTION" | awk '
             BEGIN { found=0 }
             /^### Fixed/ { found=1; next }
@@ -91,7 +78,6 @@ jobs:
             found && /^- / && !/N\/A/ { print }
           ')
 
-          # Build release notes
           NOTES=""
 
           if [ -n "$BREAKING" ]; then
@@ -125,25 +111,6 @@ jobs:
           NOTES="${NOTES}[Full changelog](https://github.com/anaconda/anaconda-otel-python/blob/main/CHANGELOG.md)"
 
           echo "$NOTES" > /tmp/release_notes.md
-
-      - name: Create branch, commit, and merge version update
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          BRANCH="release/${{ steps.version.outputs.tag }}"
-
-          git checkout -b "$BRANCH"
-          git add anaconda_opentelemetry/__version__.py
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.sdk }}"
-          git push origin "$BRANCH"
-
-          git checkout main
-          git merge "$BRANCH"
-          git push origin main
-
-          git push origin --delete "$BRANCH"
 
       - name: Create GitHub release
         env:
