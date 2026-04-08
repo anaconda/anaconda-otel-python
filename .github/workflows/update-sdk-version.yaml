@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: testing
+          ref: fix-release-gha
           fetch-depth: 0
 
       - name: Strip leading v if present
@@ -135,9 +135,9 @@ jobs:
           git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.clean }}"
           git push origin "$BRANCH"
 
-          git checkout testing
+          git checkout fix-release-gha
           git merge "$BRANCH"
-          git push origin testing
+          git push origin fix-release-gha
 
           git push origin --delete "$BRANCH"
 
@@ -147,6 +147,6 @@ jobs:
         run: |
           gh release create "v${{ steps.version.outputs.clean }}" \
             --title "v${{ steps.version.outputs.clean }}" \
-            --target testing \
+            --target fix-release-gha \
             --latest=false \
             --notes-file /tmp/release_notes.md
