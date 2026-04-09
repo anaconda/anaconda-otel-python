@@ -1,9 +1,9 @@
 name: Update SDK Version
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'CHANGELOG.md'
 
 permissions:
   contents: write
@@ -14,32 +14,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout PR branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.head_ref }}
 
-      - name: Get version from release tag or latest release
-        id: get-version
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Extract latest version from CHANGELOG.md
+        id: version
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-          else
-            VERSION=$(gh release view --json tagName --jq '.tagName')
+          # Get the first version header (closest to line 1 = latest)
+          TAG=$(awk '/^## \[v[0-9]/ { match($0, /v[0-9]+\.[0-9]+\.[0-9]+/); print substr($0, RSTART, RLENGTH); exit }' CHANGELOG.md)
+          if [ -z "$TAG" ]; then
+            echo "::error::No version found in CHANGELOG.md"
+            exit 1
           fi
-          # Strip leading 'v' if present
-          VERSION="${VERSION#v}"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          # Strip v for __SDK_VERSION__
+          echo "sdk=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Update __SDK_VERSION__ in __version__.py
         run: |
-          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.get-version.outputs.version }}\"/" anaconda_opentelemetry/__version__.py
+          sed -i "s/^__SDK_VERSION__ = \".*\"/__SDK_VERSION__ = \"${{ steps.version.outputs.sdk }}\"/" anaconda_opentelemetry/__version__.py
 
-      - name: Commit and push changes
+      - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add anaconda_opentelemetry/__version__.py
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "update __SDK_VERSION__ to ${{ steps.get-version.outputs.version }}"
+          git commit -m "update __SDK_VERSION__ to ${{ steps.version.outputs.sdk }}"
           git push
