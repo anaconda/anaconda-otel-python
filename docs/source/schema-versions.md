@@ -11,7 +11,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
         "attributes": {  # key value pairs within here are where data is added
           "telemetry.sdk.language": "python",  # added by Otel
           "telemetry.sdk.name": "opentelemetry",  # added by Otel
-          "telemetry.sdk.version": "1.33.1",  # added by Otel   
+          "telemetry.sdk.version": "1.33.1",  # added by Otel
           "service.name": "platform-service",
           "service.version": "x.x.x",
           "os.type": "Darwin",
