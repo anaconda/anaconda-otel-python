@@ -5,11 +5,9 @@
 import sys
 sys.path.append("./")
 
-import tempfile
 import unittest, pytest
 from unittest.mock import patch, MagicMock
 from anaconda_opentelemetry.attributes import ResourceAttributes
-from anaconda_anon_usage import tokens, utils
 from anaconda_opentelemetry.__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
 class TestResourceAttributes(unittest.TestCase):
@@ -379,40 +377,42 @@ class TestAnonUsageAttributes(unittest.TestCase):
         "anaconda.auth.token",
     ]
 
+    MOCK_TOKEN_FUNCS = [
+        ("client_token", lambda: "mock_client_token"),
+        ("session_token", lambda: "mock_session_token"),
+        ("environment_token", lambda: "mock_env_token"),
+        ("organization_tokens", lambda: ["mock_org_token"]),
+        ("installer_tokens", lambda: ["mock_installer_token"]),
+        ("machine_tokens", lambda: ["mock_machine_token"]),
+        ("anaconda_auth_token", lambda: "mock_auth_token"),
+    ]
+
     def setUp(self):
         """Set up test fixtures"""
         self.test_service_name = "test_service"
         self.test_service_version = "1.0.0"
-        self._tmp_dir = tempfile.TemporaryDirectory()
-        self._original_config_dir = tokens.CONFIG_DIR
-        tokens.CONFIG_DIR = self._tmp_dir.name
-        utils._cache_clear()
-
-    def tearDown(self):
-        tokens.CONFIG_DIR = self._original_config_dir
-        utils._cache_clear()
-        self._tmp_dir.cleanup()
 
     def test_anon_usage_true_adds_token_keys(self):
         """Test that anon_usage=True adds all token keys to attributes"""
-        attrs = ResourceAttributes(
-            service_name=self.test_service_name,
-            service_version=self.test_service_version,
-            anon_usage=True
-        )
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version,
+                anon_usage=True
+            )
 
         all_attrs = attrs._get_attributes()
-        expected_keys = self.TOKEN_KEYS[:6]
-        for key in expected_keys:
+        for key in self.TOKEN_KEYS:
             self.assertIn(key, all_attrs)
 
     def test_anon_usage_false_no_token_keys(self):
         """Test that anon_usage=False does not add token keys"""
-        attrs = ResourceAttributes(
-            service_name=self.test_service_name,
-            service_version=self.test_service_version,
-            anon_usage=False
-        )
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version,
+                anon_usage=False
+            )
 
         all_attrs = attrs._get_attributes()
         for key in self.TOKEN_KEYS:
@@ -420,10 +420,11 @@ class TestAnonUsageAttributes(unittest.TestCase):
 
     def test_anon_usage_default_no_token_keys(self):
         """Test that omitting anon_usage defaults to False and does not add token keys"""
-        attrs = ResourceAttributes(
-            service_name=self.test_service_name,
-            service_version=self.test_service_version
-        )
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version
+            )
 
         all_attrs = attrs._get_attributes()
         for key in self.TOKEN_KEYS:

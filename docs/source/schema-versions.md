@@ -26,9 +26,9 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           "client.token": "xyz"  # nullable. token string
           "session.token": "xyz"  # nullable. token string
           "environment.token": "xyz"  # nullable. token string
-          "organization.tokens": ["xyz", "abc"]  # nullable. json stringified list of org tokens
-          "installer.tokens": ["xyz", "abc"]  # nullable. json stringified list of org tokens
-          "machine.tokens": ["xyz", "abc"]  # nullable. json stringified list of org tokens
+          "organization.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
+          "installer.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
+          "machine.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
           "anaconda.auth.token": "xyz"  # nullable. token string
           "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
         }

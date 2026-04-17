@@ -33,8 +33,8 @@ class EventLogger:
     """
     Emits log records purely as OTel log telemetry, bypassing Python's
     logging hierarchy so they never appear in console/file handlers or
-    interfere with developer log levels. Optional way to export logs,
-    the Python logging module is supported as well.
+    interfere with developer log levels. Should be used if the logs
+    being collected are not developer logs, and correspond to events.
     """
 
     def __init__(

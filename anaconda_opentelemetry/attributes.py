@@ -9,16 +9,19 @@ from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields, InitVar
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
-from anaconda_anon_usage import tokens
-TOKEN_FUNCS = [
-    ("client_token", tokens.client_token),
-    ("session_token", tokens.session_token),
-    ("environment_token", tokens.environment_token),
-    ("organization_tokens", tokens.organization_tokens),
-    ("installer_tokens", tokens.installer_tokens),
-    ("machine_tokens", tokens.machine_tokens),
-    ("anaconda_auth_token", tokens.anaconda_auth_token),
-]
+try:
+    from anaconda_anon_usage import tokens
+    TOKEN_FUNCS = [
+        ("client_token", tokens.client_token),
+        ("session_token", tokens.session_token),
+        ("environment_token", tokens.environment_token),
+        ("organization_tokens", tokens.organization_tokens),
+        ("installer_tokens", tokens.installer_tokens),
+        ("machine_tokens", tokens.machine_tokens),
+        ("anaconda_auth_token", tokens.anaconda_auth_token),
+    ]
+except ImportError:
+    TOKEN_FUNCS = []
 
 
 @dataclass
