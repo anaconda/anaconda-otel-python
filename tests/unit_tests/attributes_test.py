@@ -9,7 +9,7 @@ import tempfile
 import unittest, pytest
 from unittest.mock import patch, MagicMock
 from anaconda_opentelemetry.attributes import ResourceAttributes
-from anaconda_opentelemetry.anon_usage import tokens, utils
+from anaconda_anon_usage import tokens, utils
 from anaconda_opentelemetry.__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
 class TestResourceAttributes(unittest.TestCase):

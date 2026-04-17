@@ -14,6 +14,7 @@ authors = [
 ]
 license = { text = "Apache 2.0" }  # SPDX identifier
 dependencies = [
+    "anaconda-anon-usage",
     "PyYAML>=6.0.2",
     "opentelemetry-api==1.38.0",
     "opentelemetry-exporter-otlp-proto-common==1.38.0",

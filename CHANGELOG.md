@@ -9,7 +9,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 - Added EventLogger - simple python event logger for log structured data that does not qualify as developer logging
 - Native OIDC authenticator support
 - Proxy support for exporters (exporter session respects proxy)
-- anaconda-anon-usage functionality for generating/fetching tokens can now be integrated into telemetry attributes
+- anaconda-anon-usage token integration via anaconda-anon-usage dependency for telemetry attributes
 
 ### Changed
 - Added processing for EventLogger to handle string payloads and JSON

@@ -9,7 +9,7 @@ from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields, InitVar
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
-from anaconda_opentelemetry.anon_usage import tokens
+from anaconda_anon_usage import tokens
 TOKEN_FUNCS = [
     ("client_token", tokens.client_token),
     ("session_token", tokens.session_token),
