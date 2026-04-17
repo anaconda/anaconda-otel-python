@@ -18,6 +18,16 @@ from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 from .formatting import AttrDict
 
+from anaconda_opentelemetry.anon_usage import tokens
+TOKEN_FUNCS = [
+    ("client_token", tokens.client_token),
+    ("session_token", tokens.session_token),
+    ("environment_token", tokens.environment_token),
+    ("organization_tokens", tokens.organization_tokens),
+    ("installer_tokens", tokens.installer_tokens),
+    ("machine_tokens", tokens.machine_tokens),
+    ("anaconda_auth_token", tokens.anaconda_auth_token),
+]
 
 class MetricsNotInitialized(RuntimeError):
     pass
@@ -45,6 +55,8 @@ class _AnacondaCommon:
         self.default_endpoint = config._get_default_endpoint()
         # export options
         self.use_console_exporters = config._get_console_exporter()
+        # anon usage
+        self.anon_usage = config._get_anon_usage()
 
     def make_otel_resource(self, attributes: Attributes):
         # Read resource attributes
@@ -107,6 +119,13 @@ class _AnacondaCommon:
         if any(not isinstance(key, str) or not key for key in attributes):
             self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
             attributes = {}
+
+        # if anon-usage is enabled
+        # WILL override any identically named attributes
+        if self.anon_usage:
+            for name, func in TOKEN_FUNCS:
+                print(f"{name}: {func()}")
+                attributes[name.replace('_', '.')] = func()
 
         # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
         # for backwards compatability if people have been setting user.id with ResourceAttributes
