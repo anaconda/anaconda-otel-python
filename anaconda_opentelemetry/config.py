@@ -87,7 +87,6 @@ class Configuration:
     SKIP_INTERNET_CHECK_NAME        = 'skip_internet_check'
     USE_CUMULATIVE_METRICS_NAME     = 'use_cumulative_metrics'
     PROXY_URL_NAME                  = 'proxy_url'
-    ANON_USAGE_NAME                 = 'anon_usage'
 
     _base_names: List[str] = [
         DEFAULT_ENDPOINT_NAME,
@@ -110,7 +109,6 @@ class Configuration:
         SKIP_INTERNET_CHECK_NAME,
         USE_CUMULATIVE_METRICS_NAME,
         PROXY_URL_NAME,
-        ANON_USAGE_NAME,
     ]
 
     _endpoint_names: List[str] = [
@@ -138,7 +136,6 @@ class Configuration:
         USE_CONSOLE_EXPORTER_NAME,
         SKIP_INTERNET_CHECK_NAME,
         USE_CUMULATIVE_METRICS_NAME,
-        ANON_USAGE_NAME,
     ]
 
     _int_value_names: List[str] = [
@@ -569,21 +566,6 @@ class Configuration:
         """
         self._config[self.PROXY_URL_NAME] = proxy_url
         return self
-    
-    def set_anon_usage(self, anon_usage: bool):
-        """
-        Use to complement anonymous telemetry collection. This configures whether or not to invoke
-        anon_usage token generation/fetch. The anon-usage functionality is disabled by default.
-        Automatically applied to all signals if present.
-
-        Args:
-            anon_usage (bool): True to invoke anon_usage, False to disable
-
-        Returns:
-            Self
-        """
-        self._config[self.ANON_USAGE_NAME] = anon_usage
-        return self
 
     def _get_proxy_url(self) -> str:
         return self._config.get(self.PROXY_URL_NAME, None)
@@ -804,6 +786,3 @@ class Configuration:
 
     def _get_use_cumulative_metrics(self) -> bool:
         return self._config.get(self.USE_CUMULATIVE_METRICS_NAME, False)
-    
-    def _get_anon_usage(self) -> bool:
-        return self._config.get(self.ANON_USAGE_NAME, False)
