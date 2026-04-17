@@ -2,7 +2,7 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
-## [v1.1.0] (2026-02-04)
+## [v1.1.0] (2026-04-17)
 
 ### Added
 
