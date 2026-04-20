@@ -2,13 +2,14 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
-## [v1.1.0] (2026-02-04)
+## [v1.1.0] (2026-04-17)
 
 ### Added
 
 - Added EventLogger - simple python event logger for log structured data that does not qualify as developer logging
 - Native OIDC authenticator support
 - Proxy support for exporters (exporter session respects proxy)
+- anaconda-anon-usage token integration via anaconda-anon-usage dependency for telemetry attributes
 
 ### Changed
 - Added processing for EventLogger to handle string payloads and JSON
@@ -41,6 +42,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 - Native OIDC Authenticator [#51](https://github.com/anaconda/anaconda-otel-python/pull/51)
 - [feat] Proxy support for exporters [#54](https://github.com/anaconda/anaconda-otel-python/pull/54)
 - [fix] service.name resource attribute lost during log event emission [#58](https://github.com/anaconda/anaconda-otel-python/pull/58)
+- [feat] Add anon-usage information to telemetry attributes [#62](https://github.com/anaconda/anaconda-otel-python/pull/62)
 
 ## [v1.0.1] (2026-02-04)
 

@@ -4,10 +4,27 @@
 
 # attributes.py
 
-import logging, platform, re
+import json, logging, platform, re
 from typing import Dict, Tuple, Literal
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, InitVar
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
+
+try:
+    from anaconda_anon_usage import tokens
+    # map token funcs to otel resource attribute names
+    TOKEN_FUNCS = [
+        ("aau.version", tokens.version_token),
+        ("aau.client.token", tokens.client_token),
+        ("aau.session.token", tokens.session_token),
+        ("aau.environment.token", tokens.environment_token),
+        ("aau.organization.tokens", tokens.organization_tokens),
+        ("aau.installer.tokens", tokens.installer_tokens),
+        ("aau.machine.tokens", tokens.machine_tokens),
+        ("aau.anaconda_auth.token", tokens.anaconda_auth_token),
+    ]
+except ImportError:
+    TOKEN_FUNCS = []
+
 
 @dataclass
 class ResourceAttributes:
@@ -59,6 +76,7 @@ class ResourceAttributes:
     user_id: str = field(
         default=""
     )
+    anon_usage: InitVar[bool] = False
     # Readonly
     client_sdk_version: str = field(
         default=__SDK_VERSION__,
@@ -86,10 +104,10 @@ class ResourceAttributes:
         else:
             super().__setattr__(
                 str(key),
-                value if key == "parameters" else str(value)
+                value if key == "parameters" else (json.dumps(value) if isinstance(value, (list, dict)) else str(value))
             )
 
-    def __post_init__(self):
+    def __post_init__(self, anon_usage: bool):
         # set non-init readonly
         self.client_sdk_version = __SDK_VERSION__
         self.schema_version = __TELEMETRY_SCHEMA_VERSION__
@@ -104,6 +122,11 @@ class ResourceAttributes:
             self.python_version = platform.python_version()
         if not self.hostname:
             self.hostname = self._get_host_name()
+
+        # if anon-usage is specified
+        if anon_usage:
+            for name, func in TOKEN_FUNCS:
+                self.__setattr__(name, func())
 
         # check for valid environment
         valid_environments = {"", "test", "development", "staging", "production"}

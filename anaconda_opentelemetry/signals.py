@@ -126,7 +126,9 @@ def initialize_telemetry(config: Config,
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
 
-def change_signal_endpoint(signal_type: str, new_endpoint: str, auth_token: str = None):
+def change_signal_endpoint(signal_type: str,
+                           new_endpoint: str,
+                           auth_token: str = None):
     """
     Updates the endpoint for the passed signal
 
@@ -149,6 +151,7 @@ def change_signal_endpoint(signal_type: str, new_endpoint: str, auth_token: str 
         logging.getLogger(__package__).warning(f"{signal_type} not a valid signal type.")
         return False
 
+    # execute OpenTelemetry changes
     updated_endpoint = _AnacondaTelInstance._instance.exporter.change_signal_endpoint(
         batch_access,
         _AnacondaTelInstance._instance._config,

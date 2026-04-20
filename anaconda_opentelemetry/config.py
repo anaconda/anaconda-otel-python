@@ -108,7 +108,7 @@ class Configuration:
         METRICS_CA_CERT_NAME,
         SKIP_INTERNET_CHECK_NAME,
         USE_CUMULATIVE_METRICS_NAME,
-        PROXY_URL_NAME
+        PROXY_URL_NAME,
     ]
 
     _endpoint_names: List[str] = [
@@ -135,7 +135,7 @@ class Configuration:
     _bool_value_names: List[str] = [
         USE_CONSOLE_EXPORTER_NAME,
         SKIP_INTERNET_CHECK_NAME,
-        USE_CUMULATIVE_METRICS_NAME
+        USE_CUMULATIVE_METRICS_NAME,
     ]
 
     _int_value_names: List[str] = [

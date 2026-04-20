@@ -18,7 +18,6 @@ from .attributes import ResourceAttributes as Attributes
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 from .formatting import AttrDict
 
-
 class MetricsNotInitialized(RuntimeError):
     pass
 

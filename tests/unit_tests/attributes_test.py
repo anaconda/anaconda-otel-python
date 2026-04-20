@@ -191,6 +191,30 @@ class TestResourceAttributes(unittest.TestCase):
         self.assertIsInstance(attrs.service_name, str)
         self.assertIsInstance(attrs.service_version, str)
 
+    def test_setattr_json_serializes_list(self):
+        """Test that setattr JSON-serializes list values"""
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version
+        )
+
+        attrs.hostname = ["token1", "token2"]
+
+        self.assertEqual(attrs.hostname, '["token1", "token2"]')
+        self.assertIsInstance(attrs.hostname, str)
+
+    def test_setattr_json_serializes_dict(self):
+        """Test that setattr JSON-serializes dict values"""
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version
+        )
+
+        attrs.hostname = {"key": "value"}
+
+        self.assertEqual(attrs.hostname, '{"key": "value"}')
+        self.assertIsInstance(attrs.hostname, str)
+
     # Test _get_attributes method
     def test_get_attributes(self):
         """Test _get_attributes returns all attributes except _readonly_fields"""
@@ -339,3 +363,60 @@ class TestResourceAttributes(unittest.TestCase):
         # Verify readonly fields unchanged
         self.assertEqual(attrs.client_sdk_version, __SDK_VERSION__)
         self.assertEqual(attrs.schema_version, __TELEMETRY_SCHEMA_VERSION__)
+
+
+class TestAnonUsageAttributes(unittest.TestCase):
+
+    MOCK_TOKEN_FUNCS = [
+        ("aau.version", lambda: "mock_version_token"),
+        ("aau.client.token", lambda: "mock_client_token"),
+        ("aau.session.token", lambda: "mock_session_token"),
+        ("aau.environment.token", lambda: "mock_env_token"),
+        ("aau.organization.tokens", lambda: ["mock_org_token"]),
+        ("aau.installer.tokens", lambda: ["mock_installer_token"]),
+        ("aau.machine.tokens", lambda: ["mock_machine_token"]),
+        ("aau.anaconda_auth.token", lambda: "mock_auth_token"),
+    ]
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.test_service_name = "test_service"
+        self.test_service_version = "1.0.0"
+
+    def test_anon_usage_true_adds_token_keys(self):
+        """Test that anon_usage=True adds all token keys to attributes"""
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version,
+                anon_usage=True
+            )
+
+        all_attrs = attrs._get_attributes()
+        for key, _ in self.MOCK_TOKEN_FUNCS:
+            self.assertIn(key, all_attrs)
+
+    def test_anon_usage_false_no_token_keys(self):
+        """Test that anon_usage=False does not add token keys"""
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version,
+                anon_usage=False
+            )
+
+        all_attrs = attrs._get_attributes()
+        for key, _ in self.MOCK_TOKEN_FUNCS:
+            self.assertNotIn(key, all_attrs)
+
+    def test_anon_usage_default_no_token_keys(self):
+        """Test that omitting anon_usage defaults to False and does not add token keys"""
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", self.MOCK_TOKEN_FUNCS):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version
+            )
+
+        all_attrs = attrs._get_attributes()
+        for key, _ in self.MOCK_TOKEN_FUNCS:
+            self.assertNotIn(key, all_attrs)
