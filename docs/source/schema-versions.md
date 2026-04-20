@@ -23,13 +23,14 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           “platform”: “cloud provider”,
           “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
           "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
-          "client.token": "xyz"  # nullable. token string
-          "session.token": "xyz"  # nullable. token string
-          "environment.token": "xyz"  # nullable. token string
-          "organization.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
-          "installer.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
-          "machine.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
-          "anaconda.auth.token": "xyz"  # nullable. token string
+          "aau.version": "0.7.5",  # anaconda-anon-usage version
+          "aau.client.token": "xyz"  # nullable. token string
+          "aau.session.token": "xyz"  # nullable. token string
+          "aau.environment.token": "xyz"  # nullable. token string
+          "aau.organization.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
+          "aau.installer.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
+          "aau.machine.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
+          "aau.anaconda.auth.token": "xyz"  # nullable. token string
           "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
         }
       }

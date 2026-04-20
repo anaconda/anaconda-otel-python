@@ -11,14 +11,16 @@ from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
 try:
     from anaconda_anon_usage import tokens
+    # map token funcs to otel resource attribute names
     TOKEN_FUNCS = [
-        ("client_token", tokens.client_token),
-        ("session_token", tokens.session_token),
-        ("environment_token", tokens.environment_token),
-        ("organization_tokens", tokens.organization_tokens),
-        ("installer_tokens", tokens.installer_tokens),
-        ("machine_tokens", tokens.machine_tokens),
-        ("anaconda_auth_token", tokens.anaconda_auth_token),
+        ("aau.version", tokens.version_token),
+        ("aau.client.token", tokens.client_token),
+        ("aau.session.token", tokens.session_token),
+        ("aau.environment.token", tokens.environment_token),
+        ("aau.organization.tokens", tokens.organization_tokens),
+        ("aau.installer.tokens", tokens.installer_tokens),
+        ("aau.machine.tokens", tokens.machine_tokens),
+        ("aau.anaconda_auth.token", tokens.anaconda_auth_token),
     ]
 except ImportError:
     TOKEN_FUNCS = []
@@ -124,7 +126,7 @@ class ResourceAttributes:
         # if anon-usage is specified
         if anon_usage:
             for name, func in TOKEN_FUNCS:
-                self.__setattr__(name.replace('_', '.'), func())
+                self.__setattr__(name, func())
 
         # check for valid environment
         valid_environments = {"", "test", "development", "staging", "production"}
