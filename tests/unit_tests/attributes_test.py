@@ -367,24 +367,15 @@ class TestResourceAttributes(unittest.TestCase):
 
 class TestAnonUsageAttributes(unittest.TestCase):
 
-    TOKEN_KEYS = [
-        "client.token",
-        "session.token",
-        "environment.token",
-        "organization.tokens",
-        "installer.tokens",
-        "machine.tokens",
-        "anaconda.auth.token",
-    ]
-
     MOCK_TOKEN_FUNCS = [
-        ("client_token", lambda: "mock_client_token"),
-        ("session_token", lambda: "mock_session_token"),
-        ("environment_token", lambda: "mock_env_token"),
-        ("organization_tokens", lambda: ["mock_org_token"]),
-        ("installer_tokens", lambda: ["mock_installer_token"]),
-        ("machine_tokens", lambda: ["mock_machine_token"]),
-        ("anaconda_auth_token", lambda: "mock_auth_token"),
+        ("aau.version", lambda: "mock_version_token"),
+        ("aau.client.token", lambda: "mock_client_token"),
+        ("aau.session.token", lambda: "mock_session_token"),
+        ("aau.environment.token", lambda: "mock_env_token"),
+        ("aau.organization.tokens", lambda: ["mock_org_token"]),
+        ("aau.installer.tokens", lambda: ["mock_installer_token"]),
+        ("aau.machine.tokens", lambda: ["mock_machine_token"]),
+        ("aau.anaconda_auth.token", lambda: "mock_auth_token"),
     ]
 
     def setUp(self):
@@ -402,7 +393,7 @@ class TestAnonUsageAttributes(unittest.TestCase):
             )
 
         all_attrs = attrs._get_attributes()
-        for key in self.TOKEN_KEYS:
+        for key, _ in self.MOCK_TOKEN_FUNCS:
             self.assertIn(key, all_attrs)
 
     def test_anon_usage_false_no_token_keys(self):
@@ -415,7 +406,7 @@ class TestAnonUsageAttributes(unittest.TestCase):
             )
 
         all_attrs = attrs._get_attributes()
-        for key in self.TOKEN_KEYS:
+        for key, _ in self.MOCK_TOKEN_FUNCS:
             self.assertNotIn(key, all_attrs)
 
     def test_anon_usage_default_no_token_keys(self):
@@ -427,5 +418,5 @@ class TestAnonUsageAttributes(unittest.TestCase):
             )
 
         all_attrs = attrs._get_attributes()
-        for key in self.TOKEN_KEYS:
+        for key, _ in self.MOCK_TOKEN_FUNCS:
             self.assertNotIn(key, all_attrs)
