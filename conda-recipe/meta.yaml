@@ -1,11 +1,10 @@
 # SPDX-FileCopyrightText: 2025 Anaconda, Inc
 # SPDX-License-Identifier: Apache-2.0
-# {% set version = load_file_regex(load_file=RECIPE_DIR + "/../version.txt", regex_pattern="^(.*)$") %}
+{% set version = load_file_regex(load_file=RECIPE_DIR + "/../anaconda_opentelemetry/__version__.py", regex_pattern='__SDK_VERSION__\s*=\s*"(.*)"') %}
 
 package:
   name: anaconda-opentelemetry
-  # version: {{ version[0] }}
-  version: 1.1.0
+  version: {{ version[1] }}
 source:
   path: ..
 
