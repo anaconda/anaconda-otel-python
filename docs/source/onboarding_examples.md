@@ -74,6 +74,13 @@ initialize_telemetry(
 ## Recording Telemetry
 
 ### Logs
+
+#### Simple Event Logging
+```python
+send_event("Log body", "event_name", attributes=attrs)
+```
+
+#### Developer logs
 ```python
 log = logging.getLogger("your_logger_name_here")
 try:
@@ -81,6 +88,7 @@ try:
 except:
   log.warning(f"OpenTelemetry logger failed to be initialized.")
 ```
+### 
 
 ### Metrics
 These functions do not need additional error handling. They will all catch exceptions.

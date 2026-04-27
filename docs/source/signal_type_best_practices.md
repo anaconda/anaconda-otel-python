@@ -114,7 +114,6 @@ When many developers think of logs, they think of application/developer logs. An
 
 The reason to use logs rather than put telemetry data into a suboptimally utilized metric or trace is related to querying/processing. Log payloads are designed to be queried by their log body. Only the log body, logger name, and attributes are of high interest. In comparison metrics and traces have other fields that make up their payloads and require more detail to parse through.
 
-If your product is using logs to capture events rather than to capture developer logs, the `EventLogger` class invoked by the `send_event` function in our code is a more efficient method of transporting events. These calls produce the lightest payloads. If you are not interested in capturing the line numbers, log levels, etc. that come with standard developer logs, this class would be the way to go.
 
 #### Visual Example of a log payload
 ```
@@ -153,6 +152,38 @@ If your product is using logs to capture events rather than to capture developer
                 }
             }
             ],
+        }
+        ]
+    }
+    ]
+}
+```
+
+### Simple Event Logs
+If your product is using logs to capture events rather than to capture developer logs, the `EventLogger` class invoked by the `send_event` function in our code is a more efficient method of transporting events. These calls produce the lightest payloads. If you are not interested in capturing the line numbers, log levels, etc. that come with standard developer logs, this would be the way to go.
+
+#### Visual example of Event Log payload
+```
+{
+    "scope_logs": [
+    {
+        "scope": {
+        "name": "aau_test_event_logger"
+        },
+        "log_records": [
+        {
+            "body": {
+            "string_value": "Hello"
+            },
+            "attributes": [
+            {
+                "key": "log.event.name",
+                "value": {
+                "string_value": "test_event"
+                }
+            }
+            ],
+            "observed_time_unix_nano": "1777304261742595000"
         }
         ]
     }
