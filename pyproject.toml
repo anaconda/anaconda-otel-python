@@ -27,6 +27,9 @@ dependencies = [
 
 requires-python = ">=3.9"
 
+[tool.setuptools.dynamic]
+version = {attr = "anaconda_opentelemetry.__version__.__SDK_VERSION__"}
+
 [tool.setuptools.packages.find]
 include = ["anaconda_opentelemetry"]
 
