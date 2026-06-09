@@ -2,6 +2,43 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.2.0] (2026-06-09)
+
+### Added
+
+- Added `shutdown_on_exit` to `Configuration` which allows consumers to toggle the OpenTelemetry behavior on process exit
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Issue with shutdown that caused OpenTelemetry exporters to hang in certain conditions
+- Pip now can read the package version
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+- pip install reads version [#66](https://github.com/anaconda/anaconda-otel-python/pull/66)
+- allow consumers to manage shutdown [#69](https://github.com/anaconda/anaconda-otel-python/pull/69)
+
+
+
 ## [v1.1.0] (2026-04-17)
 
 ### Added
