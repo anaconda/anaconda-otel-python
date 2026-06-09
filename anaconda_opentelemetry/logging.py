@@ -19,6 +19,7 @@ import json
 import logging
 from typing import Dict
 
+from opentelemetry import _logs
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler, LogRecord
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 
@@ -63,13 +64,17 @@ class _AnacondaLogger(_AnacondaCommon):
 
     _default_log_attributes = {log_event_name_key: "__LOG__"}
 
-    def __init__(self, config: Config, attributes: Attributes):
+    def __init__(self, config: Config, attributes: Attributes, shutdown_on_exit: bool = True):
         super().__init__(config, attributes)
         self.log_level = self._get_log_level(config._get_logging_level())
         self.logger_endpoint = config._get_logging_endpoint()
 
         # Create logger provider
-        self._provider = LoggerProvider(resource=self.resource)
+        self._provider = LoggerProvider(resource=self.resource, shutdown_on_exit=shutdown_on_exit)
+        try:
+            _logs.set_logger_provider(self._provider)
+        except Exception:
+            self.logger.warning("The logger provider was previously set; this call is ignored.")
         self._console_exporter: ConsoleLogExporter | None = None
         # Add OTLP exporter
         if self.use_console_exporters:

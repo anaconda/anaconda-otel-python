@@ -112,17 +112,18 @@ class _AnacondaTrace(_AnacondaCommon):
     # Singleton instance (internal only); provide a single instance of the tracing class
     _instance = None
 
-    def __init__(self, config: Config, attributes: Attributes):
+    def __init__(self, config: Config, attributes: Attributes, shutdown_on_exit: bool = True):
         # Init singleton instance
         super().__init__(config, attributes)
         self.telemetry_export_interval_millis = config._get_tracing_export_interval_ms()
         self.tracing_endpoint = config._get_tracing_endpoint()
 
+        self._shutdown_on_exit = shutdown_on_exit
         self.tracer = self._setup_tracing(config)
 
     def _setup_tracing(self, config: Config) -> trace.Tracer:
         # Create tracer provider
-        tracer_provider = TracerProvider(resource=self.resource)
+        tracer_provider = TracerProvider(resource=self.resource, shutdown_on_exit=self._shutdown_on_exit)
 
         # Add OTLP exporter
         if self.use_console_exporters:
@@ -157,6 +158,7 @@ class _AnacondaTrace(_AnacondaCommon):
         )
 
         # Set as global provider
+        self._provider = tracer_provider
         try:
             trace.set_tracer_provider(tracer_provider)
         except Exception:

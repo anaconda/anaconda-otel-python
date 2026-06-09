@@ -56,9 +56,9 @@ class TestInitializeTelemetry:
             mock.assert_called_once()
 
         # Verify all three metric types were initialized by default
-        mock_logger.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY)
-        mock_metrics.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY)
-        mock_trace.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY)
+        mock_logger.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY, shutdown_on_exit=True)
+        mock_metrics.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY, shutdown_on_exit=True)
+        mock_trace.assert_called_once_with(unittest.mock.ANY, unittest.mock.ANY, shutdown_on_exit=True)
 
         # Verify that _instance attributes were set on the mock classes
         assert hasattr(mock_logger, '_instance')

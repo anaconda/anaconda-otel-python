@@ -11,11 +11,14 @@ signals) using OpenTelemetry. It includes classes for handling logging, metrics,
 tracing, as well as functions for initializing the telemetry system and recording metrics.
 """
 
-import logging, socket
+import logging, socket, threading
 from typing import Dict, Iterator, List
 from contextlib import contextmanager
 
-from opentelemetry.sdk._logs import LoggingHandler
+from opentelemetry import trace, metrics, _logs
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
 
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
@@ -59,7 +62,8 @@ __CONFIG = None
 # Exposed APIs
 def initialize_telemetry(config: Config,
                          attributes: Attributes = None,
-                         signal_types: List[str] = ['metrics']):  # Follows what the backend has implemented.
+                         signal_types: List[str] = ['metrics'],
+                         shutdown_on_exit: bool = True):  # Follows what the backend has implemented.
     """
     Initializes the telemetry system.
 
@@ -72,6 +76,11 @@ def initialize_telemetry(config: Config,
             it will override any values shared with configuration file.
         signal_types (list, optional): List of metric types to initialize. Defaults to ['logging','metrics','tracing'].
             Supported values are 'logging', 'metrics', and 'tracing'. If an empty list is provided, no metrics will be initialized.
+        shutdown_on_exit (bool, optional): If True (default), each provider registers an
+            ``atexit`` handler that flushes on interpreter exit. If False, no atexit
+            handlers are registered and the caller becomes responsible for flushing:
+            call ``shutdown_telemetry()`` (or ``flush_telemetry()``) before the process
+            exits, otherwise buffered telemetry is silently dropped.
 
     Raises:
         ValueError: If the config passed is None or the attributes passed are None.
@@ -105,17 +114,17 @@ def initialize_telemetry(config: Config,
     # Initialize logging here...
     signal_type_count = 0
     if 'logging' in signal_types:
-        _AnacondaLogger._instance = _AnacondaLogger(*init_params)
+        _AnacondaLogger._instance = _AnacondaLogger(*init_params, shutdown_on_exit=shutdown_on_exit)
         signal_type_count += 1
 
     # Initialize the telemetry system here
     if 'metrics' in signal_types:
-        _AnacondaMetrics._instance = _AnacondaMetrics(*init_params)
+        _AnacondaMetrics._instance = _AnacondaMetrics(*init_params, shutdown_on_exit=shutdown_on_exit)
         signal_type_count += 1
 
     # Initialize tracing here...
     if 'tracing' in signal_types:
-        _AnacondaTrace._instance = _AnacondaTrace(*init_params)
+        _AnacondaTrace._instance = _AnacondaTrace(*init_params, shutdown_on_exit=shutdown_on_exit)
         signal_type_count += 1
 
     if signal_type_count == 0:
@@ -125,6 +134,99 @@ def initialize_telemetry(config: Config,
               "metric types in the parameter 'signal_types'."
         )
     __ANACONDA_TELEMETRY_INITIALIZED = True
+
+_SHUTDOWN_DONE = False
+_shutdown_lock = threading.Lock()
+
+
+def flush_telemetry() -> bool:
+    """Force-flush all initialized telemetry providers.
+
+    Uses the standard OTel global getters to retrieve providers.
+    Returns True if all providers flushed successfully.
+    """
+    if not __ANACONDA_TELEMETRY_INITIALIZED:
+        return False
+    success = True
+    try:
+        tp = trace.get_tracer_provider()
+        if isinstance(tp, TracerProvider):
+            try:
+                tp.force_flush()
+            except Exception:
+                logging.getLogger(__package__).debug("Tracer flush failed", exc_info=True)
+                success = False
+
+        mp = metrics.get_meter_provider()
+        if isinstance(mp, MeterProvider):
+            try:
+                mp.force_flush()
+            except Exception:
+                logging.getLogger(__package__).debug("Meter flush failed", exc_info=True)
+                success = False
+
+        lp = _logs.get_logger_provider()
+        if isinstance(lp, LoggerProvider):
+            try:
+                lp.force_flush()
+            except Exception:
+                logging.getLogger(__package__).debug("Logger flush failed", exc_info=True)
+                success = False
+    except Exception:
+        logging.getLogger(__package__).debug("flush_telemetry failed", exc_info=True)
+        success = False
+    return success
+
+
+def shutdown_telemetry(*, timeout_seconds: float | None = None) -> bool:
+    """Flush all telemetry providers at process shutdown, optionally time-bounded.
+
+    Performs a bounded *force-flush* (via :func:`flush_telemetry`). It intentionally does
+    not call ``provider.shutdown()``: at process exit that only adds worker-thread joins
+    (more blocking) with no benefit. Pair with
+    ``initialize_telemetry(..., shutdown_on_exit=False)`` to control flush timing from a
+    signal handler or atexit path.
+
+    With ``timeout_seconds=None`` the flush runs synchronously (unbounded). When set, the
+    flush runs on a daemon thread joined for at most ``timeout_seconds``; only the
+    caller's wait is bounded (a still-running flush thread is reaped at interpreter exit).
+
+    Idempotent and thread-safe: once a flush completes it is not repeated; concurrent or
+    re-entrant (signal-handler) calls never double-flush or block. A call that times out
+    does not mark completion, so a later call may retry.
+
+    The ``join`` blocks the calling thread, so do not call this with a ``timeout_seconds``
+    from inside an async event loop; use it from a signal handler, an atexit path, or a
+    dedicated thread.
+
+    Returns True if the flush completed (now or previously); False if telemetry was never
+    initialized, the flush timed out, or another call is already in progress.
+    """
+    global _SHUTDOWN_DONE
+    if not __ANACONDA_TELEMETRY_INITIALIZED:
+        return False
+    if _SHUTDOWN_DONE:
+        return True
+    # Non-blocking so a concurrent or re-entrant caller returns immediately instead of
+    # double-flushing or deadlocking (this may run inside a signal handler).
+    if not _shutdown_lock.acquire(blocking=False):
+        return _SHUTDOWN_DONE
+    try:
+        if _SHUTDOWN_DONE:
+            return True
+        if timeout_seconds is None:
+            completed = flush_telemetry()
+        else:
+            flush_thread = threading.Thread(target=flush_telemetry, daemon=True)
+            flush_thread.start()
+            flush_thread.join(timeout=timeout_seconds)
+            completed = not flush_thread.is_alive()
+        if completed:
+            _SHUTDOWN_DONE = True
+        return completed
+    finally:
+        _shutdown_lock.release()
+
 
 def change_signal_endpoint(signal_type: str,
                            new_endpoint: str,
