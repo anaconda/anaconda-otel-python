@@ -46,7 +46,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         True: "CUMULATIVE"
     }
 
-    def __init__(self, config: Config, attributes: Attributes, shutdown_on_exit: bool = True):
+    def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
 
         self.metrics_endpoint = config._get_metrics_endpoint()
@@ -55,7 +55,6 @@ class _AnacondaMetrics(_AnacondaCommon):
         self.up_down_counter_objects: Dict[str, Any] = {}
         self.histogram_objects: Dict[str, Any] = {}
 
-        self._shutdown_on_exit = shutdown_on_exit
         self.meter = self._setup_metrics(config)
         self.create_dispatcher = {
             'simple_counter': self.meter.create_counter,

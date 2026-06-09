@@ -44,6 +44,8 @@ class _AnacondaCommon:
         self.default_endpoint = config._get_default_endpoint()
         # export options
         self.use_console_exporters = config._get_console_exporter()
+        # shutdown on exit flag
+        self._shutdown_on_exit = config._get_shutdown_on_exit()
 
     def make_otel_resource(self, attributes: Attributes):
         # Read resource attributes

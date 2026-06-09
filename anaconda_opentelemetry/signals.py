@@ -62,8 +62,7 @@ __CONFIG = None
 # Exposed APIs
 def initialize_telemetry(config: Config,
                          attributes: Attributes = None,
-                         signal_types: List[str] = ['metrics'],
-                         shutdown_on_exit: bool = True):  # Follows what the backend has implemented.
+                         signal_types: List[str] = ['metrics']):
     """
     Initializes the telemetry system.
 
@@ -76,11 +75,6 @@ def initialize_telemetry(config: Config,
             it will override any values shared with configuration file.
         signal_types (list, optional): List of metric types to initialize. Defaults to ['logging','metrics','tracing'].
             Supported values are 'logging', 'metrics', and 'tracing'. If an empty list is provided, no metrics will be initialized.
-        shutdown_on_exit (bool, optional): If True (default), each provider registers an
-            ``atexit`` handler that flushes on interpreter exit. If False, no atexit
-            handlers are registered and the caller becomes responsible for flushing:
-            call ``shutdown_telemetry()`` (or ``flush_telemetry()``) before the process
-            exits, otherwise buffered telemetry is silently dropped.
 
     Raises:
         ValueError: If the config passed is None or the attributes passed are None.
@@ -105,7 +99,7 @@ def initialize_telemetry(config: Config,
     elif type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
 
-    # Right now, no acction is taken but it possible to disable telemetry with no access to the endpoint...
+    # Right now, no action is taken but it possible to disable telemetry with no access to the endpoint...
     _, _ = __check_internet_status(config, timeout=4)  # Max wait 4 seconds...
 
     # all params are the same currently so only write them once
@@ -114,17 +108,17 @@ def initialize_telemetry(config: Config,
     # Initialize logging here...
     signal_type_count = 0
     if 'logging' in signal_types:
-        _AnacondaLogger._instance = _AnacondaLogger(*init_params, shutdown_on_exit=shutdown_on_exit)
+        _AnacondaLogger._instance = _AnacondaLogger(*init_params)
         signal_type_count += 1
 
     # Initialize the telemetry system here
     if 'metrics' in signal_types:
-        _AnacondaMetrics._instance = _AnacondaMetrics(*init_params, shutdown_on_exit=shutdown_on_exit)
+        _AnacondaMetrics._instance = _AnacondaMetrics(*init_params)
         signal_type_count += 1
 
     # Initialize tracing here...
     if 'tracing' in signal_types:
-        _AnacondaTrace._instance = _AnacondaTrace(*init_params, shutdown_on_exit=shutdown_on_exit)
+        _AnacondaTrace._instance = _AnacondaTrace(*init_params)
         signal_type_count += 1
 
     if signal_type_count == 0:

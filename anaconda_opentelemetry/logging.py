@@ -64,13 +64,13 @@ class _AnacondaLogger(_AnacondaCommon):
 
     _default_log_attributes = {log_event_name_key: "__LOG__"}
 
-    def __init__(self, config: Config, attributes: Attributes, shutdown_on_exit: bool = True):
+    def __init__(self, config: Config, attributes: Attributes):
         super().__init__(config, attributes)
         self.log_level = self._get_log_level(config._get_logging_level())
         self.logger_endpoint = config._get_logging_endpoint()
 
         # Create logger provider
-        self._provider = LoggerProvider(resource=self.resource, shutdown_on_exit=shutdown_on_exit)
+        self._provider = LoggerProvider(resource=self.resource, shutdown_on_exit=self._shutdown_on_exit)
         try:
             _logs.set_logger_provider(self._provider)
         except Exception:

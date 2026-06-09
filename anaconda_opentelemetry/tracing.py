@@ -112,13 +112,12 @@ class _AnacondaTrace(_AnacondaCommon):
     # Singleton instance (internal only); provide a single instance of the tracing class
     _instance = None
 
-    def __init__(self, config: Config, attributes: Attributes, shutdown_on_exit: bool = True):
+    def __init__(self, config: Config, attributes: Attributes):
         # Init singleton instance
         super().__init__(config, attributes)
         self.telemetry_export_interval_millis = config._get_tracing_export_interval_ms()
         self.tracing_endpoint = config._get_tracing_endpoint()
 
-        self._shutdown_on_exit = shutdown_on_exit
         self.tracer = self._setup_tracing(config)
 
     def _setup_tracing(self, config: Config) -> trace.Tracer:

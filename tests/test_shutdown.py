@@ -111,11 +111,13 @@ def _provider_atexit_handlers():
 def test_shutdown_on_exit_false_skips_atexit_registration():
     from anaconda_opentelemetry.signals import initialize_telemetry
 
+    config = _make_config()
+    config.set_shutdown_on_exit(False)
+
     initialize_telemetry(
-        config=_make_config(),
+        config=config,
         attributes=_make_attributes(),
         signal_types=["logging", "metrics", "tracing"],
-        shutdown_on_exit=False,
     )
 
     handlers = _provider_atexit_handlers()
@@ -151,12 +153,13 @@ def test_global_logger_provider_retrievable_after_init():
     from opentelemetry import _logs
     from opentelemetry.sdk._logs import LoggerProvider
 
-    # shutdown_on_exit=False to avoid registering atexit handlers from this test
+    config = _make_config()
+    config.set_shutdown_on_exit(False)
+
     initialize_telemetry(
-        config=_make_config(),
+        config=config,
         attributes=_make_attributes(),
         signal_types=["logging", "metrics", "tracing"],
-        shutdown_on_exit=False,
     )
 
     lp = _logs.get_logger_provider()
