@@ -12,7 +12,7 @@ tracing, as well as functions for initializing the telemetry system and recordin
 """
 
 import logging, socket, threading
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Optional
 from contextlib import contextmanager
 
 from opentelemetry import trace, metrics, _logs
@@ -172,7 +172,7 @@ def flush_telemetry() -> bool:
     return success
 
 
-def shutdown_telemetry(*, timeout_seconds: float | None = None) -> bool:
+def shutdown_telemetry(*, timeout_seconds: Optional[float] = None) -> bool:
     """Flush all telemetry providers at process shutdown, optionally time-bounded.
 
     Performs a bounded *force-flush* (via :func:`flush_telemetry`). It intentionally does
