@@ -122,7 +122,7 @@ class _AnacondaTrace(_AnacondaCommon):
 
     def _setup_tracing(self, config: Config) -> trace.Tracer:
         # Create tracer provider
-        tracer_provider = TracerProvider(resource=self.resource)
+        tracer_provider = TracerProvider(resource=self.resource, shutdown_on_exit=self._shutdown_on_exit)
 
         # Add OTLP exporter
         if self.use_console_exporters:
@@ -157,6 +157,7 @@ class _AnacondaTrace(_AnacondaCommon):
         )
 
         # Set as global provider
+        self._provider = tracer_provider
         try:
             trace.set_tracer_provider(tracer_provider)
         except Exception:

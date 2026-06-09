@@ -11,6 +11,8 @@ from .signals import record_histogram as record_histogram
 from .signals import increment_counter as increment_counter
 from .signals import decrement_counter as decrement_counter
 from .signals import get_trace as get_trace
+from .signals import shutdown_telemetry as shutdown_telemetry
+from .signals import flush_telemetry as flush_telemetry
 from .signals import ASpan
 from .config import Configuration
 from .attributes import ResourceAttributes

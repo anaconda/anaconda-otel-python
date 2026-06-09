@@ -102,8 +102,10 @@ class _AnacondaMetrics(_AnacondaCommon):
         # Create and set meter provider
         meter_provider = MeterProvider(
             resource=self.resource,
-            metric_readers=[self.metric_reader]
+            metric_readers=[self.metric_reader],
+            shutdown_on_exit=self._shutdown_on_exit
         )
+        self._provider = meter_provider
         try:
             metrics.set_meter_provider(meter_provider)
         except Exception as e:
