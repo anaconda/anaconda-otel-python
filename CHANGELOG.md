@@ -2,6 +2,41 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.2.1] (2026-06-16)
+
+### Added
+
+- Added `send_event` to `__init__.py`
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Fixes different import path required by exclusion of send_event
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+- pip install reads version [#71](https://github.com/anaconda/anaconda-otel-python/pull/71)
+
+
+
 ## [v1.2.0] (2026-06-09)
 
 ### Added
