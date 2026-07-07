@@ -95,8 +95,10 @@ class ResourceAttributes:
     )
 
     def __setattr__(self, key, value):
+        is_aau_key = isinstance(key, str) and key.startswith("aau.")
         if value is None or key is None:
-            logging.getLogger(__package__).warning(f"Either an attribute or key is None which is not allowed. Attribute: `{key}`. Value: `{value}`")
+            if not is_aau_key:
+                logging.getLogger(__package__).warning(f"Either an attribute or key is None which is not allowed. Attribute: `{key}`. Value: `{value}`")
         elif hasattr(self, '_readonly_fields') and key in self._readonly_fields:
             logging.getLogger(__package__).warning(f"Attempted overwrite of readonly common attribute {key}")
         elif (key == "service_name" or key == "service_version") and not self._check_valid_string(value):
