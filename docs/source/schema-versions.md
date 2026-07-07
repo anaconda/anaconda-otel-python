@@ -2,7 +2,7 @@
 This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
 ## Current Schema
-### [v0.4.0] (4/16/2025)
+### [v0.4.0] (4/16/2026)
 ```
 {
   "resourceMetrics|resourceLogs": [
