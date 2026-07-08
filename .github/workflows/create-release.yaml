@@ -134,3 +134,10 @@ jobs:
             --title "${{ steps.version.outputs.tag }}" \
             --target main \
             --notes-file /tmp/release_notes.md
+
+  publish:
+    name: Publish to PyPI
+    needs: [release]
+    uses: ./.github/workflows/publish-to-pypi.yaml
+    permissions:
+      id-token: write
