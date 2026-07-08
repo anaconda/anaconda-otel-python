@@ -178,7 +178,7 @@ def shutdown_telemetry(*, timeout_seconds: Optional[float] = None) -> bool:
     Performs a bounded *force-flush* (via :func:`flush_telemetry`). It intentionally does
     not call ``provider.shutdown()``: at process exit that only adds worker-thread joins
     (more blocking) with no benefit. Pair with
-    ``initialize_telemetry(..., shutdown_on_exit=False)`` to control flush timing from a
+    ``config.set_shutdown_on_exit(False)`` to control flush timing from a
     signal handler or atexit path.
 
     With ``timeout_seconds=None`` the flush runs synchronously (unbounded). When set, the
