@@ -2,7 +2,7 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
-## [v1.2.1] (2026-06-16)
+## [v1.2.1] (2026-07-08)
 
 ### Added
 
@@ -10,7 +10,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Changed
 
-- N/A
+- Updated `shutdown_telemetry` docstring to reflect actual setup
 
 ### Deprecated
 
@@ -18,7 +18,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Removed
 
-- N/A
+- Log warnings for `None` resource attribute values if the key stems from `anaconda-anon-usage`
 
 ### Fixed
 
