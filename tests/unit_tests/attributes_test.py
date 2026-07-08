@@ -176,6 +176,23 @@ class TestResourceAttributes(unittest.TestCase):
         attrs.service_name = None
         mock_logger_instance.warning.assert_called()
 
+    @patch('logging.getLogger')
+    def test_setattr_aau_key_with_none_value_no_warning(self, mock_logger):
+        """Test that setting None values for AAU keys does NOT trigger a warning"""
+        mock_logger_instance = MagicMock()
+        mock_logger.return_value = mock_logger_instance
+
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version
+        )
+
+        attrs.__setattr__("aau.client.token", None)
+        attrs.__setattr__("aau.session.token", None)
+        attrs.__setattr__("aau.organization.tokens", None)
+
+        mock_logger_instance.warning.assert_not_called()
+
     def test_setattr_converts_to_string(self):
         """Test that setattr converts values to strings"""
         attrs = ResourceAttributes(
@@ -420,3 +437,29 @@ class TestAnonUsageAttributes(unittest.TestCase):
         all_attrs = attrs._get_attributes()
         for key, _ in self.MOCK_TOKEN_FUNCS:
             self.assertNotIn(key, all_attrs)
+
+    @patch('logging.getLogger')
+    def test_anon_usage_with_none_token_values_no_warning(self, mock_logger):
+        """Test that AAU token functions returning None do not trigger warnings"""
+        mock_logger_instance = MagicMock()
+        mock_logger.return_value = mock_logger_instance
+
+        MOCK_TOKEN_FUNCS_WITH_NONE = [
+            ("aau.version", lambda: "mock_version_token"),
+            ("aau.client.token", lambda: None),
+            ("aau.session.token", lambda: "mock_session_token"),
+            ("aau.environment.token", lambda: None),
+            ("aau.organization.tokens", lambda: None),
+            ("aau.installer.tokens", lambda: ["mock_installer_token"]),
+            ("aau.machine.tokens", lambda: None),
+            ("aau.anaconda_auth.token", lambda: "mock_auth_token"),
+        ]
+
+        with patch("anaconda_opentelemetry.attributes.TOKEN_FUNCS", MOCK_TOKEN_FUNCS_WITH_NONE):
+            attrs = ResourceAttributes(
+                service_name=self.test_service_name,
+                service_version=self.test_service_version,
+                anon_usage=True
+            )
+
+        mock_logger_instance.warning.assert_not_called()
