@@ -7,20 +7,12 @@
 Anaconda Telemetry - Logging signal class and EventLogger.
 """
 
-import warnings
-from opentelemetry.sdk._logs import LogDeprecatedInitWarning
-warnings.filterwarnings(
-    "ignore",
-    category=LogDeprecatedInitWarning,
-    message=".*LogRecord will be removed.*",
-)
-
 import json
 import logging
 from typing import Dict
 
 from opentelemetry import _logs
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler, LogRecord
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 
 from .common import _AnacondaCommon
