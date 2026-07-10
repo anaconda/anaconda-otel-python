@@ -130,8 +130,8 @@ class _AnacondaMetrics(_AnacondaCommon):
             raise MetricsNotInitialized(f"Metric type '{metric_type}' is unknown!")
         metric = bucket_list.get(metric_name, None)
         if metric is None:
-            if not re.fullmatch(r"^[A-Za-z][A-Za-z_0-9]+$", metric_name):
-                self.logger.warning(f"Metric {metric_name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9]+$\"")
+            if not re.fullmatch(r"^[A-Za-z][A-Za-z_0-9.]+$", metric_name):
+                self.logger.warning(f"Metric {metric_name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]+$\"")
                 return None
             create = self.create_dispatcher.get(metric_type, None)
             if create is None:

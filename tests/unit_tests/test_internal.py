@@ -740,7 +740,7 @@ class TestAnacondaMetrics:
         AnacondaMetric._get_or_create_metric(name)
 
         AnacondaMetric.logger.warning.assert_called_once_with(
-            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9]+$\""
+            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]+$\""
         )
         assert AnacondaMetric.type_list["simple_up_down_counter"] == {}
 
