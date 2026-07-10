@@ -41,43 +41,65 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+  integration-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Integration Tests
+        uses: ./.github/actions/integration-tests/
+        with:
+          python-version: ${{ matrix.python-version }}
+
   test-status:
-    name: Unit Tests Status
+    name: Tests Status
     if: always()
-    needs: [detect-changes, unit-tests]
+    needs: [detect-changes, unit-tests, integration-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate test results
         run: |
           echo "::group::Change Detection Results"
-          echo "Python changes detected: ${{ needs.detect-changes.outputs.python }}"
-          echo "TypeScript changes detected: ${{ needs.detect-changes.outputs.typescript }}"
+          echo "Package changes detected: ${{ needs.detect-changes.outputs.package }}"
           echo "::endgroup::"
-          
+
           echo "::group::Test Execution Results"
-          echo "Python tests result: ${{ needs.python-tests.result }}"
-          echo "TypeScript tests result: ${{ needs.typescript-tests.result }}"
+          echo "Unit tests result: ${{ needs.unit-tests.result }}"
+          echo "Integration tests result: ${{ needs.integration-tests.result }}"
           echo "::endgroup::"
-          
-          # Check Python tests
-          if [[ "${{ needs.detect-changes.outputs.python }}" == "true" ]]; then
-            if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then
-              echo "Python tests passed (required due to changes)"
-            else
-              echo "Python tests failed or were cancelled"
+
+          if [[ "${{ needs.detect-changes.outputs.package }}" == "true" ]]; then
+            if [[ "${{ needs.unit-tests.result }}" != "success" ]]; then
+              echo "Unit tests failed or were cancelled"
               exit 1
             fi
+            if [[ "${{ needs.integration-tests.result }}" != "success" ]]; then
+              echo "Integration tests failed or were cancelled"
+              exit 1
+            fi
+            echo "All tests passed (required due to changes)"
           else
-            echo "Python tests skipped (no changes detected)"
+            echo "Tests skipped (no changes detected)"
           fi
-          
-          # Handle workflow_dispatch case
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "::notice::Manual workflow run - checking all executed tests"
             if [[ "${{ needs.unit-tests.result }}" != "success" && "${{ needs.unit-tests.result }}" != "skipped" ]]; then
-              echo "Python tests failed in manual run"
+              echo "Unit tests failed in manual run"
+              exit 1
+            fi
+            if [[ "${{ needs.integration-tests.result }}" != "success" && "${{ needs.integration-tests.result }}" != "skipped" ]]; then
+              echo "Integration tests failed in manual run"
               exit 1
             fi
           fi
-          
+
           echo "::notice:: All required tests have passed!"
