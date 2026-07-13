@@ -13,13 +13,12 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         miniforge-version: latest
-        activate-environment: test-env
-        auto-activate-base: false
+        auto-activate-base: true
 
     - name: Install conda-build
       shell: bash -el {0}
       run: |
-        conda install -y conda-build
+        conda install -n base -y conda-build
 
     - name: Build conda package
       shell: bash -el {0}
