@@ -9,7 +9,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup Conda
-      uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+      uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
       with:
         python-version: ${{ inputs.python-version }}
         miniforge-version: latest
