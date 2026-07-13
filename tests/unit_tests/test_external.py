@@ -356,6 +356,7 @@ class TestInitializeTelemetry:
             os.environ['OTEL_SDK_DISABLED'] = 'true'  # Ensure OTEL_SDK_DISABLED is not set
             cfg = Config(default_endpoint='http://localhost:4317')
             cfg.set_console_exporter(False)
+            cfg.set_shutdown_on_exit(False)
             attributes = Attributes("test_service", "1.0.0")
 
             initialize_telemetry(cfg, attributes, signal_types=['metrics', 'logging', 'tracing'])
@@ -1145,6 +1146,7 @@ class TestLogging:
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_without_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
+        cfg.set_shutdown_on_exit(False)
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=[])
         assert get_telemetry_logger_handler() is None
@@ -1153,6 +1155,7 @@ class TestLogging:
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_get_telemetry_logger_handler_with_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
+        cfg.set_shutdown_on_exit(False)
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
         assert get_telemetry_logger_handler() is not None
@@ -1176,6 +1179,7 @@ class TestSendEvent:
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_send_event_without_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
+        cfg.set_shutdown_on_exit(False)
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=[])
         assert send_event("test", "test.event") is False
@@ -1184,6 +1188,7 @@ class TestSendEvent:
     @patch('anaconda_opentelemetry.signals._AnacondaLogger._instance', new=_instance)
     def test_send_event_with_logger(self):
         cfg = Config(default_endpoint='http://localhost:4317')
+        cfg.set_shutdown_on_exit(False)
         attr = Attributes('test_service_name', '1.2.3')
         initialize_telemetry(config=cfg, attributes=attr, signal_types=['logging'])
         assert send_event("test message", "test.event") is True

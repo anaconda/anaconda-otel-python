@@ -12,8 +12,47 @@ permissions:
   contents: write
 
 jobs:
+  unit-tests:
+    name: Unit Tests Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+
+      - name: Run Unit Tests
+        uses: ./.github/actions/unit-tests
+        with:
+          python-version: ${{ matrix.python-version }}
+
+  integration-tests:
+    name: Integration Tests Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+
+      - name: Run Integration Tests
+        uses: ./.github/actions/integration-tests
+        with:
+          python-version: ${{ matrix.python-version }}
+
   release:
     name: Create Release
+    needs: [unit-tests, integration-tests]
     runs-on: ubuntu-latest
 
     steps:
@@ -147,7 +186,7 @@ jobs:
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Build wheel and sdist
         run: pipx run build

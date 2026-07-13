@@ -23,4 +23,4 @@ runs:
 
     - name: Run integration tests
       shell: bash
-      run: python -m pytest tests/integration_tests/test_trace_carrier.py
+      run: python -m pytest tests/integration_tests/

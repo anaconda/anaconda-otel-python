@@ -35,10 +35,15 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pytest pytest-cov
 
-      - name: Run UT
+      - name: Run Unit Tests
         shell: bash
         run: |
           OTEL_USE_CONSOLE_EXPORTER=TRUE pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
+
+      - name: Run Integration Tests
+        shell: bash
+        run: |
+          pytest --color=yes tests/integration_tests/
 
       - name: Run Build Script
         shell: bash

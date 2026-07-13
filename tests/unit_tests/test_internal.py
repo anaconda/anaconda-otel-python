@@ -4,11 +4,13 @@
 import sys, time, json
 sys.path.append("./")
 
+import anaconda_opentelemetry.signals
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
 from anaconda_opentelemetry.signals import _AnacondaCommon as AnacondaTelBase
 from anaconda_opentelemetry.signals import _AnacondaLogger as AnacondaLogger
 from anaconda_opentelemetry.signals import _AnacondaTrace as AnacondaTrace
 from anaconda_opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
+from anaconda_opentelemetry.signals import shutdown_telemetry
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.formatting import AttrDict, log_event_name_key
 from opentelemetry.trace import Span, Tracer
@@ -63,6 +65,7 @@ class TestAnacondaCommon:
         config_dict, attributes = config_values['configs'], config_values['attributes']
         config_dict['entropy'] = "timestamp"  # this value is required and normally initialized by initialize_telemetry()
         config = Config(config_dict=config_dict)
+        config.set_shutdown_on_exit(False)
 
         service_name = "test-service"
         service_version = "1.0.0"
@@ -296,7 +299,8 @@ class TestAnacondaLogger:
         """
         - Checks that the OTLPLogExporter from grpc library was called once
         """
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
 
         _ = AnacondaLogger(config, attr)
@@ -308,7 +312,8 @@ class TestAnacondaLogger:
         """
         - Checks that the OTLPLogExporter from grpc library was called once
         """
-        config = Config(default_endpoint="grpc://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="grpc://localhost:4317")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         _ = AnacondaLogger(config, attr)
 
@@ -331,7 +336,7 @@ class TestAnacondaLogger:
             "WaRnInG": logging.WARNING,  # mixed case input
         }
         # with patch('anaconda_opentelemetry.signals._AnacondaLogger._inject_otel_logging'):
-        alogger = AnacondaLogger(Config(default_endpoint='http://localhost:4317').set_console_exporter(True),
+        alogger = AnacondaLogger(Config(default_endpoint='http://localhost:4317'),
                                 Attributes(service_name='test_name', service_version='0.0.0'))
         for input_str, expected in test_cases.items():
             result = alogger._get_log_level(input_str)
@@ -347,7 +352,9 @@ class TestAnacondaLogger:
         """
         Checks that the logging handler's filter injects log.event.name='__LOG__' on log records.
         """
-        alogger = AnacondaLogger(Config(default_endpoint='http://localhost:4317').set_console_exporter(True),
+        config = Config(default_endpoint='http://localhost:4317')
+        config.set_shutdown_on_exit(False)
+        alogger = AnacondaLogger(config,
                                  Attributes(service_name='test_name', service_version='0.0.0'))
         handler = alogger._get_log_handler()
         record = logging.LogRecord(
@@ -364,12 +371,14 @@ class TestAnacondaTrace:
 
     @pytest.fixture(scope="class")
     def AnacondaTracer(self) -> AnacondaTrace:
+        from opentelemetry import trace
         if TestAnacondaTrace.instance is None:
             TestAnacondaTrace.logger = MagicMock()
             config_values = read_config()
             config_dict = config_values['configs']
             config_dict['entropy'] = "timestamp"  # this value is required and normally initialized by initialize_telemetry()
-            config = Config(default_endpoint='http://localhost:4317').set_console_exporter(True)
+            config = Config(default_endpoint='http://localhost:4317')
+            config.set_shutdown_on_exit(False)
             attributes = Attributes("test-service", "1.0.0")
             with patch('opentelemetry.trace.set_tracer_provider'),\
                  patch('opentelemetry.sdk.trace.export.ConsoleSpanExporter'):
@@ -377,7 +386,10 @@ class TestAnacondaTrace:
                 TestAnacondaTrace.instance.use_console_exporters = False
                 TestAnacondaTrace.instance.logger = TestAnacondaTrace.logger
 
-        return TestAnacondaTrace.instance
+        yield TestAnacondaTrace.instance
+
+        # trace.get_tracer_provider().shutdown()
+        TestAnacondaTrace.instance = None
 
     @pytest.fixture
     def ASpanFactory(self) -> Callable[[AnacondaTrace, str, Dict[str, str]], object]:
@@ -441,6 +453,7 @@ class TestAnacondaTrace:
         """
 
         config = Config(default_endpoint="http://localhost")
+        config.set_shutdown_on_exit(False)
         tracer = AnacondaTracer._setup_tracing(config)
         mock_exporter_http.assert_called_once()
 
@@ -459,6 +472,7 @@ class TestAnacondaTrace:
         """
         AnacondaTracer._request_protocol = 'grpc'
         config = Config(default_endpoint="grpc://localhost")
+        config.set_shutdown_on_exit(False)
         tracer = AnacondaTracer._setup_tracing(config)
         mock_exporter_grpc.assert_called_once()
 
@@ -688,11 +702,13 @@ class TestAnacondaMetrics:
 
     @pytest.fixture(scope="class")
     def AnacondaMetric(self) -> AnacondaMetrics:
+        from opentelemetry import metrics
         if TestAnacondaMetrics.instance is None:
             config_values = read_config()
             config_dict, attributes_dict = config_values['configs'], config_values['attributes']
             config_dict['entropy'] = "timestamp"  # this value is required and normally initialized by initialize_telemetry()
             config = Config(config_dict=config_dict)
+            config.set_shutdown_on_exit(False)
             attributes = Attributes("test-service", "1.0.0")
             attributes.set_attributes(**attributes_dict)
             # initialize class for testing
@@ -701,7 +717,10 @@ class TestAnacondaMetrics:
                 TestAnacondaMetrics.instance.use_console_exporters = False
                 TestAnacondaMetrics.instance.logger = MagicMock()
 
-        return TestAnacondaMetrics.instance
+        yield TestAnacondaMetrics.instance
+
+        # metrics.get_meter_provider().shutdown()
+        TestAnacondaMetrics.instance = None
 
     @patch('opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter')
     def test_setup_metrics_http(self, mock_exporter_http: MagicMock, AnacondaMetric: AnacondaMetrics):
@@ -711,6 +730,7 @@ class TestAnacondaMetrics:
         """
         mock_exporter_http.__name__ = 'OTLPMetricExporter'
         config = Config(default_endpoint="http://localhost")
+        config.set_shutdown_on_exit(False)
         metrics = AnacondaMetric._setup_metrics(config)
         mock_exporter_http.assert_called_once()
 
@@ -724,6 +744,7 @@ class TestAnacondaMetrics:
         - Checks that grpc library is called for exporter
         """
         config = Config(default_endpoint="grpc://localhost")
+        config.set_shutdown_on_exit(False)
         metrics = AnacondaMetric._setup_metrics(config)
         mock_exporter_grpc.assert_called_once()
 
@@ -881,7 +902,8 @@ class TestAnacondaMetrics:
         - Checks that the temporaity is cumulative when set by caller.
         """
         cfg = Config(default_endpoint="http://localhost/v1/metrics")
-        cfg.set_use_cumulative_metrics(True).set_console_exporter(True)
+        cfg.set_use_cumulative_metrics(True)
+        cfg.set_shutdown_on_exit(False)
         attr = Attributes("test-service", "1.0.0")
         with patch('opentelemetry.metrics.set_meter_provider'):
             metrics = AnacondaMetrics(cfg, attr)
@@ -1018,7 +1040,7 @@ class TestBuildHttpExporterKwargs:
 
     @pytest.fixture
     def common_instance(self):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(True)
+        config = Config(default_endpoint="http://localhost:4317")
         attributes = Attributes(service_name='test-name', service_version='0.0.0')
         return AnacondaTelBase(config, attributes)
 
@@ -1051,7 +1073,7 @@ class TestBuildHttpExporterKwargs:
         assert kwargs['endpoint'] == 'http://localhost:4317/v1/metrics'
 
     def test_kwargs_correct_ca_cert_per_signal(self):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(True)
+        config = Config(default_endpoint="http://localhost:4317")
         attributes = Attributes(service_name='test-name', service_version='0.0.0')
         instance = AnacondaTelBase(config, attributes)
 
@@ -1071,8 +1093,9 @@ class TestProxyInSignalSetup:
 
     @patch('opentelemetry.exporter.otlp.proto.http._log_exporter.OTLPLogExporter')
     def test_logging_http_with_proxy(self, mock_exporter):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
         config.set_proxy_url("http://proxy:8080")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         logger = AnacondaLogger(config, attr)
         call_kwargs = mock_exporter.call_args
@@ -1085,15 +1108,17 @@ class TestProxyInSignalSetup:
 
     @patch('opentelemetry.exporter.otlp.proto.http._log_exporter.OTLPLogExporter')
     def test_logging_http_without_proxy(self, mock_exporter):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         logger = AnacondaLogger(config, attr)
         assert 'session' not in logger.exporter._init_kwargs
 
     @patch('opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter')
     def test_tracing_http_with_proxy(self, mock_exporter):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
         config.set_proxy_url("http://proxy:8080")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         with patch('opentelemetry.trace.set_tracer_provider'):
             tracer = AnacondaTrace(config, attr)
@@ -1102,7 +1127,8 @@ class TestProxyInSignalSetup:
 
     @patch('opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter')
     def test_tracing_http_without_proxy(self, mock_exporter):
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         with patch('opentelemetry.trace.set_tracer_provider'):
             tracer = AnacondaTrace(config, attr)
@@ -1111,7 +1137,8 @@ class TestProxyInSignalSetup:
     @patch('opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter')
     def test_metrics_http_with_proxy(self, mock_exporter):
         mock_exporter.__name__ = 'OTLPMetricExporter'
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_shutdown_on_exit(False)
         config.set_proxy_url("http://proxy:8080")
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         with patch('opentelemetry.metrics.set_meter_provider'):
@@ -1122,7 +1149,8 @@ class TestProxyInSignalSetup:
     @patch('opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter')
     def test_metrics_http_without_proxy(self, mock_exporter):
         mock_exporter.__name__ = 'OTLPMetricExporter'
-        config = Config(default_endpoint="http://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="http://localhost:4317")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         with patch('opentelemetry.metrics.set_meter_provider'):
             metrics = AnacondaMetrics(config, attr)
@@ -1130,8 +1158,9 @@ class TestProxyInSignalSetup:
 
     @patch('opentelemetry.exporter.otlp.proto.grpc._log_exporter.OTLPLogExporter')
     def test_grpc_not_affected_by_proxy(self, mock_exporter):
-        config = Config(default_endpoint="grpc://localhost:4317").set_console_exporter(False)
+        config = Config(default_endpoint="grpc://localhost:4317")
         config.set_proxy_url("http://proxy:8080")
+        config.set_shutdown_on_exit(False)
         attr = Attributes(service_name='test-name', service_version='0.0.0')
         logger = AnacondaLogger(config, attr)
         assert 'session' not in logger.exporter._init_kwargs
