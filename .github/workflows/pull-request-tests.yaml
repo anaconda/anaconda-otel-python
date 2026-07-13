@@ -22,8 +22,9 @@ jobs:
           filters: |
             package:
               - 'anaconda_opentelemetry/**'
+              - 'conda-recipe/**'
 
-  unit-tests:
+  conda-package-tests:
     needs: detect-changes
     if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -36,33 +37,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Run Unit Tests
-        uses: ./.github/actions/unit-tests/
-        with:
-          python-version: ${{ matrix.python-version }}
-
-  integration-tests:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Run Integration Tests
-        uses: ./.github/actions/integration-tests/
+      - name: Build and Test Conda Package
+        uses: ./.github/actions/conda-package-tests/
         with:
           python-version: ${{ matrix.python-version }}
 
   test-status:
     name: Tests Status
     if: always()
-    needs: [detect-changes, unit-tests, integration-tests]
+    needs: [detect-changes, conda-package-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate test results
@@ -72,17 +55,12 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Test Execution Results"
-          echo "Unit tests result: ${{ needs.unit-tests.result }}"
-          echo "Integration tests result: ${{ needs.integration-tests.result }}"
+          echo "Conda package tests result: ${{ needs.conda-package-tests.result }}"
           echo "::endgroup::"
 
           if [[ "${{ needs.detect-changes.outputs.package }}" == "true" ]]; then
-            if [[ "${{ needs.unit-tests.result }}" != "success" ]]; then
-              echo "Unit tests failed or were cancelled"
-              exit 1
-            fi
-            if [[ "${{ needs.integration-tests.result }}" != "success" ]]; then
-              echo "Integration tests failed or were cancelled"
+            if [[ "${{ needs.conda-package-tests.result }}" != "success" ]]; then
+              echo "Conda package tests failed or were cancelled"
               exit 1
             fi
             echo "All tests passed (required due to changes)"
@@ -92,12 +70,8 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "::notice::Manual workflow run - checking all executed tests"
-            if [[ "${{ needs.unit-tests.result }}" != "success" && "${{ needs.unit-tests.result }}" != "skipped" ]]; then
-              echo "Unit tests failed in manual run"
-              exit 1
-            fi
-            if [[ "${{ needs.integration-tests.result }}" != "success" && "${{ needs.integration-tests.result }}" != "skipped" ]]; then
-              echo "Integration tests failed in manual run"
+            if [[ "${{ needs.conda-package-tests.result }}" != "success" && "${{ needs.conda-package-tests.result }}" != "skipped" ]]; then
+              echo "Conda package tests failed in manual run"
               exit 1
             fi
           fi
