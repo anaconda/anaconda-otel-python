@@ -15,6 +15,8 @@ from anaconda_opentelemetry.signals import (
     record_histogram,
     increment_counter,
     get_trace,
+    shutdown_telemetry,
+    flush_telemetry,
     _AnacondaLogger
 )
 
@@ -47,6 +49,7 @@ class ExampleApp:
         config = Configuration(default_endpoint=otel_endpoint)
 
         config.set_console_exporter(use_console=use_console_exporter)
+        config.set_shutdown_on_exit(False)
         attrs.set_attributes(**{"cheese": "american", "test": "hello"})
 
         # initialize package
@@ -101,6 +104,8 @@ def simulate_metric() -> str:
 
     # Find the ConsoleMetricExporter in the metric readers
     exporter_found = False
+    saved_out = None
+    exporter_ref = None
     if hasattr(meter_provider, '_all_metric_readers'):
         # Iterate through _all_metric_readers
         for reader_ref in meter_provider._all_metric_readers:
@@ -108,8 +113,10 @@ def simulate_metric() -> str:
                 exporter = reader_ref._exporter
                 # Check if it's a ConsoleMetricExporter
                 if exporter.__class__.__name__ == 'ConsoleMetricExporter':
-                    # Replace its out attribute
+                    # Save and replace its out attribute
+                    saved_out = exporter.out
                     exporter.out = mock_out
+                    exporter_ref = exporter
                     exporter_found = True
                     break
 
@@ -119,10 +126,17 @@ def simulate_metric() -> str:
     # Run the simulation
     example.export_metric()
 
-    # Force metrics to export
-    meter_provider.force_flush(timeout_millis=10000)
+    # Force flush telemetry
+    flush_telemetry()
 
-    return mock_out.getvalue()
+    # Get output
+    output = mock_out.getvalue()
+
+    # Restore original output
+    if saved_out is not None and exporter_ref is not None:
+        exporter_ref.out = saved_out
+
+    return output
 
 def simulate_log() -> str:
     # Create ExampleApp with logging enabled
@@ -137,15 +151,18 @@ def simulate_log() -> str:
 
     example.export_log()
 
-    # Force flush logs to ensure they're written to our StringIO
-    inst._provider.force_flush()
+    # Force flush telemetry before restoring
+    flush_telemetry()
+
+    # Get output before restoring
+    output = mock_out.getvalue()
 
     # Restore logger state
     inst._test_set_console_mock(saved)
     example.remove_handler()
 
     # return outout as a string
-    return mock_out.getvalue()
+    return output
 
 def simulate_trace() -> str:
     from opentelemetry import trace
@@ -157,6 +174,8 @@ def simulate_trace() -> str:
     # Create a StringIO object to capture output
     mock_out = StringIO()
     exporter_found = False
+    saved_out = None
+    exporter_ref = None
 
     # get trace provider
     trace_provider = trace.get_tracer_provider()
@@ -171,8 +190,10 @@ def simulate_trace() -> str:
                     if hasattr(processor, 'span_exporter'):
                         exporter = processor.span_exporter
                         if isinstance(exporter, ConsoleSpanExporter):
-                            # Replace its out attribute
+                            # Save and replace its out attribute
+                            saved_out = exporter.out
                             exporter.out = mock_out
+                            exporter_ref = exporter
                             exporter_found = True
                             break
 
@@ -186,6 +207,13 @@ def simulate_trace() -> str:
     example.export_trace()
 
     # force flush
-    trace_provider.force_flush()
+    flush_telemetry()
 
-    return mock_out.getvalue()
+    # Get output
+    output = mock_out.getvalue()
+
+    # Restore
+    if saved_out is not None and exporter_ref is not None:
+        exporter_ref.out = saved_out
+
+    return output

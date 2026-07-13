@@ -28,7 +28,7 @@ requirements:
     - opentelemetry-exporter-otlp-proto-http ==1.40.0
     - opentelemetry-proto ==1.40.0
     - opentelemetry-sdk ==1.40.0
-    - opentelemetry-semantic-conventions ==0.59b0
+    - opentelemetry-semantic-conventions ==0.61b0
     - grpcio >=1.71.0
 
 about:
