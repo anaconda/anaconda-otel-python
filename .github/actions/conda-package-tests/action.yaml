@@ -18,20 +18,20 @@ runs:
     - name: Install conda-build
       shell: bash -el {0}
       run: |
-        conda install -n base -y conda-build
+        conda install -n base -y conda-build -q
 
     - name: Build conda package
       shell: bash -el {0}
       run: |
-        conda build conda-recipe --output-folder ./build
+        conda build conda-recipe --output-folder ./build -q
 
     - name: Create test environment and install package
       shell: bash -el {0}
       run: |
-        conda create -n package-test python=${{ inputs.python-version }} -y
+        conda create -n package-test python=${{ inputs.python-version }} -y -q
         conda activate package-test
-        conda install -c ./build anaconda-opentelemetry -y
-        conda install pytest flask -y
+        conda install -c ./build anaconda-opentelemetry -y -q
+        conda install pytest flask -y -q
 
     - name: Run unit tests
       shell: bash -el {0}

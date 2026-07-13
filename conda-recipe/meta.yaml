@@ -19,7 +19,7 @@ requirements:
     - setuptools
     - wheel
   run:
-    - python >=3.9
+    - python >=3.10
     - anaconda-anon-usage
     - pyyaml >=6.0.2
     - opentelemetry-api ==1.40.0

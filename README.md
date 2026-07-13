@@ -11,6 +11,13 @@ includes a quickstart guide accessed from the left list.
 
 The OpenTelemetry output format is documented at [this location](https://github.com/anaconda/anaconda-otel-python/blob/main/docs/source/schema-versions.md).
 
+## Support Python versions
+- 3.10
+- 3.11
+- 3.12
+- 3.13
+- 3.14
+
 ## Coverage Report
 The latest coverage report for the last merged Pull Request is [here](https://anaconda.github.io/anaconda-otel-python/coverage/index.html).
 

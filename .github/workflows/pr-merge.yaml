@@ -1,4 +1,4 @@
-name: Deploy docs to GitHub Pages (on PR merge)
+name: Deploy docs & coverage to GitHub Pages (on PR merge)
 
 on:
   push:
@@ -33,6 +33,12 @@ jobs:
       - name: Install requirements.txt
         run: |
           python -m pip install -r requirements.txt
+          python -m pip install pytest pytest-cov
+
+      - name: Run Unit Tests with Coverage
+        shell: bash
+        run: |
+          OTEL_USE_CONSOLE_EXPORTER=TRUE pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
 
       - name: Run Build Script
         shell: bash
@@ -43,8 +49,9 @@ jobs:
         shell: bash
         run: |
           rm -rf site
-          mkdir -p site/docs
+          mkdir -p site/docs site/coverage
           cp -r docs/build/html/* site/docs/
+          cp -r htmlcov/* site/coverage/
           touch site/.nojekyll
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
