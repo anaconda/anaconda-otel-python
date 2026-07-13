@@ -33,16 +33,12 @@ jobs:
       - name: Install requirements.txt
         run: |
           python -m pip install -r requirements.txt
+          python -m pip install pytest pytest-cov
 
-      - name: Run Unit Tests
-        uses: ./.github/actions/unit-tests/
-        with:
-          python-version: 3.14
-
-      - name: Run Integration Tests
-        uses: ./.github/actions/integration-tests/
-        with:
-          python-version: 3.14
+      - name: Run Unit Tests with Coverage
+        shell: bash
+        run: |
+          OTEL_USE_CONSOLE_EXPORTER=TRUE pytest --color=yes --cov=./anaconda_opentelemetry --cov-report=html --cov-report=term-missing tests/unit_tests
 
       - name: Run Build Script
         shell: bash

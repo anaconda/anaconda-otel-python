@@ -12,47 +12,28 @@ permissions:
   contents: write
 
 jobs:
-  unit-tests:
-    name: Unit Tests Python ${{ matrix.python-version }}
+  conda-package-tests:
+    name: Conda Package Tests Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: main
 
-      - name: Run Unit Tests
-        uses: ./.github/actions/unit-tests
-        with:
-          python-version: ${{ matrix.python-version }}
-
-  integration-tests:
-    name: Integration Tests Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: main
-
-      - name: Run Integration Tests
-        uses: ./.github/actions/integration-tests
+      - name: Build and Test Conda Package
+        uses: ./.github/actions/conda-package-tests/
         with:
           python-version: ${{ matrix.python-version }}
 
   release:
     name: Create Release
-    needs: [unit-tests, integration-tests]
+    needs: [conda-package-tests]
     runs-on: ubuntu-latest
 
     steps:
