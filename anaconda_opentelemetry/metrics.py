@@ -11,7 +11,7 @@ import logging, re
 from typing import Dict, Any
 
 from opentelemetry import metrics
-from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
+from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter, _Gauge
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality
 
 from .common import _AnacondaCommon, MetricsNotInitialized
@@ -31,6 +31,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         Histogram: AggregationTemporality.CUMULATIVE,
         UpDownCounter: AggregationTemporality.DELTA,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
+        _Gauge: AggregationTemporality.CUMULATIVE,  # A gauge is a last-value metric; DELTA is meaningless for it.
     }
 
     _cumulative_temporality: dict[type,AggregationTemporality] = {
@@ -39,6 +40,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         Histogram: AggregationTemporality.CUMULATIVE,
         UpDownCounter: AggregationTemporality.CUMULATIVE,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
+        _Gauge: AggregationTemporality.CUMULATIVE,
     }
 
     _temporalityValue: dict[bool,str] = {
@@ -54,17 +56,20 @@ class _AnacondaMetrics(_AnacondaCommon):
         self.counter_objects: Dict[str, Any] = {}
         self.up_down_counter_objects: Dict[str, Any] = {}
         self.histogram_objects: Dict[str, Any] = {}
+        self.gauge_objects: Dict[str, Any] = {}
 
         self.meter = self._setup_metrics(config)
         self.create_dispatcher = {
             'simple_counter': self.meter.create_counter,
             'simple_up_down_counter': self.meter.create_up_down_counter,
-            'histogram': self.meter.create_histogram
+            'histogram': self.meter.create_histogram,
+            'gauge': self.meter.create_gauge
         }
         self.type_list = {
             'simple_counter': self.counter_objects,
             'simple_up_down_counter': self.up_down_counter_objects,
-            'histogram': self.histogram_objects
+            'histogram': self.histogram_objects,
+            'gauge': self.gauge_objects
         }
 
     def _setup_metrics(self, config: Config) -> metrics.Meter:
@@ -154,6 +159,21 @@ class _AnacondaMetrics(_AnacondaCommon):
             self.logger.error(f"Metric '{metric_name}' failed to be created.")
             return False
         metric.record(value, attributes)
+        return True
+
+    def set_gauge(self, metric_name, value, attributes: AttrDict={}) -> bool:
+        # Set a gauge metric with the given name to the given value; the last value set wins.
+        # Unlike the other instruments, OTel's Gauge.set() does no arithmetic on the value, so a
+        # non-numeric value is accepted here and only fails later during serialization -- which
+        # discards the whole export batch, not just this metric. Reject it up front instead.
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            self.logger.error(f"Metric '{metric_name}' gauge value must be an int or float, not {type(value).__name__}.")
+            return False
+        metric = self._get_or_create_metric(metric_name, metric_type='gauge', units='#', description='Dynamically create gauge metric.')
+        if metric is None:
+            self.logger.error(f"Metric '{metric_name}' failed to be created.")
+            return False
+        metric.set(value, attributes)
         return True
 
     def increment_counter(self, counter_name, by=1, attributes: AttrDict={}) -> bool:
