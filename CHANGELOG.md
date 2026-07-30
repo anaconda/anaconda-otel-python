@@ -2,6 +2,40 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [Unreleased]
+
+### Added
+
+- Added the `gauge` metric type and the `set_gauge` API for recording last-value metrics
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- N/A
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- N/A
+
 ## [v1.2.1] (2026-07-08)
 
 ### Added
