@@ -17,10 +17,7 @@ from opentelemetry import _logs
 from opentelemetry.sdk._logs import Logger, LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
 
-try:  # opentelemetry-sdk >= 1.40.0 removed LogRecord from the public SDK namespace
-    from opentelemetry.sdk._logs import LogRecord
-except ImportError:  # pragma: no cover - depends on installed SDK version
-    LogRecord = None
+from opentelemetry.sdk._logs import LogRecord
 
 from .common import _AnacondaCommon
 from .config import Configuration as Config
