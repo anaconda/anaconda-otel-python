@@ -288,6 +288,36 @@ class TestAnacondaCommon:
                 "Attributes `{None: 'val'}` passed with non empty str type key. Invalid attributes."
             )
 
+    def test_process_attributes_all_attrdict_types(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that all types specified in AttrDict are properly handled
+        AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar], Dict]]
+        """
+        AnacondaCommon._user_id = None
+        attributes: AttrDict = {
+            "str_val": "test_string",
+            "bool_val": True,
+            "int_val": 42,
+            "float_val": 3.14,
+            "list_str": ["a", "b", "c"],
+            "list_int": [1, 2, 3],
+            "list_bool": [True, False],
+            "list_float": [1.1, 2.2],
+            "list_mixed": ["x", 1, True, 2.5],
+            "dict_val": {"nested": "value", "count": 10}
+        }
+        output_attributes = AnacondaCommon._process_attributes(attributes)
+        assert output_attributes["str_val"] == "test_string"
+        assert output_attributes["bool_val"] == "True"
+        assert output_attributes["int_val"] == "42"
+        assert output_attributes["float_val"] == "3.14"
+        assert output_attributes["list_str"] == json.dumps(["a", "b", "c"])
+        assert output_attributes["list_int"] == json.dumps([1, 2, 3])
+        assert output_attributes["list_bool"] == json.dumps([True, False])
+        assert output_attributes["list_float"] == json.dumps([1.1, 2.2])
+        assert output_attributes["list_mixed"] == json.dumps(["x", 1, True, 2.5])
+        assert output_attributes["dict_val"] == json.dumps({"nested": "value", "count": 10})
+
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None
