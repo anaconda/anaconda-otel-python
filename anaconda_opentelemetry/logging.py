@@ -7,19 +7,32 @@
 Anaconda Telemetry - Logging signal class and EventLogger.
 """
 
+import inspect
 import json
 import logging
+from time import time_ns
 from typing import Dict
 
 from opentelemetry import _logs
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs import Logger, LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
+
+try:  # opentelemetry-sdk >= 1.40.0 removed LogRecord from the public SDK namespace
+    from opentelemetry.sdk._logs import LogRecord
+except ImportError:  # pragma: no cover - depends on installed SDK version
+    LogRecord = None
 
 from .common import _AnacondaCommon
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
 from .exporter_shim import OTLPLogExporterShim
 from .formatting import AttrDict, EventPayload, log_event_name_key
+
+# ``Logger.emit`` gained keyword arguments (body=, attributes=, ...) in
+# opentelemetry-sdk 1.40.0; before that it took a single positional LogRecord.
+# This package pins ==1.40.0, but an older SDK already present in the
+# environment wins at import time, so detect the shape instead of assuming it.
+_EMIT_TAKES_KWARGS = 'body' in inspect.signature(Logger.emit).parameters
 
 
 class EventLogger:
@@ -46,8 +59,17 @@ class EventLogger:
         if not isinstance(body, str):
             body = json.dumps(body)
         # update attributes with event name - mandatory for event logs
-        attributes.update({log_event_name_key: event_name})
-        self._logger.emit(body=body, attributes=attributes)
+        # copy first: `attributes` may be a caller-owned dict (or the default {})
+        attributes = {**attributes, log_event_name_key: event_name}
+        if _EMIT_TAKES_KWARGS:
+            self._logger.emit(body=body, attributes=attributes)
+        else:
+            # opentelemetry-sdk < 1.40.0: emit() takes a single LogRecord.
+            self._logger.emit(LogRecord(
+                body=body,
+                attributes=attributes,
+                observed_timestamp=time_ns(),
+            ))
 
 
 class _AnacondaLogger(_AnacondaCommon):

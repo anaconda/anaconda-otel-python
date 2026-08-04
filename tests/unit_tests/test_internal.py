@@ -15,6 +15,8 @@ from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.formatting import AttrDict, log_event_name_key
 from opentelemetry.trace import Span, Tracer
 from opentelemetry.metrics import Meter, Histogram
+from opentelemetry.sdk.metrics import _Gauge
+from opentelemetry.sdk.metrics.export import AggregationTemporality
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.context import Context
 
@@ -851,6 +853,132 @@ class TestAnacondaMetrics:
         assert result is True
         mock_metric.record.assert_called_once_with(value, {"tag": "test"})
 
+    def test_set_gauge_success(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that method returns True given assembled inputs
+        - Checks that _Gauge.set was called exactly once with expected arguments
+        """
+        mock_metric = MagicMock()
+
+        # Inject a fake metric into the instance
+        AnacondaMetric.type_list["gauge"]['my_gauge'] = mock_metric
+
+        value = 17.5
+
+        result = AnacondaMetric.set_gauge("my_gauge", value, {"tag": "test"})
+
+        assert result is True
+        mock_metric.set.assert_called_once_with(value, {"tag": "test"})
+
+    def test_set_gauge_default_attributes(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that method returns True after correctly falling back to default attributes
+        - Checks that _Gauge.set was called exactly once with an empty attributes dict
+        """
+        mock_metric = MagicMock()
+
+        AnacondaMetric.type_list["gauge"]['default_gauge'] = mock_metric
+
+        result = AnacondaMetric.set_gauge("default_gauge", 3)
+
+        assert result is True
+        mock_metric.set.assert_called_once_with(3, {})
+
+    def test_set_gauge_negative_and_zero_values(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that gauge values are passed through unmodified, unlike counters which use abs()
+        """
+        mock_metric = MagicMock()
+
+        AnacondaMetric.type_list["gauge"]['signed_gauge'] = mock_metric
+
+        for value in (-42.5, 0, 99):
+            assert AnacondaMetric.set_gauge("signed_gauge", value) is True
+
+        assert [call.args[0] for call in mock_metric.set.call_args_list] == [-42.5, 0, 99]
+
+    def test_set_gauge_reuses_existing_metric(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that repeated calls with the same name do not create a new gauge object
+        """
+        create_mock = MagicMock()
+        saved_dispatcher = AnacondaMetric.create_dispatcher
+        AnacondaMetric.create_dispatcher = {'gauge': create_mock}
+        try:
+            AnacondaMetric.type_list["gauge"].pop('reused_gauge', None)
+
+            assert AnacondaMetric.set_gauge("reused_gauge", 1) is True
+            assert AnacondaMetric.set_gauge("reused_gauge", 2) is True
+
+            create_mock.assert_called_once_with(
+                "reused_gauge", unit='#', description='Dynamically create gauge metric.'
+            )
+            assert create_mock.return_value.set.call_count == 2
+        finally:
+            AnacondaMetric.create_dispatcher = saved_dispatcher
+
+    def test_set_gauge_invalid_name_returns_false(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that an invalid metric name is rejected, logged, and no gauge is created
+        """
+        AnacondaMetric.logger = MagicMock()
+        name = "1_bad gauge"
+
+        assert AnacondaMetric.set_gauge(name, 5) is False
+
+        AnacondaMetric.logger.warning.assert_called_once_with(
+            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]+$\""
+        )
+        assert name not in AnacondaMetric.type_list["gauge"]
+
+    @pytest.mark.parametrize("value", ["7", None, True, False, [1], {"a": 1}, object()])
+    def test_set_gauge_non_numeric_value_returns_false(self, value, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that a non-numeric gauge value is rejected before reaching the otel instrument
+        - Rejecting up front matters because otel's Gauge.set() accepts anything and the failure
+          would otherwise surface at serialization, discarding the entire export batch
+        - bool is rejected too; it is an int subclass but never a meaningful gauge reading
+        """
+        AnacondaMetric.logger = MagicMock()
+        mock_metric = MagicMock()
+        AnacondaMetric.type_list["gauge"]['rejecting_gauge'] = mock_metric
+
+        assert AnacondaMetric.set_gauge("rejecting_gauge", value) is False
+
+        mock_metric.set.assert_not_called()
+        AnacondaMetric.logger.error.assert_called_once_with(
+            f"Metric 'rejecting_gauge' gauge value must be an int or float, not {type(value).__name__}."
+        )
+
+    @pytest.mark.parametrize("value", [0, 42, -42, 0.0, 12.5, -0.001])
+    def test_set_gauge_accepts_int_and_float(self, value, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that valid numeric values still pass validation and reach the instrument unmodified
+        """
+        mock_metric = MagicMock()
+        AnacondaMetric.type_list["gauge"]['numeric_gauge'] = mock_metric
+
+        assert AnacondaMetric.set_gauge("numeric_gauge", value) is True
+
+        mock_metric.set.assert_called_once_with(value, {})
+
+    def test_set_gauge_bad_value_does_not_create_metric(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that a rejected value short-circuits before the gauge object is created, so a bad
+          call cannot register an instrument as a side effect
+        """
+        AnacondaMetric.logger = MagicMock()
+        create_mock = MagicMock()
+        saved_dispatcher = AnacondaMetric.create_dispatcher
+        AnacondaMetric.create_dispatcher = {'gauge': create_mock}
+        try:
+            assert AnacondaMetric.set_gauge("never_created_gauge", "not a number") is False
+
+            create_mock.assert_not_called()
+            assert 'never_created_gauge' not in AnacondaMetric.type_list["gauge"]
+        finally:
+            AnacondaMetric.create_dispatcher = saved_dispatcher
+
     def test_increment_counter_success_counter(self, AnacondaMetric: AnacondaMetrics):
         """
         - Checks that method returns False given correctly assembled inputs
@@ -939,6 +1067,65 @@ class TestAnacondaMetrics:
             metrics = AnacondaMetrics(cfg, attr)
             assert metrics._cumulative_temporality == metrics._get_temporality()
 
+    def test_gauge_registered_on_new_instance(self):
+        """
+        - Checks that a freshly built instance wires 'gauge' into both the dispatcher and the type list
+        - Checks that the gauge dispatcher entry is the otel Meter.create_gauge method
+        """
+        cfg = Config(default_endpoint="http://localhost/v1/metrics")
+        cfg.set_shutdown_on_exit(False)
+        attr = Attributes("test-service", "1.0.0")
+        with patch('opentelemetry.metrics.set_meter_provider'):
+            metrics = AnacondaMetrics(cfg, attr)
+
+        assert metrics.create_dispatcher['gauge'] == metrics.meter.create_gauge
+        assert metrics.type_list['gauge'] is metrics.gauge_objects
+        assert metrics.gauge_objects == {}
+
+    def test_gauge_temporality_always_cumulative(self):
+        """
+        - Checks that a gauge is CUMULATIVE in both the default and cumulative temporality maps,
+          since a last-value metric has no meaningful DELTA representation
+        """
+        for temporality_map in (AnacondaMetrics._default_temporality, AnacondaMetrics._cumulative_temporality):
+            assert temporality_map[_Gauge] == AggregationTemporality.CUMULATIVE
+
+    def test_gauge_creates_real_otel_gauge(self):
+        """
+        - Checks that the create path produces a real otel SDK gauge with the expected unit and description
+        - Uses the instance's own provider so a real meter (not the global proxy meter) is exercised
+        """
+        cfg = Config(default_endpoint="http://localhost/v1/metrics")
+        cfg.set_shutdown_on_exit(False)
+        attr = Attributes("test-service", "1.0.0")
+        with patch('opentelemetry.metrics.set_meter_provider'):
+            metrics = AnacondaMetrics(cfg, attr)
+
+        real_meter = metrics._provider.get_meter("test-service", "1.0.0")
+        metrics.meter = real_meter
+        metrics.create_dispatcher['gauge'] = real_meter.create_gauge
+
+        assert metrics.set_gauge("real_gauge", 12.5, {"host": "local"}) is True
+
+        gauge = metrics.type_list['gauge']['real_gauge']
+        assert isinstance(gauge, _Gauge)
+        assert gauge.unit == '#'
+        assert gauge.description == 'Dynamically create gauge metric.'
+
+def _emitted(mock_provider):
+    """Return (body, attributes) from the recorded Logger.emit call.
+
+    ``Logger.emit`` takes keyword arguments (body=, attributes=) on
+    opentelemetry-sdk >= 1.40.0 and a single positional LogRecord before that,
+    so read whichever shape was used rather than assuming one.
+    """
+    call = mock_provider.get_logger.return_value.emit.call_args
+    if call.kwargs:
+        return call.kwargs["body"], call.kwargs["attributes"]
+    record = call.args[0]
+    return record.body, dict(record.attributes)
+
+
 class TestEventLogger:
     """Tests for the EventLogger class."""
 
@@ -967,17 +1154,16 @@ class TestEventLogger:
         event_logger._send_event("test message", "test.event")
         mock_logger = mock_provider.get_logger.return_value
         mock_logger.emit.assert_called_once()
-        kwargs = mock_logger.emit.call_args.kwargs
-        assert kwargs["body"] == "test message"
-        assert kwargs["attributes"][log_event_name_key] == "test.event"
+        body, attributes = _emitted(mock_provider)
+        assert body == "test message"
+        assert attributes[log_event_name_key] == "test.event"
 
     def test_send_event_with_attributes(self, event_logger, mock_provider):
         attrs = {"key": "value"}
         event_logger._send_event("error msg", "error.event", attributes=attrs)
-        mock_logger = mock_provider.get_logger.return_value
-        kwargs = mock_logger.emit.call_args.kwargs
-        assert kwargs["body"] == "error msg"
-        assert kwargs["attributes"] == {"key": "value", log_event_name_key: "error.event"}
+        body, attributes = _emitted(mock_provider)
+        assert body == "error msg"
+        assert attributes == {"key": "value", log_event_name_key: "error.event"}
 
     def test_send_event_missing_event_name(self, event_logger):
         """Verifies that _send_event raises TypeError when event_name is not passed."""
@@ -987,31 +1173,31 @@ class TestEventLogger:
     def test_send_event_default_empty_attributes(self, event_logger, mock_provider):
         """Verifies that _send_event defaults to empty dict with event_name still injected."""
         event_logger._send_event("msg", "test.event")
-        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
-        assert kwargs["attributes"] == {log_event_name_key: "test.event"}
+        _, attributes = _emitted(mock_provider)
+        assert attributes == {log_event_name_key: "test.event"}
 
     def test_send_event_body_string_passthrough(self, event_logger, mock_provider):
         """Verifies that a string body is passed through unchanged."""
         event_logger._send_event("plain text", "test.event")
-        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
-        assert kwargs["body"] == "plain text"
-        assert isinstance(kwargs["body"], str)
+        body, _ = _emitted(mock_provider)
+        assert body == "plain text"
+        assert isinstance(body, str)
 
     def test_send_event_body_dict_serialized(self, event_logger, mock_provider):
         """Verifies that a dict body is JSON-serialized."""
         body = {"status": "ok", "count": 42}
         event_logger._send_event(body, "test.event")
-        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
-        assert kwargs["body"] == json.dumps(body)
-        assert isinstance(kwargs["body"], str)
+        emitted_body, _ = _emitted(mock_provider)
+        assert emitted_body == json.dumps(body)
+        assert isinstance(emitted_body, str)
 
     def test_send_event_body_list_serialized(self, event_logger, mock_provider):
         """Verifies that a list body is JSON-serialized."""
         body = [1, "two", {"three": 3}]
         event_logger._send_event(body, "test.event")
-        kwargs = mock_provider.get_logger.return_value.emit.call_args.kwargs
-        assert kwargs["body"] == json.dumps(body)
-        assert isinstance(kwargs["body"], str)
+        emitted_body, _ = _emitted(mock_provider)
+        assert emitted_body == json.dumps(body)
+        assert isinstance(emitted_body, str)
 
 
 class TestProxyConfig:

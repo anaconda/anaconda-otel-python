@@ -14,6 +14,7 @@ from anaconda_opentelemetry.signals import (
     get_telemetry_logger_handler,
     record_histogram,
     increment_counter,
+    set_gauge,
     get_trace,
     shutdown_telemetry,
     flush_telemetry,
@@ -88,6 +89,13 @@ class ExampleApp:
         record_histogram(
             "request_duration_seconds",
             value=processing_time,
+            attributes={"endpoint": "/api/data"}
+        )
+
+        # Set the current queue depth gauge
+        set_gauge(
+            "request_queue_depth",
+            value=random.randint(1, 10),
             attributes={"endpoint": "/api/data"}
         )
 

@@ -8,7 +8,8 @@ import unittest, pytest, logging, os, tempfile
 from unittest.mock import patch, MagicMock
 import anaconda_opentelemetry.signals as signals_package
 from anaconda_opentelemetry.signals import initialize_telemetry, record_histogram, increment_counter, \
-    decrement_counter, get_trace, get_telemetry_logger_handler, send_event, MetricsNotInitialized, change_signal_endpoint
+    decrement_counter, set_gauge, get_trace, get_telemetry_logger_handler, send_event, MetricsNotInitialized, \
+    change_signal_endpoint
 from anaconda_opentelemetry.signals import __check_internet_status as check_internet
 from anaconda_opentelemetry.config import Configuration as Config
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
@@ -553,6 +554,192 @@ class TestRecordHistogram:
             assert mock_logger_instance.error.call_count == len(test_cases)
             for call in mock_logger_instance.error.call_args_list:
                 assert "Anaconda telemetry system not initialized." in call[0][0]
+
+class TestSetGauge:
+
+    def setup_method(self):
+        """Reset global state before each test"""
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", False)
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_successful_gauge_set_minimal_params(self, mock_metrics: MagicMock):
+        """
+        Test successful gauge set with minimal required parameters
+        - Sets telemetry as initialized
+        - Calls set_gauge with metric name and value only
+        - Verifies _AnacondaMetrics._instance.set_gauge is called with correct params
+        - Confirms function returns True when underlying method succeeds
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance.set_gauge.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        result = set_gauge("queue_depth", 12)
+
+        assert result is True
+        mock_metrics_instance.set_gauge.assert_called_once_with(
+            "queue_depth", 12, {}
+        )
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_successful_gauge_set_with_attributes(self, mock_metrics: MagicMock):
+        """
+        Test successful gauge set with custom attributes
+        - Verifies attributes are processed and passed through correctly
+        - Confirms function returns True
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance.set_gauge.return_value = True
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        custom_attributes = {
+            "host": "worker-01",
+            "environment": "production",
+            "region": "us-west-2"
+        }
+        mock_metrics_instance._process_attributes.return_value = custom_attributes
+
+        result = set_gauge("memory_in_use_bytes", 1048576, custom_attributes)
+
+        assert result is True
+        mock_metrics_instance.set_gauge.assert_called_once_with(
+            "memory_in_use_bytes", 1048576, custom_attributes
+        )
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_gauge_set_failure_returns_false(self, mock_metrics: MagicMock):
+        """
+        Test that function returns False when the underlying set_gauge fails
+        - Configures underlying method to return False
+        - Verifies function propagates the False return value
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance.set_gauge.return_value = False
+        mock_metrics_instance._process_attributes.return_value = {}
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        result = set_gauge("failed_gauge", 5.5)
+
+        assert result is False
+        mock_metrics_instance.set_gauge.assert_called_once_with(
+            "failed_gauge", 5.5, {}
+        )
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_gauge_various_numeric_values(self, mock_metrics: MagicMock):
+        """
+        Test gauge set with various numeric value types
+        - Tests positive, negative, zero, integer, and float values
+        - Verifies negative values are passed through unchanged (gauges are not abs()'d like counters)
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance.set_gauge.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        test_values = [
+            ("positive_float", 123.456),
+            ("negative_float", -67.89),
+            ("zero_value", 0.0),
+            ("integer_value", 42),
+            ("very_small", 0.00001),
+            ("very_large", 999999.99)
+        ]
+
+        for metric_name, value in test_values:
+            assert set_gauge(metric_name, value) is True
+
+        assert mock_metrics_instance.set_gauge.call_count == len(test_values)
+        recorded = [call.args[1] for call in mock_metrics_instance.set_gauge.call_args_list]
+        assert recorded == [value for _, value in test_values]
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_gauge_empty_attributes_dict_default(self, mock_metrics: MagicMock):
+        """
+        Test that empty dict is used as default for the attributes parameter
+        - Calls function without attributes parameter
+        - Verifies underlying method receives empty dict
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance.set_gauge.return_value = True
+        mock_metrics_instance._process_attributes.return_value = {}
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        result = set_gauge("default_attrs_gauge", 50.0)
+
+        assert result is True
+        mock_metrics_instance.set_gauge.assert_called_once_with(
+            "default_attrs_gauge", 50.0, {}
+        )
+
+    @patch('anaconda_opentelemetry.signals._AnacondaMetrics')
+    def test_gauge_exception_handling(self, mock_metrics: MagicMock):
+        """
+        Test behavior when the underlying set_gauge method raises an exception
+        - MetricsNotInitialized is caught and False returned (logged as a warning)
+        - Any other exception is caught and False returned (logged as an error)
+        """
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+        mock_metrics_instance = MagicMock()
+        mock_metrics_instance._process_attributes.return_value = {}
+        setattr(mock_metrics, '_instance', mock_metrics_instance)
+
+        mock_metrics_instance.set_gauge.side_effect = MetricsNotInitialized("Metrics system error")
+        assert False == set_gauge("exception_gauge", 100.0)
+
+        # For uncaught exceptions...
+        mock_metrics_instance.set_gauge.side_effect = RuntimeError("Metrics system error")
+        assert False == set_gauge("exception_gauge2", 100.0)
+
+    def test_gauge_telemetry_not_initialized_returns_false(self):
+        """
+        Test that set_gauge returns False when telemetry is not initialized
+        - Verifies __ANACONDA_TELEMETRY_INITIALIZED is False before call
+        - Confirms function returns False and logs the uninitialized error
+        """
+        assert getattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED") is False
+
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_logger_instance = MagicMock()
+            mock_get_logger.return_value = mock_logger_instance
+
+            result = set_gauge("test_gauge", 42.5)
+
+            assert result is False
+            mock_logger_instance.error.assert_called_once_with(
+                "Anaconda telemetry system not initialized."
+            )
+
+    def test_gauge_bad_value_returns_false_through_public_api(self):
+        """
+        Test that a non-numeric gauge value is reported as a failure through the public API
+        - Drives a real _AnacondaMetrics rather than a mock so the value validation actually runs
+        - increment_counter returns False for the same input (abs() raises in our own code), so a
+          gauge must not be the one metric API that silently accepts garbage and reports success
+        - A bad value must not poison the metric: a valid value on the same name still succeeds
+        """
+        config = Config(default_endpoint="http://localhost:4318")
+        config.set_console_exporter(use_console=True)
+        config.set_shutdown_on_exit(False)
+        attributes = Attributes("test-service", "1.0.0")
+
+        with patch('opentelemetry.metrics.set_meter_provider'), \
+             patch('anaconda_opentelemetry.signals.__check_internet_status', return_value=(True, True)):
+            initialize_telemetry(config, attributes, signal_types=['metrics'])
+        setattr(signals_package, "__ANACONDA_TELEMETRY_INITIALIZED", True)
+
+        assert increment_counter("parity_counter", "not a number") is False
+        assert set_gauge("parity_gauge", "not a number") is False
+        assert set_gauge("parity_gauge", None) is False
+        assert set_gauge("parity_gauge", True) is False
+
+        assert set_gauge("parity_gauge", 5) is True
 
 class TestIncrementCounter:
 

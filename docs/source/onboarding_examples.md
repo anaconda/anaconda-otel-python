@@ -101,6 +101,15 @@ from anaconda_opentelemetry.signals import *
 record_histogram("request_duration_ms", value=123.4, attributes={"route": "/home"})
 ```
 
+#### Gauge
+Records the last value set, for values sampled at a point in time.
+
+```python
+from anaconda_opentelemetry.signals import *
+
+set_gauge("request_queue_depth", value=7, attributes={"host": "worker-01"})
+```
+
 #### Counter (Increment)
 
 ```python
