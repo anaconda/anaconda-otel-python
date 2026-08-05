@@ -57,6 +57,7 @@ class Configuration:
     - USE_CUMULATIVE_METRICS_NAME - If aggregating data in the client is required for Counter, or Histogram set this to a True state.
     - PROXY_URL_NAME - Used to set the proxy for telemetry exporters in this package
     - SHUTDOWN_ON_EXIT_NAME - If True (default), providers register atexit handlers that flush on interpreter exit. If False, the caller must manually call shutdown_telemetry() or flush_telemetry() before the process exits.
+    - VERBOSE_EXPORT_ERRORS_NAME - If False (default), OpenTelemetry export errors are suppressed. If True, export errors such as "Transient error" will be logged.
 
     To initializes the Configuration instance.
 
@@ -89,6 +90,7 @@ class Configuration:
     USE_CUMULATIVE_METRICS_NAME     = 'use_cumulative_metrics'
     PROXY_URL_NAME                  = 'proxy_url'
     SHUTDOWN_ON_EXIT_NAME           = 'shutdown_on_exit'
+    VERBOSE_EXPORT_ERRORS_NAME      = 'verbose_export_errors'
 
     _base_names: List[str] = [
         DEFAULT_ENDPOINT_NAME,
@@ -112,6 +114,7 @@ class Configuration:
         USE_CUMULATIVE_METRICS_NAME,
         PROXY_URL_NAME,
         SHUTDOWN_ON_EXIT_NAME,
+        VERBOSE_EXPORT_ERRORS_NAME,
     ]
 
     _endpoint_names: List[str] = [
@@ -140,6 +143,7 @@ class Configuration:
         SKIP_INTERNET_CHECK_NAME,
         USE_CUMULATIVE_METRICS_NAME,
         SHUTDOWN_ON_EXIT_NAME,
+        VERBOSE_EXPORT_ERRORS_NAME,
     ]
 
     _int_value_names: List[str] = [
@@ -588,6 +592,22 @@ class Configuration:
         self._config[self.SHUTDOWN_ON_EXIT_NAME] = value
         return self
 
+    def set_verbose_export_errors(self, value: bool):
+        """
+        Sets whether OpenTelemetry export errors are logged to stdout/stderr.
+        If False (default), export errors from the OpenTelemetry SDK are suppressed.
+        If True, export errors such as "Transient error" will be logged by the OpenTelemetry SDK.
+        The environment variable is 'ATEL_VERBOSE_EXPORT_ERRORS'.
+
+        Args:
+            value (bool): True to show export errors, False to suppress them.
+
+        Returns:
+            Self
+        """
+        self._config[self.VERBOSE_EXPORT_ERRORS_NAME] = value
+        return self
+
     def _get_proxy_url(self) -> str:
         return self._config.get(self.PROXY_URL_NAME, None)
 
@@ -810,3 +830,6 @@ class Configuration:
 
     def _get_shutdown_on_exit(self) -> bool:
         return self._config.get(self.SHUTDOWN_ON_EXIT_NAME, True)
+
+    def _get_verbose_export_errors(self) -> bool:
+        return self._config.get(self.VERBOSE_EXPORT_ERRORS_NAME, False)

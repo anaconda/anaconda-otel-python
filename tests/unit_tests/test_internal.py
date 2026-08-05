@@ -320,6 +320,19 @@ class TestAnacondaCommon:
         assert output_attributes["list_mixed"] == json.dumps(["x", 1, True, 2.5])
         assert output_attributes["dict_val"] == json.dumps({"nested": "value", "count": 10})
 
+    def test_process_attributes_list_with_uuid_fails(self, AnacondaCommon: AnacondaTelBase):
+        """
+        Checks that _process_attributes fails when list contains UUID objects
+        """
+        import uuid
+        AnacondaCommon._user_id = None
+        attributes: AttrDict = {
+            "ids": [uuid.uuid4(), uuid.uuid4()]
+        }
+        with pytest.raises(TypeError) as exc_info:
+            AnacondaCommon._process_attributes(attributes)
+        assert "not JSON serializable" in str(exc_info.value)
+
 
 class TestAnacondaLogger:
     instance: AnacondaLogger = None

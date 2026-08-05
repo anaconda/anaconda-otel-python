@@ -30,6 +30,17 @@ from .metrics import _AnacondaMetrics
 from .tracing import _AnacondaTrace, ASpan, _ASpan
 
 
+def _suppress_otel_export_errors():
+    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.http.exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.metric_exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.http.metric_exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.trace_exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.http.trace_exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc._log_exporter').setLevel(logging.CRITICAL)
+    logging.getLogger('opentelemetry.exporter.otlp.proto.http._log_exporter').setLevel(logging.CRITICAL)
+
+
 # Internet and endpoint access check method
 def __check_internet_status(config: Config, timeout: float = 5.0) -> tuple[bool,bool]: # seconds max to pause....
     # Relies on Configuration to validate the endpoint...
@@ -98,6 +109,9 @@ def initialize_telemetry(config: Config,
         raise ValueError(f"The attributes argument is required but was None")
     elif type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
+
+    if not config._get_verbose_export_errors():
+        _suppress_otel_export_errors()
 
     # Right now, no action is taken but it possible to disable telemetry with no access to the endpoint...
     _, _ = __check_internet_status(config, timeout=4)  # Max wait 4 seconds...
