@@ -30,15 +30,16 @@ from .metrics import _AnacondaMetrics
 from .tracing import _AnacondaTrace, ASpan, _ASpan
 
 
+_SUPPRESSED_LOGGER_ROOTS = ('opentelemetry',)
+
+
 def _suppress_otel_export_errors():
-    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.http.exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.metric_exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.http.metric_exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc.trace_exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.http.trace_exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.grpc._log_exporter').setLevel(logging.CRITICAL)
-    logging.getLogger('opentelemetry.exporter.otlp.proto.http._log_exporter').setLevel(logging.CRITICAL)
+    for root in _SUPPRESSED_LOGGER_ROOTS:
+        logging.getLogger(root).setLevel(logging.CRITICAL)
+        prefix = root + '.'
+        for name, logger in list(logging.Logger.manager.loggerDict.items()):
+            if name.startswith(prefix) and isinstance(logger, logging.Logger):
+                logger.setLevel(logging.NOTSET)
 
 
 # Internet and endpoint access check method

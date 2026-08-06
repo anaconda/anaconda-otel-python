@@ -32,6 +32,15 @@ class TestVerboseExportErrors:
 
         for logger_name in otel_loggers:
             logger = logging.getLogger(logger_name)
-            assert logger.level == logging.CRITICAL
+            assert logger.getEffectiveLevel() == logging.CRITICAL
             assert not logger.isEnabledFor(logging.WARNING)
             assert not logger.isEnabledFor(logging.ERROR)
+
+    def test_suppress_otel_export_errors_overrides_preexisting_child_level(self):
+        child = logging.getLogger('opentelemetry.sdk.trace.export')
+        child.setLevel(logging.DEBUG)
+
+        _suppress_otel_export_errors()
+
+        assert child.level == logging.NOTSET
+        assert not child.isEnabledFor(logging.ERROR)
