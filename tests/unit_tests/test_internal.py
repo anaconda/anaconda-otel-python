@@ -293,7 +293,7 @@ class TestAnacondaCommon:
     def test_process_attributes_all_attrdict_types(self, AnacondaCommon: AnacondaTelBase):
         """
         Checks that all types specified in AttrDict are properly handled
-        AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar], Dict]]
+        AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
         """
         AnacondaCommon._user_id = None
         attributes: AttrDict = {
@@ -306,7 +306,7 @@ class TestAnacondaCommon:
             "list_bool": [True, False],
             "list_float": [1.1, 2.2],
             "list_mixed": ["x", 1, True, 2.5],
-            "dict_val": {"nested": "value", "count": 10}
+            "dict_val": {"nested": "value"}
         }
         output_attributes = AnacondaCommon._process_attributes(attributes)
         assert output_attributes["str_val"] == "test_string"
@@ -318,7 +318,7 @@ class TestAnacondaCommon:
         assert output_attributes["list_bool"] == json.dumps([True, False])
         assert output_attributes["list_float"] == json.dumps([1.1, 2.2])
         assert output_attributes["list_mixed"] == json.dumps(["x", 1, True, 2.5])
-        assert output_attributes["dict_val"] == json.dumps({"nested": "value", "count": 10})
+        assert "dict_val" not in output_attributes
 
     def test_process_attributes_list_with_uuid_fails(self, AnacondaCommon: AnacondaTelBase):
         """

@@ -1,8 +1,7 @@
 from typing import Dict, Union, Sequence
 
-# Custom Typing
 Scalar = Union[str, bool, int, float]
-AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar], Dict]]
+AttrDict = Dict[str, Union[str, bool, int, float, Sequence[Scalar]]]
 EventPayload = Union[str, Dict[Union[str, int, float, bool], Union[str, int, float, bool]]]
 
 # Custom Naming

@@ -109,10 +109,14 @@ class _AnacondaCommon:
             self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
             attributes = {}
 
-        # serialize list/dict values to JSON strings to match __setattr__ behavior
         processed = {}
         for key, value in attributes.items():
-            processed[key] = json.dumps(value) if isinstance(value, (list, dict)) else str(value)
+            if isinstance(value, (str, bool, int, float)):
+                processed[key] = value
+            elif isinstance(value, (list, tuple)):
+                processed[key] = json.dumps(value)
+            else:
+                self.logger.debug(f"Skipping attribute '{key}' with unsupported type {type(value).__name__}")
 
         # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
         # for backwards compatability if people have been setting user.id with ResourceAttributes
