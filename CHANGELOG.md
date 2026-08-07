@@ -2,7 +2,7 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
-## [Unreleased]
+## [v1.2.2]
 
 ### Added
 
@@ -10,7 +10,9 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Changed
 
-- N/A
+- Updated telemetry attributes to serialize list and dict objects
+- Allow metric name regex to accept . characters
+- Updated opentelemetry dependencies to v1.40.0
 
 ### Deprecated
 
@@ -34,7 +36,10 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Pull Requests Merged
 
-- N/A
+- Added gauge + tests, fixed failing test [#91](https://github.com/anaconda/anaconda-otel-python/pull/91)
+- Support . chars in metric names [#84](https://github.com/anaconda/anaconda-otel-python/pull/84)
+- Support list and dict types as telemetry attributes and serialize them [#92](https://github.com/anaconda/anaconda-otel-python/pull/92)
+
 
 ## [v1.2.1] (2026-07-08)
 

@@ -381,6 +381,19 @@ class TestResourceAttributes(unittest.TestCase):
         self.assertEqual(attrs.client_sdk_version, __SDK_VERSION__)
         self.assertEqual(attrs.schema_version, __TELEMETRY_SCHEMA_VERSION__)
 
+    def test_setattr_json_serializes_list_with_uuid(self):
+        """Test that setattr fails to JSON-serialize list values containing UUIDs"""
+        import uuid
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version
+        )
+
+        with self.assertRaises(TypeError) as context:
+            attrs.hostname = [str(uuid.uuid4()), uuid.uuid4()]
+
+        self.assertIn("not JSON serializable", str(context.exception))
+
 
 class TestAnonUsageAttributes(unittest.TestCase):
 

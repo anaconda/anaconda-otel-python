@@ -30,6 +30,18 @@ from .metrics import _AnacondaMetrics
 from .tracing import _AnacondaTrace, ASpan, _ASpan
 
 
+_SUPPRESSED_LOGGER_ROOTS = ('opentelemetry',)
+
+
+def _suppress_otel_export_errors():
+    for root in _SUPPRESSED_LOGGER_ROOTS:
+        logging.getLogger(root).setLevel(logging.CRITICAL)
+        prefix = root + '.'
+        for name, logger in list(logging.Logger.manager.loggerDict.items()):
+            if name.startswith(prefix) and isinstance(logger, logging.Logger):
+                logger.setLevel(logging.NOTSET)
+
+
 # Internet and endpoint access check method
 def __check_internet_status(config: Config, timeout: float = 5.0) -> tuple[bool,bool]: # seconds max to pause....
     # Relies on Configuration to validate the endpoint...
@@ -98,6 +110,9 @@ def initialize_telemetry(config: Config,
         raise ValueError(f"The attributes argument is required but was None")
     elif type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
+
+    if not config._get_verbose_export_errors():
+        _suppress_otel_export_errors()
 
     # Right now, no action is taken but it possible to disable telemetry with no access to the endpoint...
     _, _ = __check_internet_status(config, timeout=4)  # Max wait 4 seconds...

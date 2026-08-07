@@ -109,12 +109,24 @@ class _AnacondaCommon:
             self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
             attributes = {}
 
+        processed = {}
+        for key, value in attributes.items():
+            if isinstance(value, (str, bool, int, float)):
+                processed[key] = value
+            elif isinstance(value, (list, tuple)):
+                if all(isinstance(item, (str, bool, int, float)) for item in value):
+                    processed[key] = tuple(value)
+                else:
+                    self.logger.debug(f"Skipping attribute '{key}' - sequence contains non-primitive types")
+            else:
+                self.logger.debug(f"Skipping attribute '{key}' with unsupported type {type(value).__name__}")
+
         # pulls a user id initially passed to ResourceAttributes and adds it to event specific events
         # for backwards compatability if people have been setting user.id with ResourceAttributes
         if not self._user_id:
-            return attributes  # no op
-        elif 'user.id' in attributes:
-            return attributes  # key already exists
+            return processed  # no op
+        elif 'user.id' in processed:
+            return processed  # key already exists
         else:
-            attributes['user.id'] = self._user_id
-            return attributes
+            processed['user.id'] = self._user_id
+            return processed
