@@ -310,9 +310,9 @@ class TestAnacondaCommon:
         }
         output_attributes = AnacondaCommon._process_attributes(attributes)
         assert output_attributes["str_val"] == "test_string"
-        assert output_attributes["bool_val"] == "True"
-        assert output_attributes["int_val"] == "42"
-        assert output_attributes["float_val"] == "3.14"
+        assert output_attributes["bool_val"] == True
+        assert output_attributes["int_val"] == 42
+        assert output_attributes["float_val"] == 3.14
         assert output_attributes["list_str"] == json.dumps(["a", "b", "c"])
         assert output_attributes["list_int"] == json.dumps([1, 2, 3])
         assert output_attributes["list_bool"] == json.dumps([True, False])
