@@ -313,25 +313,26 @@ class TestAnacondaCommon:
         assert output_attributes["bool_val"] == True
         assert output_attributes["int_val"] == 42
         assert output_attributes["float_val"] == 3.14
-        assert output_attributes["list_str"] == json.dumps(["a", "b", "c"])
-        assert output_attributes["list_int"] == json.dumps([1, 2, 3])
-        assert output_attributes["list_bool"] == json.dumps([True, False])
-        assert output_attributes["list_float"] == json.dumps([1.1, 2.2])
-        assert output_attributes["list_mixed"] == json.dumps(["x", 1, True, 2.5])
+        assert output_attributes["list_str"] == ("a", "b", "c")
+        assert output_attributes["list_int"] == (1, 2, 3)
+        assert output_attributes["list_bool"] == (True, False)
+        assert output_attributes["list_float"] == (1.1, 2.2)
+        assert output_attributes["list_mixed"] == ("x", 1, True, 2.5)
         assert "dict_val" not in output_attributes
 
-    def test_process_attributes_list_with_uuid_fails(self, AnacondaCommon: AnacondaTelBase):
+    def test_process_attributes_list_with_uuid_skipped(self, AnacondaCommon: AnacondaTelBase):
         """
-        Checks that _process_attributes fails when list contains UUID objects
+        Checks that _process_attributes skips lists containing non-primitive types like UUID objects
         """
         import uuid
         AnacondaCommon._user_id = None
         attributes: AttrDict = {
-            "ids": [uuid.uuid4(), uuid.uuid4()]
+            "ids": [uuid.uuid4(), uuid.uuid4()],
+            "valid": [1, 2, 3]
         }
-        with pytest.raises(TypeError) as exc_info:
-            AnacondaCommon._process_attributes(attributes)
-        assert "not JSON serializable" in str(exc_info.value)
+        output_attributes = AnacondaCommon._process_attributes(attributes)
+        assert "ids" not in output_attributes
+        assert output_attributes["valid"] == (1, 2, 3)
 
 
 class TestAnacondaLogger:

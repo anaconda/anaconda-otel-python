@@ -114,7 +114,10 @@ class _AnacondaCommon:
             if isinstance(value, (str, bool, int, float)):
                 processed[key] = value
             elif isinstance(value, (list, tuple)):
-                processed[key] = json.dumps(value)
+                if all(isinstance(item, (str, bool, int, float)) for item in value):
+                    processed[key] = tuple(value)
+                else:
+                    self.logger.debug(f"Skipping attribute '{key}' - sequence contains non-primitive types")
             else:
                 self.logger.debug(f"Skipping attribute '{key}' with unsupported type {type(value).__name__}")
 
