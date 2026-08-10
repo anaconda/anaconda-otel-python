@@ -268,26 +268,26 @@ class TestAnacondaCommon:
 
     def test_process_attributes_invalid_keys(self, AnacondaCommon: AnacondaTelBase):
         """
-        Checks that the pull_user_id method works as expected
+        Checks that only invalid keys are dropped, valid keys are preserved
         """
         with patch.object(AnacondaCommon, 'logger') as mock_logger:
             AnacondaCommon._user_id = None
-            output_attributes = AnacondaCommon._process_attributes({1: "val", 2: False})
-            assert output_attributes == {}
+            output_attributes = AnacondaCommon._process_attributes({1: "val", 2: False, "valid": "test"})
+            assert output_attributes == {"valid": "test"}
             mock_logger.error.assert_called_once_with(
-                "Attributes `{1: 'val', 2: False}` passed with non empty str type key. Invalid attributes."
+                "Dropping attributes with invalid keys: [1, 2]"
             )
 
     def test_process_attributes_none_keys(self, AnacondaCommon: AnacondaTelBase):
         """
-        Checks that the pull_user_id method works as expected
+        Checks that only None keys are dropped, valid keys are preserved
         """
         with patch.object(AnacondaCommon, 'logger') as mock_logger:
             AnacondaCommon._user_id = None
-            output_attributes = AnacondaCommon._process_attributes({None: "val"})
-            assert output_attributes == {}
+            output_attributes = AnacondaCommon._process_attributes({None: "val", "valid_key": "valid_val"})
+            assert output_attributes == {"valid_key": "valid_val"}
             mock_logger.error.assert_called_once_with(
-                "Attributes `{None: 'val'}` passed with non empty str type key. Invalid attributes."
+                "Dropping attributes with invalid keys: [None]"
             )
 
     def test_process_attributes_all_attrdict_types(self, AnacondaCommon: AnacondaTelBase):

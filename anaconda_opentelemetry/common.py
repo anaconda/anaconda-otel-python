@@ -104,10 +104,11 @@ class _AnacondaCommon:
         if not isinstance(attributes, Dict):
             self.logger.error(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
             attributes = {}
-        # check attributes for invalid keys
-        if any(not isinstance(key, str) or not key for key in attributes):
-            self.logger.error(f"Attributes `{attributes}` passed with non empty str type key. Invalid attributes.")
-            attributes = {}
+        # check attributes for invalid keys and filter them out
+        invalid_keys = [k for k in attributes if not isinstance(k, str) or not k]
+        if invalid_keys:
+            self.logger.error(f"Dropping attributes with invalid keys: {invalid_keys}")
+            attributes = {k: v for k, v in attributes.items() if isinstance(k, str) and k}
 
         processed = {}
         for key, value in attributes.items():
