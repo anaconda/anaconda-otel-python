@@ -48,6 +48,8 @@ class _AnacondaCommon:
         self._shutdown_on_exit = config._get_shutdown_on_exit()
 
     def make_otel_resource(self, attributes: Attributes):
+        # Hash any attributes with the hash property
+        attributes._hash_attributes()
         # Read resource attributes
         resource_attrs = attributes._get_attributes()
         # Required parameters

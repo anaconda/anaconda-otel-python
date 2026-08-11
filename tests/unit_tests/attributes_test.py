@@ -5,7 +5,7 @@
 import sys
 sys.path.append("./")
 
-import unittest, pytest
+import hashlib, unittest, pytest
 from unittest.mock import patch, MagicMock
 from anaconda_opentelemetry.attributes import ResourceAttributes
 from anaconda_opentelemetry.__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
@@ -393,6 +393,22 @@ class TestResourceAttributes(unittest.TestCase):
             attrs.hostname = [str(uuid.uuid4()), uuid.uuid4()]
 
         self.assertIn("not JSON serializable", str(context.exception))
+
+    def test_hash_attributes_hostname(self):
+        """Test that _hash_attributes hashes the hostname field"""
+        test_hostname = "test-machine-123"
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version,
+            hostname=test_hostname
+        )
+
+        expected_hash = hashlib.sha256(test_hostname.encode("utf-8")).hexdigest()
+        attrs._hash_attributes()
+
+        self.assertEqual(attrs.hostname, expected_hash)
+        self.assertNotEqual(attrs.hostname, test_hostname)
+        self.assertEqual(len(attrs.hostname), 64)
 
 
 class TestAnonUsageAttributes(unittest.TestCase):
