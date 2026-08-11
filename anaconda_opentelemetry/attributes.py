@@ -4,7 +4,7 @@
 
 # attributes.py
 
-import json, logging, platform, re
+import hashlib, json, logging, platform, re
 from typing import Dict, Tuple, Literal
 from dataclasses import dataclass, field, fields, InitVar
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
@@ -63,7 +63,7 @@ class ResourceAttributes:
     )
     hostname: str = field(
         default="",
-        metadata={"otel_name": "hostname"}
+        metadata={"otel_name": "hostname", "hash": True}
     )
     platform: str = field(
         default="",
@@ -157,6 +157,15 @@ class ResourceAttributes:
     def _get_attributes(self) -> Dict[str, str]:
         """Convert all attributes to a dictionary"""
         return {k: v for k, v in self.__dict__.items() if k != '_readonly_fields'}
+
+    def _hash_attributes(self) -> None:
+        """Hash any attributes that have the hash metadata property set to True"""
+        for f in fields(self):
+            if f.metadata.get("hash", False) is True:
+                attr_value = getattr(self, f.name, "")
+                if attr_value:
+                    hashed = hashlib.sha256(str(attr_value).encode("utf-8")).hexdigest()
+                    setattr(self, f.name, hashed)
 
     def set_attributes(self, **kwargs) -> None:
         """
