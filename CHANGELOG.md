@@ -25,6 +25,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 ### Fixed
 
 - Entire attributes payload is no longer discarded if an attributes has a key equal to `None`
+- `_process_attributes` no longer mutates the passed attribute dict
 
 ### Security
 
@@ -38,7 +39,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 - Added gauge + tests, fixed failing test [#91](https://github.com/anaconda/anaconda-otel-python/pull/91)
 - Support . chars in metric names [#84](https://github.com/anaconda/anaconda-otel-python/pull/84)
-- Support list and dict types as telemetry attributes and serialize them [#92](https://github.com/anaconda/anaconda-otel-python/pull/92)
+- Support list and tuple types as telemetry attributes [#92](https://github.com/anaconda/anaconda-otel-python/pull/92)
 - fix: Make None attribute key only drop itself [#93](https://github.com/anaconda/anaconda-otel-python/pull/93)
 
 

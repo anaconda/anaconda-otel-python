@@ -45,7 +45,8 @@ class TestResourceAttributes(unittest.TestCase):
         self.assertEqual(attrs.os_type, "Linux")
         self.assertEqual(attrs.os_version, "5.4.0")
         self.assertEqual(attrs.python_version, "3.9.0")
-        self.assertEqual(attrs.hostname, "test-host")
+        expected_hash = hashlib.sha256("test-host".encode("utf-8")).hexdigest()
+        self.assertEqual(attrs.hostname, expected_hash)
         self.assertEqual(attrs.platform, "AWS")
         self.assertEqual(attrs.environment, "production")
         self.assertEqual(attrs.user_id, "12345")
@@ -75,7 +76,8 @@ class TestResourceAttributes(unittest.TestCase):
         self.assertEqual(attrs.os_type, "Darwin")
         self.assertEqual(attrs.os_version, "20.6.0")
         self.assertEqual(attrs.python_version, "3.8.5")
-        self.assertEqual(attrs.hostname, "test-machine")
+        expected_hash = hashlib.sha256("test-machine".encode("utf-8")).hexdigest()
+        self.assertEqual(attrs.hostname, expected_hash)
 
     # Test readonly fields
     def test_readonly_fields_initialized(self):
@@ -217,7 +219,8 @@ class TestResourceAttributes(unittest.TestCase):
 
         attrs.hostname = ["token1", "token2"]
 
-        self.assertEqual(attrs.hostname, '["token1", "token2"]')
+        expected_hash = hashlib.sha256('["token1", "token2"]'.encode("utf-8")).hexdigest()
+        self.assertEqual(attrs.hostname, expected_hash)
         self.assertIsInstance(attrs.hostname, str)
 
     def test_setattr_json_serializes_dict(self):
@@ -229,7 +232,8 @@ class TestResourceAttributes(unittest.TestCase):
 
         attrs.hostname = {"key": "value"}
 
-        self.assertEqual(attrs.hostname, '{"key": "value"}')
+        expected_hash = hashlib.sha256('{"key": "value"}'.encode("utf-8")).hexdigest()
+        self.assertEqual(attrs.hostname, expected_hash)
         self.assertIsInstance(attrs.hostname, str)
 
     # Test _get_attributes method
@@ -395,7 +399,7 @@ class TestResourceAttributes(unittest.TestCase):
         self.assertIn("not JSON serializable", str(context.exception))
 
     def test_hash_attributes_hostname(self):
-        """Test that _hash_attributes hashes the hostname field"""
+        """Test that hostname is automatically hashed during initialization"""
         test_hostname = "test-machine-123"
         attrs = ResourceAttributes(
             service_name=self.test_service_name,
@@ -404,7 +408,6 @@ class TestResourceAttributes(unittest.TestCase):
         )
 
         expected_hash = hashlib.sha256(test_hostname.encode("utf-8")).hexdigest()
-        attrs._hash_attributes()
 
         self.assertEqual(attrs.hostname, expected_hash)
         self.assertNotEqual(attrs.hostname, test_hostname)
