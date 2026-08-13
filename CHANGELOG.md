@@ -7,6 +7,7 @@ We [keep a changelog.](http://keepachangelog.com/)
 ### Added
 
 - Added the `gauge` metric type and the `set_gauge` API for recording last-value metrics
+- Automatic hashing for hostname telemetry attribute
 
 ### Changed
 
