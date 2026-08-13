@@ -11,9 +11,11 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Changed
 
+- OpenTelemetry SDK logs are now suppressed by default to support CLI implementation, use `set_verbose_export_errors(True)` to enable those logs (more detail in `getting_started.md`)
 - Updated telemetry attributes to serialize list and dict objects
 - Allow metric name regex to accept . characters
 - Updated opentelemetry dependencies to v1.40.0
+- Various attribute logs changes from error to debug
 
 ### Deprecated
 
@@ -42,6 +44,8 @@ We [keep a changelog.](http://keepachangelog.com/)
 - Support . chars in metric names [#84](https://github.com/anaconda/anaconda-otel-python/pull/84)
 - Support list and tuple types as telemetry attributes [#92](https://github.com/anaconda/anaconda-otel-python/pull/92)
 - fix: Make None attribute key only drop itself [#93](https://github.com/anaconda/anaconda-otel-python/pull/93)
+- fix: hash hostname by default [#94](https://github.com/anaconda/anaconda-otel-python/pull/94)
+- fix: hostname hash not consistent between signal types [#95](https://github.com/anaconda/anaconda-otel-python/pull/95)
 
 
 ## [v1.2.1] (2026-07-08)

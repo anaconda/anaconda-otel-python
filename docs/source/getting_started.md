@@ -3,6 +3,9 @@
 This section provides a quick guide to initialize and use the OpenTelemetry Python client for tracing, logging, and
 metrics using the provided configuration. This package is for the implementation of OpenTelemetry instrumentation with a bare minimum knowledge requirement of OpenTelemetry itself.
 
+## Disclaimer on Developer Logs
+As of v1.2.2 OpenTelemetry SDK logs are suppressed. This is to prevent things like transient connection errors from populating as a log on CLIs. If you are developing with this package, use `set_verbose_export_errors(True)` to enable these logs. This suppression makes a decision for ALL OpenTelemetry SDK usage, not just this package's, so if you value the logs (ex. running in kubernetes) you should use this configuration option as well.
+
 ## Install the Package
 
 Install the OpenTelemetry Python telemetry package file via conda (recommend being in a conda environment):

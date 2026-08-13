@@ -184,9 +184,6 @@ class ResourceAttributes:
         for kwarg in kwargs:
             # if kwarg has already been initialized as a property
             if kwarg in self.__dict__.keys():
-                if kwarg in self._readonly_fields:
-                    logging.getLogger(__package__).warning(f"Attempted overwrite of readonly common attribute {kwarg}")
-                    continue
                 self.__setattr__(kwarg, kwargs[kwarg])
             else:
                 self.parameters[str(kwarg)] = str(kwargs[kwarg])
