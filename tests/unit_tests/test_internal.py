@@ -250,7 +250,7 @@ class TestAnacondaCommon:
             AnacondaCommon._user_id = None
             output_attributes = AnacondaCommon._process_attributes(None)
             assert output_attributes == {}
-            mock_logger.error.assert_called_once_with(
+            mock_logger.debug.assert_called_once_with(
                 "Attributes `None` are not a dictionary, they are not valid. They will be converted to an empty one."
             )
 
@@ -262,7 +262,7 @@ class TestAnacondaCommon:
             AnacondaCommon._user_id = None
             output_attributes = AnacondaCommon._process_attributes(123)
             assert output_attributes == {}
-            mock_logger.error.assert_called_once_with(
+            mock_logger.debug.assert_called_once_with(
                 "Attributes `123` are not a dictionary, they are not valid. They will be converted to an empty one."
             )
 
@@ -274,7 +274,7 @@ class TestAnacondaCommon:
             AnacondaCommon._user_id = None
             output_attributes = AnacondaCommon._process_attributes({1: "val", 2: False, "valid": "test"})
             assert output_attributes == {"valid": "test"}
-            mock_logger.error.assert_called_once_with(
+            mock_logger.debug.assert_called_once_with(
                 "Dropping attributes with invalid keys: [1, 2]"
             )
 
@@ -286,7 +286,7 @@ class TestAnacondaCommon:
             AnacondaCommon._user_id = None
             output_attributes = AnacondaCommon._process_attributes({None: "val", "valid_key": "valid_val"})
             assert output_attributes == {"valid_key": "valid_val"}
-            mock_logger.error.assert_called_once_with(
+            mock_logger.debug.assert_called_once_with(
                 "Dropping attributes with invalid keys: [None]"
             )
 
@@ -807,7 +807,7 @@ class TestAnacondaMetrics:
         AnacondaMetric._get_or_create_metric(name)
 
         AnacondaMetric.logger.warning.assert_called_once_with(
-            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]+$\""
+            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]*[A-Za-z_0-9]$\""
         )
         assert AnacondaMetric.type_list["simple_up_down_counter"] == {}
 
@@ -941,7 +941,21 @@ class TestAnacondaMetrics:
         assert AnacondaMetric.set_gauge(name, 5) is False
 
         AnacondaMetric.logger.warning.assert_called_once_with(
-            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]+$\""
+            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]*[A-Za-z_0-9]$\""
+        )
+        assert name not in AnacondaMetric.type_list["gauge"]
+
+    def test_metric_name_ending_with_period_rejected(self, AnacondaMetric: AnacondaMetrics):
+        """
+        - Checks that metric names ending with a period are rejected
+        """
+        AnacondaMetric.logger = MagicMock()
+        name = "metric.name."
+
+        assert AnacondaMetric.set_gauge(name, 5) is False
+
+        AnacondaMetric.logger.warning.assert_called_once_with(
+            f"Metric {name} does not match valid regex: r\"^[A-Za-z][A-Za-z_0-9.]*[A-Za-z_0-9]$\""
         )
         assert name not in AnacondaMetric.type_list["gauge"]
 

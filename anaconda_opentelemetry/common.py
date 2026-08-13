@@ -48,8 +48,6 @@ class _AnacondaCommon:
         self._shutdown_on_exit = config._get_shutdown_on_exit()
 
     def make_otel_resource(self, attributes: Attributes):
-        # Hash any attributes with the hash property
-        attributes._hash_attributes()
         # Read resource attributes
         resource_attrs = attributes._get_attributes()
         # Required parameters
@@ -104,12 +102,12 @@ class _AnacondaCommon:
     def _process_attributes(self, attributes: AttrDict={}):
         # ensure attributes are of type AttrDict
         if not isinstance(attributes, Dict):
-            self.logger.error(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
+            self.logger.debug(f"Attributes `{attributes}` are not a dictionary, they are not valid. They will be converted to an empty one.")
             attributes = {}
         # check attributes for invalid keys and filter them out
         invalid_keys = [k for k in attributes if not isinstance(k, str) or not k]
         if invalid_keys:
-            self.logger.error(f"Dropping attributes with invalid keys: {invalid_keys}")
+            self.logger.debug(f"Dropping attributes with invalid keys: {invalid_keys}")
             attributes = {k: v for k, v in attributes.items() if isinstance(k, str) and k}
 
         processed = {}

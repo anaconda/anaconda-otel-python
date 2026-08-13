@@ -597,7 +597,9 @@ class Configuration:
         Sets whether OpenTelemetry export errors are logged to stdout/stderr.
         If False (default), export errors from the OpenTelemetry SDK are suppressed.
         If True, export errors such as "Transient error" will be logged by the OpenTelemetry SDK.
-        The environment variable is 'ATEL_VERBOSE_EXPORT_ERRORS'.
+        The environment variable is 'ATEL_VERBOSE_EXPORT_ERRORS'. This will bubble up to global
+        OpenTelemetry logging, so make sure to set this to True off if those logs are important, or
+        in development.
 
         Args:
             value (bool): True to show export errors, False to suppress them.

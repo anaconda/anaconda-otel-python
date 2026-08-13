@@ -104,10 +104,14 @@ class ResourceAttributes:
         elif (key == "service_name" or key == "service_version") and not self._check_valid_string(value):
             raise ValueError(f"{key} not set. {value} is invalid regex for this key: `^[a-zA-Z0-9._-]{{1,30}}$`. This is a required parameter")
         else:
-            super().__setattr__(
-                str(key),
-                value if key == "parameters" else (json.dumps(value) if isinstance(value, (list, dict)) else str(value))
-            )
+            processed_value = value if key == "parameters" else (json.dumps(value) if isinstance(value, (list, dict)) else str(value))
+            # check if this attribute should be hashed
+            if processed_value:
+                for f in fields(self):
+                    if f.name == key and f.metadata.get("hash", False) is True:
+                        processed_value = hashlib.sha256(processed_value.encode("utf-8")).hexdigest()
+                        break
+            super().__setattr__(str(key), processed_value)
 
     def __post_init__(self, anon_usage: bool):
         # set non-init readonly
@@ -132,7 +136,7 @@ class ResourceAttributes:
 
         # check for valid environment
         valid_environments = {"", "test", "development", "staging", "production"}
-        
+
         # enforce lowercase
         self.environment = self.environment.strip().lower()
         if self.environment not in valid_environments:
@@ -158,21 +162,12 @@ class ResourceAttributes:
         """Convert all attributes to a dictionary"""
         return {k: v for k, v in self.__dict__.items() if k != '_readonly_fields'}
 
-    def _hash_attributes(self) -> None:
-        """Hash any attributes that have the hash metadata property set to True"""
-        for f in fields(self):
-            if f.metadata.get("hash", False) is True:
-                attr_value = getattr(self, f.name, "")
-                if attr_value:
-                    hashed = hashlib.sha256(str(attr_value).encode("utf-8")).hexdigest()
-                    setattr(self, f.name, hashed)
-
     def set_attributes(self, **kwargs) -> None:
         """
         Sets attributes according to key value pairs passed to this function. Will overwrite existing attributes, unless they are readonly.
-        
+
         Note: Setting user_id via this method is maintained for backwards compatability. Doing so will override any user_ids set later in event specific attributes.
-        
+
         Parameters:
             \\*\\*kwargs: any keyword arguments. This can set named class properties (common attributes), or any other wildcard name (stored in `parameters`)
         The following are the common attributes that can be set:
