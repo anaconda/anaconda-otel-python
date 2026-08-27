@@ -30,7 +30,7 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           "aau.organization.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
           "aau.installer.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
           "aau.machine.tokens": "[\"xyz\", \"abc\"]"  # nullable. json stringified list of org tokens
-          "aau.anaconda.auth.token": "xyz"  # nullable. token string
+          "aau.anaconda_auth.token": "xyz"  # nullable. token string
           "parameters": {...}  # optional dynamic values for flexibility - json object of key value pairs
         }
       }
