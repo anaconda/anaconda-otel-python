@@ -7,6 +7,8 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 - `os.type`, `os.version`, `python.version`, `hostname` are now optional. Auto-collection can be disabled via `ResourceAttributes(auto_collect=False)` or excluded individually via `exclude_auto_collect=[“hostname”, “python_version”]`
 - `session.id` is now optional. Can be disabled via `Configuration().set_disable_session_id(True)`
 
+**Note on optional attributes:** When optional attributes are not collected, they are **completely omitted** from the payload (both key and value are absent). They are never present with null or empty values.
+
 ```
 {
   “resourceMetrics|resourceLogs”: [
@@ -18,15 +20,15 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           “telemetry.sdk.version”: “1.33.1”,  # added by Otel
           “service.name”: “platform-service”,
           “service.version”: “x.x.x”,
-          “os.type”: “Darwin”,  # optional - can be excluded from auto-collection
-          “os.version”: “x.x.x”,  # optional - can be excluded from auto-collection
-          “python.version”: “3.13.2”,  # optional - can be excluded from auto-collection
-          “hostname”: “Users-MBP”,  # optional - can be excluded from auto-collection
+          “os.type”: “Darwin”,  # [optional] omitted entirely when excluded
+          “os.version”: “x.x.x”,  # [optional] omitted entirely when excluded
+          “python.version”: “3.13.2”,  # [optional] omitted entirely when excluded
+          “hostname”: “Users-MBP”,  # [optional] omitted entirely when excluded
           “client.sdk.version”: “x.x.x”,
           “schema.version”: “x.x.x”,
           “platform”: “cloud provider”,
           “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
-          “session.id”: “ac8fk…”,  # optional - hash set by anaconda-opentelemetry, can be disabled
+          “session.id”: “ac8fk…”,  # [optional] omitted entirely when disabled
           “aau.version”: “0.7.5”,  # anaconda-anon-usage version
           “aau.client.token”: “xyz”  # nullable. token string
           “aau.session.token”: “xyz”  # nullable. token string
