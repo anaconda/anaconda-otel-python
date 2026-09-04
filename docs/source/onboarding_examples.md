@@ -170,7 +170,10 @@ attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
 ```
 
 ### Disabling Automatic Attribute Collection
-By default, `ResourceAttributes` automatically collects `os_type`, `os_version`, `python_version`, and `hostname` when not explicitly provided. To disable this behavior, set `auto_collect=False`:
+
+You can opt out of auto-collection via `ResourceAttributes(auto_collect=False)` or exclude specific attributes via `exclude_auto_collect=[“hostname”, “python_version”]` if you're collecting this data through other means and it would be redundant (e.g., using `anaconda-auth` provides a machine token which is simply a better version of hostname). Excluded attributes are completely omitted from the payload.
+
+By default, `ResourceAttributes` automatically collects `os_type`, `os_version`, `python_version`, and `hostname` when not explicitly provided:
 ```python
 attrs = ResourceAttributes(
   "test_service",
