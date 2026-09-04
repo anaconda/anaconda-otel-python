@@ -54,19 +54,19 @@ class ResourceAttributes:
     service_version: str
     os_type: str = field(
         default="",
-        metadata={"otel_name": "os.type"}
+        metadata={"otel_name": "os.type", "optional": True}
     )
     os_version: str = field(
         default="",
-        metadata={"otel_name": "os.version"}
+        metadata={"otel_name": "os.version", "optional": True}
     )
     python_version: str = field(
         default="",
-        metadata={"otel_name": "python.version"}
+        metadata={"otel_name": "python.version", "optional": True}
     )
     hostname: str = field(
         default="",
-        metadata={"otel_name": "hostname", "hash": True}
+        metadata={"otel_name": "hostname", "hash": True, "optional": True}
     )
     platform: str = field(
         default="",
@@ -126,6 +126,10 @@ class ResourceAttributes:
             f.name for f in fields(self)
             if f.metadata.get("readonly", False) is True
         }
+        self._optional_fields = {
+            f.name for f in fields(self)
+            if f.metadata.get("optional", False) is True
+        }
         # default certain attribute values if needed (only if auto_collect is enabled)
         if auto_collect:
             exclude_set = set(exclude_auto_collect or [])
@@ -171,8 +175,11 @@ class ResourceAttributes:
         return False
 
     def _get_attributes(self) -> Dict[str, str]:
-        """Convert all attributes to a dictionary"""
-        return {k: v for k, v in self.__dict__.items() if k != '_readonly_fields'}
+        """Convert all attributes to a dictionary, omitting auto-collected attributes when empty"""
+        return {
+            k: v for k, v in self.__dict__.items()
+            if k not in ('_readonly_fields', '_optional_fields') and not (k in self._optional_fields and v == '')
+        }
 
     def set_attributes(self, **kwargs) -> None:
         """

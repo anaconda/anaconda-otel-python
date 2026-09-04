@@ -4,10 +4,10 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 ## Current Schema
 ### [v0.5.0] (9/4/2026)
 **Changes:**
-- `os.type`, `os.version`, `python.version`, `hostname` are now optional. Auto-collection can be disabled via `ResourceAttributes(auto_collect=False)` or excluded individually via `exclude_auto_collect=[“hostname”, “python_version”]`
-- `session.id` is now optional. Can be disabled via `Configuration().set_disable_session_id(True)`
+- `os.type`, `os.version`, `python.version`, `hostname` are auto-collected by default. You can opt out of auto-collection via `ResourceAttributes(auto_collect=False)` or exclude specific attributes via `exclude_auto_collect=[“hostname”, “python_version”]` if you're collecting this data through other means and it would be redundant (e.g., using `anaconda-auth` may already provide hostname data). Excluded attributes are completely omitted from the payload.
+- `session.id` can be disabled via `Configuration().set_disable_session_id(True)` and is completely omitted from the payload when disabled.
 
-**Note on optional attributes:** When optional attributes are not collected, they are **completely omitted** from the payload (both key and value are absent). They are never present with null or empty values.
+**Note on excluded attributes:** Attributes that are excluded from auto-collection are **completely omitted** from the payload (both key and value are absent). They are never present with null or empty values.
 
 ```
 {
