@@ -195,6 +195,80 @@ class TestResourceAttributes(unittest.TestCase):
 
         mock_logger_instance.warning.assert_not_called()
 
+
+class TestAutoCollectAttributes(unittest.TestCase):
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.test_service_name = "test_service"
+        self.test_service_version = "1.0.0"
+
+    @patch('platform.system')
+    @patch('platform.release')
+    @patch('platform.python_version')
+    @patch('socket.gethostname')
+    def test_auto_collect_false_does_not_collect_attributes(
+        self,
+        mock_hostname: MagicMock,
+        mock_python_version: MagicMock,
+        mock_release: MagicMock,
+        mock_system: MagicMock
+    ):
+        """Test that auto_collect=False does not auto-collect any attributes"""
+        mock_system.return_value = "Linux"
+        mock_release.return_value = "5.4.0"
+        mock_python_version.return_value = "3.9.0"
+        mock_hostname.return_value = "no-collect-machine"
+
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version,
+            auto_collect=False
+        )
+
+        self.assertEqual(attrs.os_type, "")
+        self.assertEqual(attrs.os_version, "")
+        self.assertEqual(attrs.python_version, "")
+        self.assertEqual(attrs.hostname, "")
+
+        mock_system.assert_not_called()
+        mock_release.assert_not_called()
+        mock_python_version.assert_not_called()
+        mock_hostname.assert_not_called()
+
+    @patch('platform.system')
+    @patch('platform.release')
+    @patch('platform.python_version')
+    @patch('socket.gethostname')
+    def test_exclude_specific_auto_collect_attributes(
+        self,
+        mock_hostname: MagicMock,
+        mock_python_version: MagicMock,
+        mock_release: MagicMock,
+        mock_system: MagicMock
+    ):
+        """Test that exclude_auto_collect prevents specific attributes from being collected"""
+        mock_system.return_value = "Linux"
+        mock_release.return_value = "5.4.0"
+        mock_python_version.return_value = "3.9.0"
+        mock_hostname.return_value = "test-machine"
+
+        attrs = ResourceAttributes(
+            service_name=self.test_service_name,
+            service_version=self.test_service_version,
+            exclude_auto_collect=["hostname", "python_version"]
+        )
+
+        self.assertEqual(attrs.os_type, "Linux")
+        self.assertEqual(attrs.os_version, "5.4.0")
+        self.assertEqual(attrs.python_version, "")
+        self.assertEqual(attrs.hostname, "")
+
+        mock_system.assert_called()
+        mock_release.assert_called()
+        mock_python_version.assert_not_called()
+        mock_hostname.assert_not_called()
+
     def test_setattr_converts_to_string(self):
         """Test that setattr converts values to strings"""
         attrs = ResourceAttributes(

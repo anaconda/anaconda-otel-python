@@ -5,7 +5,7 @@
 # attributes.py
 
 import hashlib, json, logging, platform, re
-from typing import Dict, Tuple, Literal
+from typing import Dict, Tuple, Literal, List
 from dataclasses import dataclass, field, fields, InitVar
 from .__version__ import __SDK_VERSION__, __TELEMETRY_SCHEMA_VERSION__
 
@@ -42,6 +42,9 @@ class ResourceAttributes:
         environment (Literal["", "test", "development", "staging", "production"]): envrionment the software is running in
         user_id (str): some string denoting a user of a client application.
                        This will not be stored in Resource Attributes and will be moved to attributes.
+        auto_collect (bool): if True (default), automatically collects os_type, os_version, python_version, and hostname when not provided
+        exclude_auto_collect (List[str]): list of attribute names to exclude from auto-collection. Valid values: "os_type", "os_version", "python_version", "hostname"
+        anon_usage (bool): if True, collects anonymous usage tokens from anaconda-anon-usage package
         parameters (Dict[str, str]): optional dictionary containing all other telemetry attributes a client would like to add
         client_sdk_version (str): version of package. READONLY
         schema_version (str): version of telemetry schema used by package. READONLY
@@ -76,6 +79,8 @@ class ResourceAttributes:
     user_id: str = field(
         default=""
     )
+    auto_collect: InitVar[bool] = True
+    exclude_auto_collect: InitVar[List[str]] = None
     anon_usage: InitVar[bool] = False
     # Readonly
     client_sdk_version: str = field(
@@ -113,7 +118,7 @@ class ResourceAttributes:
                         break
             super().__setattr__(str(key), processed_value)
 
-    def __post_init__(self, anon_usage: bool):
+    def __post_init__(self, auto_collect: bool, exclude_auto_collect: List[str], anon_usage: bool):
         # set non-init readonly
         self.client_sdk_version = __SDK_VERSION__
         self.schema_version = __TELEMETRY_SCHEMA_VERSION__
@@ -121,13 +126,20 @@ class ResourceAttributes:
             f.name for f in fields(self)
             if f.metadata.get("readonly", False) is True
         }
-        # default certain attribute values if needed
-        if not self.os_type or not self.os_version:
-            self.os_type, self.os_version = self._get_os_info()
-        if not self.python_version:
-            self.python_version = platform.python_version()
-        if not self.hostname:
-            self.hostname = self._get_host_name()
+        # default certain attribute values if needed (only if auto_collect is enabled)
+        if auto_collect:
+            exclude_set = set(exclude_auto_collect or [])
+            if not self.os_type or not self.os_version:
+                if "os_type" not in exclude_set and "os_version" not in exclude_set:
+                    self.os_type, self.os_version = self._get_os_info()
+                elif "os_type" not in exclude_set:
+                    self.os_type = self._get_os_info()[0]
+                elif "os_version" not in exclude_set:
+                    self.os_version = self._get_os_info()[1]
+            if not self.python_version and "python_version" not in exclude_set:
+                self.python_version = platform.python_version()
+            if not self.hostname and "hostname" not in exclude_set:
+                self.hostname = self._get_host_name()
 
         # if anon-usage is specified
         if anon_usage:

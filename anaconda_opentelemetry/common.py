@@ -70,8 +70,9 @@ class _AnacondaCommon:
             otel_name = attr.metadata.get('otel_name', None)
             if otel_name:
                 self._resource_attributes[attr.metadata['otel_name']] = self._resource_attributes.pop(attr.name)
-        self._session_id = self._hash_session_id(self._config._get_tracing_session_entropy())
-        self._resource_attributes['session.id'] = self._session_id
+        if not self._config._get_disable_session_id():
+            self._session_id = self._hash_session_id(self._config._get_tracing_session_entropy())
+            self._resource_attributes['session.id'] = self._session_id
         self.resource = Resource.create(self._resource_attributes)
 
     def _hash_session_id(self, entropy):
