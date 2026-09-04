@@ -54,19 +54,19 @@ class ResourceAttributes:
     service_version: str
     os_type: str = field(
         default="",
-        metadata={"otel_name": "os.type", "optional": True}
+        metadata={"otel_name": "os.type", "auto_collect": True}
     )
     os_version: str = field(
         default="",
-        metadata={"otel_name": "os.version", "optional": True}
+        metadata={"otel_name": "os.version", "auto_collect": True}
     )
     python_version: str = field(
         default="",
-        metadata={"otel_name": "python.version", "optional": True}
+        metadata={"otel_name": "python.version", "auto_collect": True}
     )
     hostname: str = field(
         default="",
-        metadata={"otel_name": "hostname", "hash": True, "optional": True}
+        metadata={"otel_name": "hostname", "hash": True, "auto_collect": True}
     )
     platform: str = field(
         default="",
@@ -126,9 +126,9 @@ class ResourceAttributes:
             f.name for f in fields(self)
             if f.metadata.get("readonly", False) is True
         }
-        self._optional_fields = {
+        self._auto_collect_fields = {
             f.name for f in fields(self)
-            if f.metadata.get("optional", False) is True
+            if f.metadata.get("auto_collect", False) is True
         }
         # default certain attribute values if needed (only if auto_collect is enabled)
         if auto_collect:
@@ -178,7 +178,7 @@ class ResourceAttributes:
         """Convert all attributes to a dictionary, omitting auto-collected attributes when empty"""
         return {
             k: v for k, v in self.__dict__.items()
-            if k not in ('_readonly_fields', '_optional_fields') and not (k in self._optional_fields and v == '')
+            if k not in ('_readonly_fields', '_auto_collect_fields') and not (k in self._auto_collect_fields and v == '')
         }
 
     def set_attributes(self, **kwargs) -> None:
