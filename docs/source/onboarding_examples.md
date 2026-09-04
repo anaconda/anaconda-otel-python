@@ -28,6 +28,11 @@ except:
     # code here
 ```
 
+### Disabling Session ID
+```python
+config = Configuration(default_endpoint='example.com:4317').set_disable_session_id(True)
+```
+
 ## ResourceAttributes
 ```python
 service_name, service_version = "service-a", "v1"
@@ -163,6 +168,40 @@ my_attributes = {
 }
 attrs = ResourceAttributes("test-service", "1").set_attributes(**my_attributes)
 ```
+
+### Disabling Automatic Attribute Collection
+
+You can opt out of auto-collection via `ResourceAttributes(auto_collect=False)` or exclude specific attributes via `exclude_auto_collect=[“hostname”, “python_version”]` if you're collecting this data through other means and it would be redundant (e.g., using `anaconda-auth` provides a machine token which is simply a better version of hostname). Excluded attributes are completely omitted from the payload.
+
+By default, `ResourceAttributes` automatically collects `os_type`, `os_version`, `python_version`, and `hostname` when not explicitly provided:
+```python
+attrs = ResourceAttributes(
+  "test_service",
+  "v1",
+  auto_collect=False
+)
+```
+When `auto_collect=False`, the attributes will remain empty strings unless explicitly provided:
+```python
+attrs = ResourceAttributes(
+  "test_service",
+  "v1",
+  os_type="CustomOS",
+  python_version="3.10.0",
+  auto_collect=False
+)
+```
+
+### Excluding Specific Auto-Collected Attributes
+To exclude only specific attributes from auto-collection while keeping others, use `exclude_auto_collect`:
+```python
+attrs = ResourceAttributes(
+  "test_service",
+  "v1",
+  exclude_auto_collect=["hostname", "python_version"]
+)
+```
+In this example, `os_type` and `os_version` will be auto-collected, but `hostname` and `python_version` will remain empty strings.
 
 # Testing and Visualizing Telemetry Locally
 To test the telemetry package and view exports locally, the following code can be used. The console exporter exports telemetry payloads to standard output:
