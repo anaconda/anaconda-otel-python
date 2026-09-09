@@ -181,7 +181,7 @@ attrs = ResourceAttributes(
   auto_collect=False
 )
 ```
-When `auto_collect=False`, the attributes will remain empty strings unless explicitly provided:
+When `auto_collect=False`, the attributes will completely omitted unless explicitly provided:
 ```python
 attrs = ResourceAttributes(
   "test_service",
