@@ -120,6 +120,26 @@ class TestAnacondaCommon:
             AnacondaCommon._hash_session_id(None)
         assert exception.value.args[0] == 'The entropy key has been removed.'
 
+    def test_disable_session_id(self):
+        """
+        Tests that when disable_session_id is True, no session ID is generated
+        """
+        config_values = read_config()
+        config_dict, attributes_dict = config_values['configs'], config_values['attributes']
+        config_dict['entropy'] = "timestamp"
+        config = Config(config_dict=config_dict)
+        config.set_disable_session_id(True)
+        config.set_shutdown_on_exit(False)
+
+        service_name = "test-service"
+        service_version = "1.0.0"
+        attributes = Attributes(service_name, service_version)
+
+        instance = AnacondaTelBase(config, attributes)
+
+        assert instance._session_id is None
+        assert 'session.id' not in instance._resource_attributes
+
     def test_hash_output_length(self, AnacondaCommon: AnacondaTelBase):
         """
         - Checks that the sha256 hash output is of length 64

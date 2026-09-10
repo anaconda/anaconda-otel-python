@@ -58,6 +58,7 @@ class Configuration:
     - PROXY_URL_NAME - Used to set the proxy for telemetry exporters in this package
     - SHUTDOWN_ON_EXIT_NAME - If True (default), providers register atexit handlers that flush on interpreter exit. If False, the caller must manually call shutdown_telemetry() or flush_telemetry() before the process exits.
     - VERBOSE_EXPORT_ERRORS_NAME - If False (default), OpenTelemetry export errors are suppressed. If True, export errors such as "Transient error" will be logged.
+    - DISABLE_SESSION_ID_NAME - If True, disables automatic session ID generation. If False (default), a session ID is generated and added to telemetry.
 
     To initializes the Configuration instance.
 
@@ -91,6 +92,7 @@ class Configuration:
     PROXY_URL_NAME                  = 'proxy_url'
     SHUTDOWN_ON_EXIT_NAME           = 'shutdown_on_exit'
     VERBOSE_EXPORT_ERRORS_NAME      = 'verbose_export_errors'
+    DISABLE_SESSION_ID_NAME         = 'disable_session_id'
 
     _base_names: List[str] = [
         DEFAULT_ENDPOINT_NAME,
@@ -115,6 +117,7 @@ class Configuration:
         PROXY_URL_NAME,
         SHUTDOWN_ON_EXIT_NAME,
         VERBOSE_EXPORT_ERRORS_NAME,
+        DISABLE_SESSION_ID_NAME,
     ]
 
     _endpoint_names: List[str] = [
@@ -144,6 +147,7 @@ class Configuration:
         USE_CUMULATIVE_METRICS_NAME,
         SHUTDOWN_ON_EXIT_NAME,
         VERBOSE_EXPORT_ERRORS_NAME,
+        DISABLE_SESSION_ID_NAME,
     ]
 
     _int_value_names: List[str] = [
@@ -610,6 +614,22 @@ class Configuration:
         self._config[self.VERBOSE_EXPORT_ERRORS_NAME] = value
         return self
 
+    def set_disable_session_id(self, value: bool):
+        """
+        Sets whether to disable automatic session ID generation.
+        If False (default), a session ID is automatically generated and added to telemetry.
+        If True, no session ID will be generated or added to telemetry resource attributes.
+        The environment variable is 'ATEL_DISABLE_SESSION_ID'.
+
+        Args:
+            value (bool): True to disable session ID generation, False to enable it.
+
+        Returns:
+            Self
+        """
+        self._config[self.DISABLE_SESSION_ID_NAME] = value
+        return self
+
     def _get_proxy_url(self) -> str:
         return self._config.get(self.PROXY_URL_NAME, None)
 
@@ -835,3 +855,6 @@ class Configuration:
 
     def _get_verbose_export_errors(self) -> bool:
         return self._config.get(self.VERBOSE_EXPORT_ERRORS_NAME, False)
+
+    def _get_disable_session_id(self) -> bool:
+        return self._config.get(self.DISABLE_SESSION_ID_NAME, False)

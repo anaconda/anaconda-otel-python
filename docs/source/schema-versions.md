@@ -2,6 +2,94 @@
 This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.data_points.attributes` (event specific) portion of the OpenTelemetry payload. The rest of the payload's structure is not managed by the anaconda-opentelemetry package.
 
 ## Current Schema
+### [v0.5.0] (9/4/2026)
+**Changes:**
+- `os.type`, `os.version`, `python.version`, `hostname` are auto-collected by default. Users can opt out of auto-collection via `ResourceAttributes(auto_collect=False)` or exclude specific attributes via `exclude_auto_collect=[“hostname”, “python_version”]`, thus they may not be in this payload
+- `session.id` can be disabled via `Configuration().set_disable_session_id(True)` and is completely omitted from the payload when disabled.
+
+**Note on excluded attributes:** Attributes that are excluded from auto-collection are **completely omitted** from the payload (both key and value are absent). They are never present with null or empty values.
+
+```
+{
+  “resourceMetrics|resourceLogs”: [
+    {
+      “resource”: {
+        “attributes”: {  # key value pairs within here are where data is added
+          “telemetry.sdk.language”: “python”,  # added by Otel
+          “telemetry.sdk.name”: “opentelemetry”,  # added by Otel
+          “telemetry.sdk.version”: “1.33.1”,  # added by Otel
+          “service.name”: “platform-service”,
+          “service.version”: “x.x.x”,
+          “os.type”: “Darwin”,  # [optional] omitted entirely when excluded
+          “os.version”: “x.x.x”,  # [optional] omitted entirely when excluded
+          “python.version”: “3.13.2”,  # [optional] omitted entirely when excluded
+          “hostname”: “Users-MBP”,  # [optional] omitted entirely when excluded
+          “client.sdk.version”: “x.x.x”,
+          “schema.version”: “x.x.x”,
+          “platform”: “cloud provider”,
+          “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
+          “session.id”: “ac8fk…”,  # [optional] omitted entirely when disabled
+          “aau.version”: “0.7.5”,  # anaconda-anon-usage version
+          “aau.client.token”: “xyz”  # nullable. token string
+          “aau.session.token”: “xyz”  # nullable. token string
+          “aau.environment.token”: “xyz”  # nullable. token string
+          “aau.organization.tokens”: “[\”xyz\”, \”abc\”]”  # nullable. json stringified list of org tokens
+          “aau.installer.tokens”: “[\”xyz\”, \”abc\”]”  # nullable. json stringified list of org tokens
+          “aau.machine.tokens”: “[\”xyz\”, \”abc\”]”  # nullable. json stringified list of org tokens
+          “aau.anaconda.auth.token”: “xyz”  # nullable. token string
+          “parameters”: {...}  # optional dynamic values for flexibility - json object of key value pairs
+        }
+      }
+      “scopeMetrics|scopeLogs”: [
+        # Only one of Metrics or Logs would apply to a given payload - this is to illustrate the path for either case
+        ### Metrics -----------------------------------------------------------------
+        {
+          "metrics": [
+            {
+              "data": {
+                "data_points": [
+                  {
+                    "attributes": [
+                      {  # key value pairs within here are where data is added
+                        "key": "user.id",  # moved from resource.attributes in v0.3.0
+                        "value": {
+                          "stringValue": "1234"
+                        }
+                      },
+                      # this section also includes event specific attributes
+                    ],
+                  }
+                ]
+              }
+            }
+          ]
+        }
+        ### End Metrics -------------------------------------------------------------
+
+        ### Logs --------------------------------------------------------------------
+        {
+          "logRecords": [
+            {
+              "attributes": [
+                {  # key value pairs within here are where data is added
+                  "key": "user.id",  # moved from resource.attributes in v0.3.0
+                  "value": {
+                    "stringValue": "1234"
+                  }
+                },
+                # this section also includes event specific attributes
+              ],
+            }
+          ]
+        }
+        ### End Logs ----------------------------------------------------------------
+      ]
+    }
+  ]
+}
+```
+
+## Historic Schemas
 ### [v0.4.0] (4/16/2025)
 ```
 {
@@ -20,8 +108,8 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
           "hostname": "Users-MBP",
           "client.sdk.version": "x.x.x",
           "schema.version": "x.x.x",
-          “platform”: “cloud provider”,
-          “environment”: “”,  # an enum. Must be one of {“”, “test”, “development”, “staging”, “production”}
+          "platform": "cloud provider",
+          "environment": "",  # an enum. Must be one of {"", "test", "development", "staging", "production"}
           "session.id": "ac8fk…",  # hash set by anaconda-opentelemetry
           "aau.version": "0.7.5",  # anaconda-anon-usage version
           "aau.client.token": "xyz"  # nullable. token string
@@ -83,7 +171,6 @@ This schema refers to the `resource.attributes` and `scope_metrics.metrics.data.
 }
 ```
 
-## Historic Schemas
 ### [v0.3.0] (12/01/2025)
 ```
 {

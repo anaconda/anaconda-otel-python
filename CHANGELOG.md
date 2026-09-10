@@ -2,6 +2,42 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.2.3]
+
+### Added
+
+- Allows user to opt out of all auto collected resource attributes
+- Allows user to opt out of specific auto collected resource attributes
+
+### Changed
+
+- Updated export schema to v0.5.0 - optional auto collected attributes
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- N/A
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- feat: Allow for opt out of automatically collected attributes [#97](https://github.com/anaconda/anaconda-otel-python/pull/97)
+
+
 ## [v1.2.2]
 
 ### Added
