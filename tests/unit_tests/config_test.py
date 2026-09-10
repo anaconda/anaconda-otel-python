@@ -402,4 +402,24 @@ class TestConfiguration:
         with pytest.raises(ValueError):
             cfg._change_signal_endpoint("metrics", "http://invalid port:8080")
 
+    def test_ignore_environment_variables(self):
+        """Test that ignore_environment_variables=True prevents ATEL_* and OTEL_SDK_DISABLED from affecting config."""
+        endpoint = "http://localhost:4317"
+        token = "original_token"
+
+        os.environ[f"{Config.__PREFIX__}{Config.DEFAULT_AUTH_TOKEN_NAME.upper()}"] = "env_token"
+        os.environ[f"{Config.__PREFIX__}{Config.DEFAULT_ENDPOINT_NAME.upper()}"] = "http://envhost:9999"
+        os.environ[f"{Config.__PREFIX__}{Config.SKIP_INTERNET_CHECK_NAME.upper()}"] = "true"
+        os.environ["OTEL_SDK_DISABLED"] = "true"
+        try:
+            cfg = Config(default_endpoint=endpoint, default_auth_token=token, ignore_environment_variables=True)
+            assert cfg._get_default_endpoint() == endpoint
+            assert cfg._get_auth_token_default() == token
+            assert cfg._get_skip_internet_check() == False
+        finally:
+            del os.environ[f"{Config.__PREFIX__}{Config.DEFAULT_AUTH_TOKEN_NAME.upper()}"]
+            del os.environ[f"{Config.__PREFIX__}{Config.DEFAULT_ENDPOINT_NAME.upper()}"]
+            del os.environ[f"{Config.__PREFIX__}{Config.SKIP_INTERNET_CHECK_NAME.upper()}"]
+            del os.environ["OTEL_SDK_DISABLED"]
+
 
