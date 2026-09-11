@@ -2,13 +2,47 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.2.4]
+
+### Added
+
+- Allows user to opt out of `ATEL_*` and `OTEL_SDK_DISABLED` environment variables effecting the `Configuration`
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- N/A
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- feat: Optional config flag ignores env vars [#98](https://github.com/anaconda/anaconda-otel-python/pull/98)
+
+
 ## [v1.2.3]
 
 ### Added
 
 - Allows user to opt out of all auto collected resource attributes
 - Allows user to opt out of specific auto collected resource attributes
-- Allows user to opt out of `ATEL_*` and `OTEL_SDK_DISABLED` environment variables effecting the `Configuration`
 
 ### Changed
 
@@ -37,7 +71,6 @@ We [keep a changelog.](http://keepachangelog.com/)
 ### Pull Requests Merged
 
 - feat: Allow for opt out of automatically collected attributes [#97](https://github.com/anaconda/anaconda-otel-python/pull/97)
-- feat: Optional config flag ignores env vars [#98](https://github.com/anaconda/anaconda-otel-python/pull/98)
 
 
 ## [v1.2.2]
