@@ -155,7 +155,8 @@ class Configuration:
     ]
 
     def __init__(self, default_endpoint: str = None, default_auth_token: str = None,
-                 default_private_ca_cert_file: str = None, config_dict: Dict[str, Any] = {}):
+                 default_private_ca_cert_file: str = None, config_dict: Dict[str, Any] = {},
+                 ignore_environment_variables: bool = False):
         """
         Creates the configuration object passed to initialize_telemetry.
 
@@ -164,6 +165,9 @@ class Configuration:
             default_auth_token (str): The default auth token use for the default_endpoint or None.
             default_private_ca_cert_file (str): File name for the private cert file if used or None. Not used frequently.
             config_dict (Dict[str,any]): An initialization map to configure the object in bulk or {}.
+            ignore_environment_variables (bool): If True, all ATEL_* environment variables and OTEL_SDK_DISABLED are
+                                                 ignored. Only values passed via constructor arguments and config_dict
+                                                 are used. Defaults to False.
 
         Raises:
             ValueError: If there is no `default_endpoint` value passed to its arguments or in the `config_dict` kwarg,
@@ -184,11 +188,12 @@ class Configuration:
             self._config[self.DEFAULT_CA_CERT_NAME] = default_private_ca_cert_file
 
         # Merge environment variables into the config
-        for base_name in self._base_names:
-            env_name = f"{self.__PREFIX__}{base_name.upper()}"
-            env_value = os.environ.get(env_name, None)
-            if env_value is not None:
-                self._config[base_name] = env_value.strip()
+        if not ignore_environment_variables:
+            for base_name in self._base_names:
+                env_name = f"{self.__PREFIX__}{base_name.upper()}"
+                env_value = os.environ.get(env_name, None)
+                if env_value is not None:
+                    self._config[base_name] = env_value.strip()
 
         # Ensure default endpoint is set
         if self.DEFAULT_ENDPOINT_NAME not in self._config.keys():
@@ -209,7 +214,9 @@ class Configuration:
                 self._config[bool_name] = self._config[bool_name].lower().strip() in ['true', 'yes', '1', 'on']
 
         # Special case OTEL_SDK_DISABLED...
-        if os.environ.get('OTEL_SDK_DISABLED', '').lower().strip() in ['true', 'yes', '1', 'on'] and os.environ.get(self.SKIP_INTERNET_CHECK_NAME, None) is None:
+        if not ignore_environment_variables and \
+           os.environ.get('OTEL_SDK_DISABLED', '').lower().strip() in ['true', 'yes', '1', 'on'] and \
+           os.environ.get(self.SKIP_INTERNET_CHECK_NAME, None) is None:
             self._config[self.SKIP_INTERNET_CHECK_NAME] = True
 
         # Normalize the int values
