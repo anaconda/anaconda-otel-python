@@ -63,6 +63,20 @@ def reset_telemetry_state():
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+def _stub_logger_instance(provider):
+    """Install a stand-in _AnacondaLogger singleton owning `provider`.
+
+    flush_telemetry() flushes the LoggerProvider owned by the _AnacondaLogger
+    singleton (the one send_event and get_telemetry_logger_handler write to),
+    not the OTel global, so tests must supply the singleton.
+    """
+    from anaconda_opentelemetry.logging import _AnacondaLogger
+
+    _AnacondaLogger._instance = MagicMock(spec=_AnacondaLogger)
+    _AnacondaLogger._instance._provider = provider
+    return _AnacondaLogger._instance
+
+
 def _make_config():
     """Build a Configuration that performs no real network I/O.
 
@@ -288,19 +302,63 @@ def test_flush_telemetry_invokes_force_flush_on_all_three_providers():
     mock_mp.force_flush.return_value = True
     mock_lp = MagicMock(spec=LoggerProvider)
     mock_lp.force_flush.return_value = True
+    _stub_logger_instance(mock_lp)
 
     with patch(
         "opentelemetry.trace.get_tracer_provider", return_value=mock_tp
     ), patch(
         "opentelemetry.metrics.get_meter_provider", return_value=mock_mp
-    ), patch(
-        "opentelemetry._logs.get_logger_provider", return_value=mock_lp
     ):
         result = sig.flush_telemetry()
 
     mock_tp.force_flush.assert_called()
     mock_mp.force_flush.assert_called()
     mock_lp.force_flush.assert_called()
+    assert result is True
+
+
+def test_flush_telemetry_flushes_owned_logger_provider_not_the_global_one():
+    """Regression: another library may win the global set_logger_provider race.
+
+    send_event / get_telemetry_logger_handler always emit through the provider owned by
+    _AnacondaLogger, so that is the one that must be flushed. Flushing the foreign global
+    provider instead silently drops every batched event.
+    """
+    import anaconda_opentelemetry.signals as sig
+    from opentelemetry.sdk._logs import LoggerProvider
+
+    sig.__ANACONDA_TELEMETRY_INITIALIZED = True
+
+    owned_lp = MagicMock(spec=LoggerProvider)
+    owned_lp.force_flush.return_value = True
+    _stub_logger_instance(owned_lp)
+
+    foreign_lp = MagicMock(spec=LoggerProvider)
+    foreign_lp.force_flush.return_value = True
+
+    with patch("opentelemetry._logs.get_logger_provider", return_value=foreign_lp):
+        result = sig.flush_telemetry()
+
+    owned_lp.force_flush.assert_called()
+    foreign_lp.force_flush.assert_not_called()
+    assert result is True
+
+
+def test_flush_telemetry_skips_logger_provider_when_logging_not_initialized():
+    """With signal_types excluding 'logging' there is no provider of ours to flush."""
+    import anaconda_opentelemetry.signals as sig
+    from anaconda_opentelemetry.logging import _AnacondaLogger
+    from opentelemetry.sdk._logs import LoggerProvider
+
+    sig.__ANACONDA_TELEMETRY_INITIALIZED = True
+    _AnacondaLogger._instance = None
+
+    foreign_lp = MagicMock(spec=LoggerProvider)
+
+    with patch("opentelemetry._logs.get_logger_provider", return_value=foreign_lp):
+        result = sig.flush_telemetry()
+
+    foreign_lp.force_flush.assert_not_called()
     assert result is True
 
 
@@ -320,13 +378,12 @@ def test_flush_telemetry_returns_false_when_a_provider_force_flush_raises():
     mock_mp.force_flush.side_effect = RuntimeError("boom")
     mock_lp = MagicMock(spec=LoggerProvider)
     mock_lp.force_flush.return_value = True
+    _stub_logger_instance(mock_lp)
 
     with patch(
         "opentelemetry.trace.get_tracer_provider", return_value=mock_tp
     ), patch(
         "opentelemetry.metrics.get_meter_provider", return_value=mock_mp
-    ), patch(
-        "opentelemetry._logs.get_logger_provider", return_value=mock_lp
     ):
         result = sig.flush_telemetry()
 

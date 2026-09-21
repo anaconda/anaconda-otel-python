@@ -83,12 +83,18 @@ class _AnacondaLogger(_AnacondaCommon):
         self.log_level = self._get_log_level(config._get_logging_level())
         self.logger_endpoint = config._get_logging_endpoint()
 
-        # Create logger provider
+        # Create logger provider. All log telemetry (send_event and the handler from
+        # get_telemetry_logger_handler) is emitted through self._provider directly, so it stays
+        # usable even when the global provider below belongs to someone else. set_logger_provider
+        # does not raise on conflict, it logs through the (suppressed) 'opentelemetry' logger and
+        # returns, so compare identity afterwards to detect that we lost the race.
         self._provider = LoggerProvider(resource=self.resource, shutdown_on_exit=self._shutdown_on_exit)
-        try:
-            _logs.set_logger_provider(self._provider)
-        except Exception:
-            self.logger.warning("The logger provider was previously set; this call is ignored.")
+        _logs.set_logger_provider(self._provider)
+        if _logs.get_logger_provider() is not self._provider:
+            logging.getLogger(__package__).debug(
+                "A global OTel LoggerProvider was already set by another library; "
+                "anaconda_opentelemetry keeps using its own provider for log telemetry."
+            )
         self._console_exporter: ConsoleLogExporter | None = None
         # Add OTLP exporter
         if self.use_console_exporters:

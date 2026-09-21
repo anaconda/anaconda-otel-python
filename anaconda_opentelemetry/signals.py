@@ -15,7 +15,7 @@ import logging, socket, threading
 from typing import Dict, Iterator, List, Optional
 from contextlib import contextmanager
 
-from opentelemetry import trace, metrics, _logs
+from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
@@ -149,10 +149,20 @@ _shutdown_lock = threading.Lock()
 
 
 def flush_telemetry() -> bool:
-    """Force-flush all initialized telemetry providers.
+    """Force-flush the telemetry providers this package emits through.
 
-    Uses the standard OTel global getters to retrieve providers.
-    Returns True if all providers flushed successfully.
+    Spans and metrics are recorded via the OTel global tracer/meter, so the global
+    getters name the providers holding that data. Log records are not: both
+    :func:`send_event` and :func:`get_telemetry_logger_handler` write straight to the
+    :class:`LoggerProvider` owned by ``_AnacondaLogger``, which is *not* the global
+    provider when another library set one first (``set_logger_provider`` ignores the
+    second caller). Flushing the global provider in that case leaves our batched
+    events queued and drops them at exit, so the owned provider is used instead.
+
+    Providers belonging to signal types that were never initialized, and providers
+    owned by other libraries, are left alone.
+
+    Returns True if every provider we own flushed successfully.
     """
     if not __ANACONDA_TELEMETRY_INITIALIZED:
         return False
@@ -174,7 +184,7 @@ def flush_telemetry() -> bool:
                 logging.getLogger(__package__).debug("Meter flush failed", exc_info=True)
                 success = False
 
-        lp = _logs.get_logger_provider()
+        lp = getattr(_AnacondaLogger._instance, '_provider', None)
         if isinstance(lp, LoggerProvider):
             try:
                 lp.force_flush()
