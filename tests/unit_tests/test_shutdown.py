@@ -66,9 +66,7 @@ def reset_telemetry_state():
 def _stub_logger_instance(provider):
     """Install a stand-in _AnacondaLogger singleton owning `provider`.
 
-    flush_telemetry() flushes the LoggerProvider owned by the _AnacondaLogger
-    singleton (the one send_event and get_telemetry_logger_handler write to),
-    not the OTel global, so tests must supply the singleton.
+    flush_telemetry() flushes the owned provider, not the OTel global.
     """
     from anaconda_opentelemetry.logging import _AnacondaLogger
 
@@ -318,12 +316,7 @@ def test_flush_telemetry_invokes_force_flush_on_all_three_providers():
 
 
 def test_flush_telemetry_flushes_owned_logger_provider_not_the_global_one():
-    """Regression: another library may win the global set_logger_provider race.
-
-    send_event / get_telemetry_logger_handler always emit through the provider owned by
-    _AnacondaLogger, so that is the one that must be flushed. Flushing the foreign global
-    provider instead silently drops every batched event.
-    """
+    """Regression: a foreign global provider must not be flushed in place of ours."""
     import anaconda_opentelemetry.signals as sig
     from opentelemetry.sdk._logs import LoggerProvider
 

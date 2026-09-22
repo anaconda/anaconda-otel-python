@@ -83,11 +83,9 @@ class _AnacondaLogger(_AnacondaCommon):
         self.log_level = self._get_log_level(config._get_logging_level())
         self.logger_endpoint = config._get_logging_endpoint()
 
-        # Create logger provider. All log telemetry (send_event and the handler from
-        # get_telemetry_logger_handler) is emitted through self._provider directly, so it stays
-        # usable even when the global provider below belongs to someone else. set_logger_provider
-        # does not raise on conflict, it logs through the (suppressed) 'opentelemetry' logger and
-        # returns, so compare identity afterwards to detect that we lost the race.
+        # send_event and get_telemetry_logger_handler emit through self._provider, not the
+        # global one. set_logger_provider ignores a second caller instead of raising, so
+        # check identity to detect that another library got there first.
         self._provider = LoggerProvider(resource=self.resource, shutdown_on_exit=self._shutdown_on_exit)
         _logs.set_logger_provider(self._provider)
         if _logs.get_logger_provider() is not self._provider:

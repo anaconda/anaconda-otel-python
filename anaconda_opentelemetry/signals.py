@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
+from opentelemetry.sdk._logs import LoggingHandler
 
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
@@ -149,18 +149,12 @@ _shutdown_lock = threading.Lock()
 
 
 def flush_telemetry() -> bool:
-    """Force-flush the telemetry providers this package emits through.
+    """Force-flush the providers this package emits through.
 
-    Spans and metrics are recorded via the OTel global tracer/meter, so the global
-    getters name the providers holding that data. Log records are not: both
-    :func:`send_event` and :func:`get_telemetry_logger_handler` write straight to the
-    :class:`LoggerProvider` owned by ``_AnacondaLogger``, which is *not* the global
-    provider when another library set one first (``set_logger_provider`` ignores the
-    second caller). Flushing the global provider in that case leaves our batched
-    events queued and drops them at exit, so the owned provider is used instead.
-
-    Providers belonging to signal types that were never initialized, and providers
-    owned by other libraries, are left alone.
+    Spans and metrics are recorded via the OTel globals, so the global getters are correct
+    for them. Log records are not: send_event and get_telemetry_logger_handler write to the
+    LoggerProvider owned by _AnacondaLogger, which is not the global one when another
+    library set that first, so the owned provider is flushed instead.
 
     Returns True if every provider we own flushed successfully.
     """
@@ -184,8 +178,8 @@ def flush_telemetry() -> bool:
                 logging.getLogger(__package__).debug("Meter flush failed", exc_info=True)
                 success = False
 
-        lp = getattr(_AnacondaLogger._instance, '_provider', None)
-        if isinstance(lp, LoggerProvider):
+        if _AnacondaLogger._instance is not None:
+            lp = _AnacondaLogger._instance._provider
             try:
                 lp.force_flush()
             except Exception:
