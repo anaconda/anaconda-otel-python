@@ -15,10 +15,10 @@ import logging, socket, threading
 from typing import Dict, Iterator, List, Optional
 from contextlib import contextmanager
 
-from opentelemetry import trace, metrics, _logs
+from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
+from opentelemetry.sdk._logs import LoggingHandler
 
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
@@ -149,10 +149,14 @@ _shutdown_lock = threading.Lock()
 
 
 def flush_telemetry() -> bool:
-    """Force-flush all initialized telemetry providers.
+    """Force-flush the providers this package emits through.
 
-    Uses the standard OTel global getters to retrieve providers.
-    Returns True if all providers flushed successfully.
+    Spans and metrics are recorded via the OTel globals, so the global getters are correct
+    for them. Log records are not: send_event and get_telemetry_logger_handler write to the
+    LoggerProvider owned by _AnacondaLogger, which is not the global one when another
+    library set that first, so the owned provider is flushed instead.
+
+    Returns True if every provider we own flushed successfully.
     """
     if not __ANACONDA_TELEMETRY_INITIALIZED:
         return False
@@ -174,8 +178,8 @@ def flush_telemetry() -> bool:
                 logging.getLogger(__package__).debug("Meter flush failed", exc_info=True)
                 success = False
 
-        lp = _logs.get_logger_provider()
-        if isinstance(lp, LoggerProvider):
+        if _AnacondaLogger._instance is not None:
+            lp = _AnacondaLogger._instance._provider
             try:
                 lp.force_flush()
             except Exception:

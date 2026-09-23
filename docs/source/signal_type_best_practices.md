@@ -6,6 +6,76 @@ There are three main signal types in OpenTelemetry (and general observability) a
 - Traces are groupings of individual events (spans) that share parent/child relationships or context
 - Logs contain a text body
 
+### Logs
+For product telemetry we typically want to be using logs. Most often the primary interests of product telemetry are an event that occurred and the context behind it. The attributes actually are just as important as the simple presence of the event. Attibutes convey event context, like which user, which org, or which package. This case matches product events better with logs than with metrics and traces, and are superior in regards to payload size and shape compared to the other signals as well. Typically ending up in Snowflake, product telemetry doesn't benefit as handsomely from the tsdb payload features metrics have. 
+
+When many developers think of logs, they think of application/developer logs. And if you desire those logs to be part of your telemetry then the logger handler should be configured. But it's more likely the telemetry corresponds to event data. If this is the case using `send_event()` can register telemetry events this way.
+
+Beyond size and shape, another reason to use logs rather than metrics is cardinality. Product telemetry typically carries one or more high cardinality attributes (user id, username, etc.) which OpenTelemetry metrics are not optimized for. 
+
+
+#### Visual Example of a log payload
+```
+{
+    "scopeLogs": [
+    {
+        "scope": {
+        "name": "my_logger"
+        },
+        "logRecords": [
+            {
+                "timeUnixNano": "1767993488934098944",
+                "observedTimeUnixNano": "1767993488934126000",
+                "body": {
+                    "stringValue": "Hello"
+                },
+                "attributes": [
+                    {
+                        "key": "log.event.name",
+                        "value": {
+                        "stringValue": "test.event"
+                        }
+                    }
+                ],
+            }
+        ]
+    }
+    ]
+}
+```
+
+### Simple Event Logs
+If your product is using logs to capture events rather than to capture developer logs, the `EventLogger` class invoked by the `send_event` function in our code is a more efficient method of transporting events. These calls produce the lightest payloads. If you are not interested in capturing the line numbers, log levels, etc. that come with standard developer logs, this would be the way to go.
+
+#### Visual example of Event Log payload
+```
+{
+    "scope_logs": [
+    {
+        "scope": {
+        "name": "aau_test_event_logger"
+        },
+        "log_records": [
+        {
+            "body": {
+            "string_value": "Hello"
+            },
+            "attributes": [
+            {
+                "key": "log.event.name",
+                "value": {
+                "string_value": "test_event"
+                }
+            }
+            ],
+            "observed_time_unix_nano": "1777304261742595000"
+        }
+        ]
+    }
+    ]
+}
+```
+
 ### Metrics
 If an event or piece of code you want telemetry for can be presented numerically, then the use case is best for metrics. Several examples include:
 - User login event (increment by 1)
@@ -13,7 +83,7 @@ If an event or piece of code you want telemetry for can be presented numerically
 - Response time in milliseconds (add to distribution)
 - RAM utilized by a machine in megabytes (gauge the signal)
 
-This does not necessarily mean that the primary interest in the telemetry is the number of user login events. You could be collecting this telemetry event because you're more interested in the characteristics of who logged in, which you can add via attributes. The metric signal type is still the best fit because the telemetry record is inherently a metric. OpenTelemetry packages metrics of the same name together in groups containing each individual event. It uses a set structure and fixed properties for all metrics to form consist payload contents. This makes metrics easier for metric backends to store and query, and you'll be able to see specific metric events containing specific sets of labels.
+It is recommended to use metrics when the cardinality of events is lower than most product telemetry use cases. Something like a user id alone is not ideal to be added to metrics.
 
 #### Visual Example of a Metric
 ```
@@ -103,90 +173,5 @@ In this example Service A calls service B which calls service C, and the chain e
     "parent_id": null,
     "start_time": "2026-01-08T20:27:42.581063Z",
     "end_time": "2026-01-08T20:27:42.585825Z",
-}
-```
-
-### Logs
-When many developers think of logs, they think of application/developer logs. And if you desire those logs to be part of your telemetry then the log signal should be used. Log telemetry also acts a bit like a catch all. The main component of the OpenTelemetry log payload is the log body. You can send multi-line data as telemetry just by exporting logs. For data that doesn't clearly fit metrics or traces, logs are usually the best fit. Examples of good log telemetry:
-- JSON payloads
-- Large strings that can't be parsed into individual attributes
-- Multi-line messages
-
-The reason to use logs rather than put telemetry data into a suboptimally utilized metric or trace is related to querying/processing. Log payloads are designed to be queried by their log body. Only the log body, logger name, and attributes are of high interest. In comparison metrics and traces have other fields that make up their payloads and require more detail to parse through.
-
-
-#### Visual Example of a log payload
-```
-{
-    "scopeLogs": [
-    {
-        "scope": {
-        "name": "my_logger"
-        },
-        "logRecords": [
-        {
-            "timeUnixNano": "1767993488934098944",
-            "observedTimeUnixNano": "1767993488934126000",
-            "severityNumber": 13,
-            "severityText": "WARN",
-            "body": {
-            "stringValue": "Hello"
-            },
-            "attributes": [
-            {
-                "key": "code.file.path",
-                "value": {
-                "stringValue": "/Users/rhettsaunders/Documents/GitHub/anaconda-otel-python/telemetry_test_local.py"
-                }
-            },
-            {
-                "key": "code.function.name",
-                "value": {
-                "stringValue": "<module>"
-                }
-            },
-            {
-                "key": "code.line.number",
-                "value": {
-                "intValue": "33"
-                }
-            }
-            ],
-        }
-        ]
-    }
-    ]
-}
-```
-
-### Simple Event Logs
-If your product is using logs to capture events rather than to capture developer logs, the `EventLogger` class invoked by the `send_event` function in our code is a more efficient method of transporting events. These calls produce the lightest payloads. If you are not interested in capturing the line numbers, log levels, etc. that come with standard developer logs, this would be the way to go.
-
-#### Visual example of Event Log payload
-```
-{
-    "scope_logs": [
-    {
-        "scope": {
-        "name": "aau_test_event_logger"
-        },
-        "log_records": [
-        {
-            "body": {
-            "string_value": "Hello"
-            },
-            "attributes": [
-            {
-                "key": "log.event.name",
-                "value": {
-                "string_value": "test_event"
-                }
-            }
-            ],
-            "observed_time_unix_nano": "1777304261742595000"
-        }
-        ]
-    }
-    ]
 }
 ```

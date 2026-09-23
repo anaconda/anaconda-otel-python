@@ -11,12 +11,25 @@ all.
 """
 
 import sys
+sys.path.append("./")
+
 import time
 from unittest.mock import patch, MagicMock
 
 import pytest
 
-sys.path.append("./")
+from opentelemetry import _logs
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.trace import TracerProvider
+
+import anaconda_opentelemetry.signals as sig
+from anaconda_opentelemetry.attributes import ResourceAttributes
+from anaconda_opentelemetry.config import Configuration
+from anaconda_opentelemetry.logging import _AnacondaLogger
+from anaconda_opentelemetry.metrics import _AnacondaMetrics
+from anaconda_opentelemetry.signals import initialize_telemetry
+from anaconda_opentelemetry.tracing import _AnacondaTrace
 
 
 # ---------------------------------------------------------------------------
@@ -25,11 +38,6 @@ sys.path.append("./")
 @pytest.fixture(autouse=True)
 def reset_telemetry_state():
     """Reset module-level singleton state between tests."""
-    import anaconda_opentelemetry.signals as sig
-    from anaconda_opentelemetry.logging import _AnacondaLogger
-    from anaconda_opentelemetry.metrics import _AnacondaMetrics
-    from anaconda_opentelemetry.tracing import _AnacondaTrace
-
     # Defensive: undo any prior test's monkeypatch of these references
     sig._AnacondaTrace = _AnacondaTrace
     sig._AnacondaMetrics = _AnacondaMetrics
@@ -63,14 +71,22 @@ def reset_telemetry_state():
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+def _stub_logger_instance(provider):
+    """Install a stand-in _AnacondaLogger singleton owning `provider`.
+
+    flush_telemetry() flushes the owned provider, not the OTel global.
+    """
+    _AnacondaLogger._instance = MagicMock(spec=_AnacondaLogger)
+    _AnacondaLogger._instance._provider = provider
+    return _AnacondaLogger._instance
+
+
 def _make_config():
     """Build a Configuration that performs no real network I/O.
 
     - set_skip_internet_check(True): skip DNS / endpoint reachability probes
     - set_console_exporter(True): swap OTLP exporters for ConsoleExporter
     """
-    from anaconda_opentelemetry.config import Configuration
-
     config = Configuration(default_endpoint="http://localhost:4317")
     config.set_skip_internet_check(True)
     config.set_console_exporter(True)
@@ -78,8 +94,6 @@ def _make_config():
 
 
 def _make_attributes():
-    from anaconda_opentelemetry.attributes import ResourceAttributes
-
     return ResourceAttributes("test_service", "1.0.0")
 
 
@@ -93,10 +107,6 @@ def _provider_atexit_handlers():
     attribute-name asymmetry: Tracer/Meter use ``_atexit_handler``; Logger uses
     ``_at_exit_handler``.
     """
-    from anaconda_opentelemetry.logging import _AnacondaLogger
-    from anaconda_opentelemetry.metrics import _AnacondaMetrics
-    from anaconda_opentelemetry.tracing import _AnacondaTrace
-
     return {
         "TracerProvider": getattr(_AnacondaTrace._instance._provider, "_atexit_handler", None),
         "MeterProvider": getattr(_AnacondaMetrics._instance._provider, "_atexit_handler", None),
@@ -109,8 +119,6 @@ def _provider_atexit_handlers():
 #     SDK *Provider classes
 # ---------------------------------------------------------------------------
 def test_shutdown_on_exit_false_skips_atexit_registration():
-    from anaconda_opentelemetry.signals import initialize_telemetry
-
     config = _make_config()
     config.set_shutdown_on_exit(False)
 
@@ -130,8 +138,6 @@ def test_shutdown_on_exit_false_skips_atexit_registration():
 # (b) Default shutdown_on_exit=True -> atexit registered for all 3 providers
 # ---------------------------------------------------------------------------
 def test_default_shutdown_on_exit_registers_all_three_providers():
-    from anaconda_opentelemetry.signals import initialize_telemetry
-
     initialize_telemetry(
         config=_make_config(),
         attributes=_make_attributes(),
@@ -149,10 +155,6 @@ def test_default_shutdown_on_exit_registers_all_three_providers():
 # (c) Global LoggerProvider retrievable via the OTel global getter after init
 # ---------------------------------------------------------------------------
 def test_global_logger_provider_retrievable_after_init():
-    from anaconda_opentelemetry.signals import initialize_telemetry
-    from opentelemetry import _logs
-    from opentelemetry.sdk._logs import LoggerProvider
-
     config = _make_config()
     config.set_shutdown_on_exit(False)
 
@@ -169,8 +171,6 @@ def test_global_logger_provider_retrievable_after_init():
 
 
 def test_shutdown_telemetry_bounded_and_retryable_under_hanging_flush(monkeypatch):
-    import anaconda_opentelemetry.signals as sig
-
     sig.__ANACONDA_TELEMETRY_INITIALIZED = True
     sig._SHUTDOWN_DONE = False
 
@@ -201,8 +201,6 @@ def test_shutdown_telemetry_bounded_and_retryable_under_hanging_flush(monkeypatc
 # (e) Idempotency: subsequent shutdown_telemetry calls are immediate no-ops
 # ---------------------------------------------------------------------------
 def test_shutdown_telemetry_is_idempotent(monkeypatch):
-    import anaconda_opentelemetry.signals as sig
-
     sig.__ANACONDA_TELEMETRY_INITIALIZED = True
     sig._SHUTDOWN_DONE = False
 
@@ -233,8 +231,6 @@ def test_shutdown_telemetry_is_idempotent(monkeypatch):
 
 
 def test_shutdown_telemetry_skips_when_already_in_progress(monkeypatch):
-    import anaconda_opentelemetry.signals as sig
-
     sig.__ANACONDA_TELEMETRY_INITIALIZED = True
     sig._SHUTDOWN_DONE = False
 
@@ -259,8 +255,6 @@ def test_shutdown_telemetry_skips_when_already_in_progress(monkeypatch):
 # ---------------------------------------------------------------------------
 def test_flush_and_shutdown_return_false_when_uninitialized():
     """Without initialize_telemetry(), the public APIs must short-circuit."""
-    import anaconda_opentelemetry.signals as sig
-
     # Fixture has already reset __ANACONDA_TELEMETRY_INITIALIZED to False.
     assert sig.__ANACONDA_TELEMETRY_INITIALIZED is False
 
@@ -273,11 +267,6 @@ def test_flush_and_shutdown_return_false_when_uninitialized():
 # (g) flush_telemetry calls force_flush on tracer, meter, AND logger providers
 # ---------------------------------------------------------------------------
 def test_flush_telemetry_invokes_force_flush_on_all_three_providers():
-    import anaconda_opentelemetry.signals as sig
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk._logs import LoggerProvider
-
     sig.__ANACONDA_TELEMETRY_INITIALIZED = True
 
     # spec=ClassName makes isinstance(mock, ClassName) return True, which
@@ -288,13 +277,12 @@ def test_flush_telemetry_invokes_force_flush_on_all_three_providers():
     mock_mp.force_flush.return_value = True
     mock_lp = MagicMock(spec=LoggerProvider)
     mock_lp.force_flush.return_value = True
+    _stub_logger_instance(mock_lp)
 
     with patch(
         "opentelemetry.trace.get_tracer_provider", return_value=mock_tp
     ), patch(
         "opentelemetry.metrics.get_meter_provider", return_value=mock_mp
-    ), patch(
-        "opentelemetry._logs.get_logger_provider", return_value=mock_lp
     ):
         result = sig.flush_telemetry()
 
@@ -304,14 +292,42 @@ def test_flush_telemetry_invokes_force_flush_on_all_three_providers():
     assert result is True
 
 
+def test_flush_telemetry_flushes_owned_logger_provider_not_the_global_one():
+    """Regression: a foreign global provider must not be flushed in place of ours."""
+    sig.__ANACONDA_TELEMETRY_INITIALIZED = True
+
+    owned_lp = MagicMock(spec=LoggerProvider)
+    owned_lp.force_flush.return_value = True
+    _stub_logger_instance(owned_lp)
+
+    foreign_lp = MagicMock(spec=LoggerProvider)
+    foreign_lp.force_flush.return_value = True
+
+    with patch("opentelemetry._logs.get_logger_provider", return_value=foreign_lp):
+        result = sig.flush_telemetry()
+
+    owned_lp.force_flush.assert_called()
+    foreign_lp.force_flush.assert_not_called()
+    assert result is True
+
+
+def test_flush_telemetry_skips_logger_provider_when_logging_not_initialized():
+    """With signal_types excluding 'logging' there is no provider of ours to flush."""
+    sig.__ANACONDA_TELEMETRY_INITIALIZED = True
+    _AnacondaLogger._instance = None
+
+    foreign_lp = MagicMock(spec=LoggerProvider)
+
+    with patch("opentelemetry._logs.get_logger_provider", return_value=foreign_lp):
+        result = sig.flush_telemetry()
+
+    foreign_lp.force_flush.assert_not_called()
+    assert result is True
+
+
 def test_flush_telemetry_returns_false_when_a_provider_force_flush_raises():
     """Failure on any single provider should be reflected in the return
     value, and the other providers should still be flushed."""
-    import anaconda_opentelemetry.signals as sig
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk._logs import LoggerProvider
-
     sig.__ANACONDA_TELEMETRY_INITIALIZED = True
 
     mock_tp = MagicMock(spec=TracerProvider)
@@ -320,13 +336,12 @@ def test_flush_telemetry_returns_false_when_a_provider_force_flush_raises():
     mock_mp.force_flush.side_effect = RuntimeError("boom")
     mock_lp = MagicMock(spec=LoggerProvider)
     mock_lp.force_flush.return_value = True
+    _stub_logger_instance(mock_lp)
 
     with patch(
         "opentelemetry.trace.get_tracer_provider", return_value=mock_tp
     ), patch(
         "opentelemetry.metrics.get_meter_provider", return_value=mock_mp
-    ), patch(
-        "opentelemetry._logs.get_logger_provider", return_value=mock_lp
     ):
         result = sig.flush_telemetry()
 
