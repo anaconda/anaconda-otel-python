@@ -2,6 +2,40 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.2.5]
+
+### Added
+
+- N/A
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- `flush_telemetry` now behaves as expected when there are multiple instantiated LoggerProviders in a process
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- Support flush of anaconda-opentelemetry given multiple LoggerProviders [#100](https://github.com/anaconda/anaconda-otel-python/pull/100)
+
 ## [v1.2.4]
 
 ### Added
