@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      
+
       - name: Check for file changes
         uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
@@ -23,15 +23,33 @@ jobs:
             package:
               - 'anaconda_opentelemetry/**'
               - 'conda-recipe/**'
+              - 'pyproject.toml'
+              - 'requirements.txt'
+              - 'tests/**'
+              - '.github/actions/**'
+              - '.github/workflows/pull-request-tests.yaml'
 
   conda-package-tests:
+    name: conda py${{ matrix.python-version }} / otel ${{ matrix.otel-version }}
     needs: detect-changes
     if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        include:
+          - python-version: '3.10'
+            otel-version: '1.43'
+          - python-version: '3.11'
+            otel-version: '1.43'
+          - python-version: '3.12'
+            otel-version: '1.43'
+          - python-version: '3.13'
+            otel-version: '1.43'
+          - python-version: '3.14'
+            otel-version: '1.43'
+          - python-version: '3.14'
+            otel-version: '1.40'
 
     steps:
       - name: Checkout code
@@ -41,11 +59,80 @@ jobs:
         uses: ./.github/actions/conda-package-tests/
         with:
           python-version: ${{ matrix.python-version }}
+          otel-version: ${{ matrix.otel-version }}
+
+  # Covers the PyPI channel: the interior minors `defaults` skipped, which only pip
+  # can resolve, plus a free solve of pyproject.toml.
+  pypi-package-tests:
+    name: pypi py${{ matrix.python-version }} / otel ${{ matrix.otel-version || 'resolved' }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Exact patches: pip has no `=1.41` series semantics.
+          - python-version: '3.13'
+            otel-version: '1.41.1'
+          - python-version: '3.13'
+            otel-version: '1.42.1'
+          # Unpinned, at both ends of `requires-python`.
+          - python-version: '3.10'
+            otel-version: ''
+          - python-version: '3.14'
+            otel-version: ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Build and Test PyPI Package
+        uses: ./.github/actions/pypi-package-tests/
+        with:
+          python-version: ${{ matrix.python-version }}
+          otel-version: ${{ matrix.otel-version }}
+
+  # Lint and type-check on one cell only, not across the matrix.
+  static-checks:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.package == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
+        with:
+          python-version: '3.14'
+          miniforge-version: latest
+          auto-activate-base: true
+
+      - name: Install package at highest version
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          conda install --override-channels -c defaults -y -q \
+            'opentelemetry-api=1.43' 'opentelemetry-sdk=1.43' \
+            'opentelemetry-exporter-otlp-proto-grpc=1.43' \
+            'opentelemetry-exporter-otlp-proto-http=1.43' \
+            pyyaml requests mypy pytest
+          python -m pip install . --no-deps
+
+      - name: Type check the OTel compatibility layer
+        shell: bash -el {0}
+        run: mypy --follow-imports=silent anaconda_opentelemetry/_compat.py
+
+      # Catches drift between the OTel ranges in pyproject.toml and conda-recipe/meta.yaml
+      - name: Check PyPI/conda dependency declarations are in sync
+        shell: bash -el {0}
+        run: python -m pytest tests/integration_tests/dependency_sync_test.py -q
 
   test-status:
     name: Tests Status
     if: always()
-    needs: [detect-changes, conda-package-tests]
+    needs: [detect-changes, conda-package-tests, pypi-package-tests, static-checks]
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate test results
@@ -56,11 +143,21 @@ jobs:
 
           echo "::group::Test Execution Results"
           echo "Conda package tests result: ${{ needs.conda-package-tests.result }}"
+          echo "PyPI package tests result: ${{ needs.pypi-package-tests.result }}"
+          echo "Static checks result: ${{ needs.static-checks.result }}"
           echo "::endgroup::"
 
           if [[ "${{ needs.detect-changes.outputs.package }}" == "true" ]]; then
             if [[ "${{ needs.conda-package-tests.result }}" != "success" ]]; then
               echo "Conda package tests failed or were cancelled"
+              exit 1
+            fi
+            if [[ "${{ needs.pypi-package-tests.result }}" != "success" ]]; then
+              echo "PyPI package tests failed or were cancelled"
+              exit 1
+            fi
+            if [[ "${{ needs.static-checks.result }}" != "success" ]]; then
+              echo "Static checks failed or were cancelled"
               exit 1
             fi
             echo "All tests passed (required due to changes)"
@@ -70,10 +167,14 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "::notice::Manual workflow run - checking all executed tests"
-            if [[ "${{ needs.conda-package-tests.result }}" != "success" && "${{ needs.conda-package-tests.result }}" != "skipped" ]]; then
-              echo "Conda package tests failed in manual run"
-              exit 1
-            fi
+            for result in "${{ needs.conda-package-tests.result }}" \
+                          "${{ needs.pypi-package-tests.result }}" \
+                          "${{ needs.static-checks.result }}"; do
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+                echo "A required job failed in manual run"
+                exit 1
+              fi
+            done
           fi
 
           echo "::notice:: All required tests have passed!"

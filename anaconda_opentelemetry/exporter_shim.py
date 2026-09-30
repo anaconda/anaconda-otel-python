@@ -2,7 +2,7 @@ import threading, logging
 from enum import Enum
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.trace.export import SpanExporter
-from opentelemetry.sdk._logs.export import LogExporter
+from ._compat import LogRecordExporter
 
 
 class ExporterState(Enum):
@@ -84,5 +84,5 @@ class OTLPSpanExporterShim(_OTLPExporterMixin, SpanExporter):
     _signal = 'tracing'
 
 
-class OTLPLogExporterShim(_OTLPExporterMixin, LogExporter):
+class OTLPLogExporterShim(_OTLPExporterMixin, LogRecordExporter):
     _signal = 'logging'

@@ -4,6 +4,10 @@ inputs:
   python-version:
     description: 'Python version to use'
     required: true
+  otel-version:
+    description: 'OpenTelemetry minor series to pin, e.g. "1.43". Empty means any version in range.'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -28,10 +32,37 @@ runs:
     - name: Create test environment and install package
       shell: bash -el {0}
       run: |
-        conda create -n package-test python=${{ inputs.python-version }} -y -q
+        set -euo pipefail
+        CHANNELS="--override-channels -c ./build -c defaults"
+
+        PINS=()
+        if [[ -n "${{ inputs.otel-version }}" ]]; then
+          for p in opentelemetry-api opentelemetry-sdk \
+                   opentelemetry-exporter-otlp-proto-grpc \
+                   opentelemetry-exporter-otlp-proto-http; do
+            PINS+=("$p=${{ inputs.otel-version }}")
+          done
+        fi
+
+        conda create -n package-test python=${{ inputs.python-version }} -y -q $CHANNELS
         conda activate package-test
-        conda install -c ./build anaconda-opentelemetry -y -q
-        conda install pytest flask -y -q
+        conda install $CHANNELS anaconda-opentelemetry "${PINS[@]}" -y -q
+        conda install $CHANNELS pytest flask requests -y -q
+
+    - name: Report resolved OpenTelemetry versions
+      shell: bash -el {0}
+      run: |
+        set -euo pipefail
+        conda activate package-test
+        conda list | grep -i opentelemetry
+        # Fail loudly if the pin did not take.
+        WANT='${{ inputs.otel-version }}' python -c '
+        import os, sys
+        from opentelemetry.sdk.version import __version__ as got
+        want = os.environ["WANT"]
+        if want and not got.startswith(want + "."):
+            sys.exit(f"expected opentelemetry-sdk {want}.x, resolved {got}")
+        print("opentelemetry-sdk", got)'
 
     - name: Run unit tests
       shell: bash -el {0}

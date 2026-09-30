@@ -1,8 +1,10 @@
 PyYAML>=6.0.2
 requests>=2.32.5
-opentelemetry-api==1.40.0
-opentelemetry-exporter-otlp==1.40.0
-opentelemetry-exporter-otlp-proto-common==1.40.0
-opentelemetry-exporter-otlp-proto-grpc==1.40.0
-opentelemetry-exporter-otlp-proto-http==1.40.0
-opentelemetry-sdk==1.40.0
+# Dev/test convenience file only -- the authoritative dependency declarations are
+# pyproject.toml (PyPI) and conda-recipe/meta.yaml (conda), which are kept in sync
+# by tests/unit_tests/dependency_sync_test.py. Keep these ranges matching them.
+opentelemetry-api>=1.40.0,<1.44
+opentelemetry-sdk>=1.40.0,<1.44
+opentelemetry-exporter-otlp-proto-grpc>=1.40.0,<1.44
+opentelemetry-exporter-otlp-proto-http>=1.40.0,<1.44
+grpcio>=1.71.0

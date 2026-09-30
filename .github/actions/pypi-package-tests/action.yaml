@@ -1,0 +1,113 @@
+name: 'Build and Test PyPI Package'
+description: >
+  Builds the wheel and sdist, installs the wheel with pip resolving
+  pyproject.toml, and runs the suite against the installed package.
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  otel-version:
+    description: >
+      Exact OpenTelemetry version to pin, e.g. "1.41.1". Empty lets pip resolve
+      freely from the range declared in pyproject.toml.
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Build sdist and wheel
+      shell: bash -el {0}
+      run: |
+        set -euo pipefail
+        python -m pip install --upgrade pip build
+        python -m build
+        ls -l dist
+
+    # Pins go in the same invocation as the wheel, so an out-of-range pin is a
+    # resolution error.
+    - name: Install the wheel and let pip resolve the declared range
+      shell: bash -el {0}
+      run: |
+        set -euo pipefail
+        PINS=()
+        if [[ -n "${{ inputs.otel-version }}" ]]; then
+          for p in opentelemetry-api opentelemetry-sdk \
+                   opentelemetry-exporter-otlp-proto-grpc \
+                   opentelemetry-exporter-otlp-proto-http; do
+            PINS+=("$p==${{ inputs.otel-version }}")
+          done
+        fi
+        python -m pip install dist/*.whl "${PINS[@]}"
+        python -m pip install pytest flask requests
+
+    - name: Check the resolved versions against the declared range
+      shell: bash -el {0}
+      run: |
+        set -euo pipefail
+        python -m pip list | grep -i opentelemetry
+        WANT='${{ inputs.otel-version }}' python - <<'PY'
+        import os, sys
+        from importlib.metadata import requires, version
+        from packaging.requirements import Requirement
+
+        want = os.environ["WANT"]
+        got = version("opentelemetry-sdk")
+        if want and got != want:
+            sys.exit(f"expected opentelemetry-sdk {want}, resolved {got}")
+
+        # Ranges come from the installed metadata, so this also covers what the
+        # built wheel actually declares.
+        declared = {
+            r.name.lower(): r
+            for r in (Requirement(s) for s in requires("anaconda-opentelemetry") or ())
+            if not r.marker
+        }
+        for name in (
+            "opentelemetry-api",
+            "opentelemetry-sdk",
+            "opentelemetry-exporter-otlp-proto-grpc",
+            "opentelemetry-exporter-otlp-proto-http",
+            "pyyaml",
+            "grpcio",
+        ):
+            req = declared.get(name)
+            if req is None:
+                sys.exit(f"{name} is missing from the built wheel's metadata")
+            installed = version(name)
+            if not req.specifier.contains(installed):
+                sys.exit(f"{name} {installed} violates declared {req.specifier}")
+            print(f"{name} {installed} satisfies {req.specifier}")
+        PY
+
+    - name: Assert the tests import the installed wheel
+      shell: bash -el {0}
+      run: |
+        set -euo pipefail
+        cat > /tmp/provenance_test.py <<'PY'
+        import sysconfig
+        import anaconda_opentelemetry
+
+
+        def test_package_is_imported_from_site_packages():
+            location = anaconda_opentelemetry.__file__
+            print("imported from:", location)
+            assert location.startswith(sysconfig.get_paths()["purelib"]), (
+                f"{location} is not the installed wheel; the repo root is on "
+                "sys.path and is shadowing it"
+            )
+        PY
+        pytest /tmp/provenance_test.py -q
+
+    - name: Run unit tests
+      shell: bash -el {0}
+      run: OTEL_USE_CONSOLE_EXPORTER=TRUE pytest tests/unit_tests/
+
+    - name: Run integration tests
+      shell: bash -el {0}
+      run: pytest tests/integration_tests/
