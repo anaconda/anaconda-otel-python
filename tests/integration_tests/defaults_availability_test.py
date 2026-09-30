@@ -47,7 +47,7 @@ _OTEL_PACKAGES = (
     "opentelemetry-proto",
 )
 
-_MODERN_WINDOW_FLOOR = (1, 39)
+_MODERN_WINDOW_FLOOR = (1, 40)
 
 
 def _parse_version(text: str) -> tuple[int, ...]:

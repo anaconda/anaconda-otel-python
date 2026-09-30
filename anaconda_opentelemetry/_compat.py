@@ -28,7 +28,6 @@ __all__ = [
     "BatchLogRecordProcessor",
     "ConsoleLogRecordExporter",
     "GaugeInstrument",
-    "Logger",
     "LoggerProvider",
     "LoggingHandler",
     "LogRecordExporter",
@@ -59,7 +58,6 @@ def _unavailable(*args: Any, **kwargs: Any) -> None:
 
 set_logger_provider: Any
 get_logger_provider: Any
-Logger: Any
 LoggerProvider: Any
 LoggingHandler: Any
 BatchLogRecordProcessor: Any
@@ -74,10 +72,6 @@ try:
     set_logger_provider = _api_logs.set_logger_provider
     get_logger_provider = _api_logs.get_logger_provider
 
-    # `LogRecord` became `ReadableLogRecord` / `ReadWriteLogRecord` in
-    # opentelemetry-sdk 1.39.0 (open-telemetry/opentelemetry-python#4676). The
-    # 1.40.0 floor sits above the rename, so one import path covers the range.
-    Logger = _sdk_logs.Logger
     LoggerProvider = _sdk_logs.LoggerProvider
     LoggingHandler = _sdk_logs.LoggingHandler
 
@@ -98,7 +92,6 @@ except Exception as _exc:  # pragma: no cover - only on an unsupported SDK
     )
     set_logger_provider = _unavailable
     get_logger_provider = _unavailable
-    Logger = _UnavailablePrivateAPI
     LoggerProvider = _UnavailablePrivateAPI
     LoggingHandler = _UnavailablePrivateAPI
     LogRecordExporter = _UnavailablePrivateAPI

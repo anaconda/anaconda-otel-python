@@ -73,8 +73,8 @@ runs:
             "opentelemetry-sdk",
             "opentelemetry-exporter-otlp-proto-grpc",
             "opentelemetry-exporter-otlp-proto-http",
-            "pyyaml",
             "grpcio",
+            "requests",
         ):
             req = declared.get(name)
             if req is None:

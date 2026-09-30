@@ -106,10 +106,7 @@ def initialize_telemetry(config: Config,
     __CONFIG = config
     __SIGNALS = signal_types
 
-    # Check ResourceAttributes object
-    if attributes is None:
-        raise ValueError(f"The attributes argument is required but was None")
-    elif type(attributes.parameters) != dict:
+    if type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
 
     if not config._get_verbose_export_errors():
