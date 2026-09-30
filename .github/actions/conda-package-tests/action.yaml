@@ -47,7 +47,7 @@ runs:
         conda create -n package-test python=${{ inputs.python-version }} -y -q $CHANNELS
         conda activate package-test
         conda install $CHANNELS anaconda-opentelemetry "${PINS[@]}" -y -q
-        conda install $CHANNELS pytest flask requests -y -q
+        pip install -r requirements.txt pytest flask
 
     - name: Report resolved OpenTelemetry versions
       shell: bash -el {0}

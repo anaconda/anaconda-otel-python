@@ -44,7 +44,7 @@ runs:
           done
         fi
         python -m pip install dist/*.whl "${PINS[@]}"
-        python -m pip install pytest flask requests
+        python -m pip install -r requirements.txt pytest flask
 
     - name: Check the resolved versions against the declared range
       shell: bash -el {0}

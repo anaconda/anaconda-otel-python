@@ -6,25 +6,11 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Added
 
-- Support for a range of OpenTelemetry versions (**1.40.0 – 1.43.x**) instead of a single exact pin. The tested set is 1.40.0 and 1.43.0, which are the only versions of the full OTel package set carried by the conda `defaults` channel
-- `anaconda_opentelemetry/_compat.py`: every private OpenTelemetry import is now funnelled through one module, so a version bump is a one-file diff instead of a repository-wide audit. A broken private import now degrades log telemetry to a no-op with a single warning rather than raising out of a log handler
-- `docs/source/otel-private-api.md`: written inventory of the private OTel API surface this package depends on, with the version range each symbol is valid in
-- README section documenting the OpenTelemetry version support policy
-- `tests/unit_tests/dependency_sync_test.py`: asserts the OTel, `grpcio` and `pyyaml` ranges in `pyproject.toml` and `conda-recipe/meta.yaml` match, normalizing conda's `<X.Y.0a0` pre-release spelling against pip's `<X.Y`
-- `tests/unit_tests/direct_imports_test.py`: AST-walks the package and asserts every directly-imported third-party distribution is declared. A grep for `import grpc` does not match `import re, os, grpc, warnings` in `config.py`, which makes `grpcio` look like a droppable transitive dependency when it is not
-- `tests/unit_tests/defaults_availability_test.py`: availability-drift check that fails when `defaults` publishes an OTel version inside our range that CI does not test, when `defaults` reaches our ceiling, or when a minor series reachable from PyPI inside our range is absent from both CI matrices
-- `.github/workflows/otel-deps-test.yaml`: runs the availability-drift check on every PR to `main`. It reads live channel contents, so it can begin failing because a third party published a release rather than because of the diff — which is the signal to open a ceiling-ratchet PR
-- `.github/actions/pypi-package-tests/action.yaml` and a `pypi-package-tests` matrix: covers the PyPI channel, which `defaults` cannot represent. Pip can resolve 1.41.x and 1.42.x from the continuous declared range, and `defaults` carries neither. Pins are passed to the same `pip install` as the built wheel, so an out-of-range pin is a resolution error. One unpinned cell per end of `requires-python` gives pip a free solve of `pyproject.toml` — the only place in CI where the declared dependency block reaches a resolver, since the conda path installs from `meta.yaml`
-- `test:` section in the conda recipe that imports the built package
+- Support for `opentelemetry-* >= 1.40.0, < 1.44`
 
 ### Changed
 
-- **Dependency ranges widened** in both `pyproject.toml` and `conda-recipe/meta.yaml`: `opentelemetry-api`, `opentelemetry-sdk`, `opentelemetry-exporter-otlp-proto-grpc` and `opentelemetry-exporter-otlp-proto-http` are now `>=1.40.0,<1.44`
-- **Declared set reduced to the imported set.** `opentelemetry-proto`, `opentelemetry-exporter-otlp-proto-common` and `opentelemetry-semantic-conventions` are no longer declared in either file: this package imports none of them, and the exporters it does declare pin all three `==<exact>`. The stale `opentelemetry-semantic-conventions==0.61b0` was the hazard — because semconv is versioned off the main train (`0.61b0` pairs with 1.40, `0.64b0` with 1.43), it would have been satisfied by silently resolving the SDK back down to 1.40.0
-- PR CI now runs the conda package tests as a version matrix: the ceiling (1.43) on every supported Python, plus the floor (1.40) on the newest Python. Test environments are solved with `--override-channels -c defaults`, so a range that cannot be satisfied from `defaults` now fails in CI rather than in a user's environment
-- Lint and type checks moved to a single dedicated job instead of running on every matrix cell
-- `OTLPLogExporterShim` now subclasses `LogRecordExporter` rather than the deprecated `LogExporter` alias, removing a `DeprecationWarning`
-- `conda-recipe/meta.yaml` `host:` now mirrors the `python >=3.10` floor from `run:`
+- N/A
 
 ### Deprecated
 
@@ -32,12 +18,11 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Removed
 
-- `opentelemetry-semantic-conventions` and `opentelemetry-proto` are no longer declared as direct dependencies. The package imports neither, and the SDK and exporters already pin both exactly. Keeping the stale `opentelemetry-semantic-conventions ==0.61b0` pin alongside a widened SDK range would have silently resolved the SDK back down to 1.40.0 with no error and no warning. `grpcio >=1.71.0` is retained: `config.py` imports `grpc` at module level
-- Runtime shape-detection for `Logger.emit` and the `opentelemetry.sdk._logs.LogRecord` import fallback. The 1.40.0 floor sits entirely on the post-1.39 side of the `ReadableLogRecord` / `ReadWriteLogRecord` rename, so neither branch is reachable
+- N/A
 
 ### Fixed
 
-- N/A
+- Potential race condition with exports on swapping exporters in the OTLPExporterShim
 
 ### Security
 
@@ -45,11 +30,12 @@ We [keep a changelog.](http://keepachangelog.com/)
 
 ### Tickets Closed
 
-- CASH-3728
+- N/A
 
 ### Pull Requests Merged
 
-- N/A
+- Multi otel dep version support + testing [#101](https://github.com/anaconda/anaconda-otel-python/pull/101)
+
 
 ## [v1.2.5]
 
