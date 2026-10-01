@@ -14,15 +14,12 @@ authors = [
 ]
 license = { text = "Apache 2.0" }  # SPDX identifier
 dependencies = [
-    "PyYAML>=6.0.2",
-    "opentelemetry-api==1.40.0",
-    "opentelemetry-exporter-otlp-proto-common==1.40.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.40.0",
-    "opentelemetry-exporter-otlp-proto-http ==1.40.0",
-    "opentelemetry-proto==1.40.0",
-    "opentelemetry-sdk==1.40.0",
-    "opentelemetry-semantic-conventions==0.61b0",
+    "opentelemetry-api >= 1.40.0, < 1.44",
+    "opentelemetry-sdk >= 1.40.0, < 1.44",
+    "opentelemetry-exporter-otlp-proto-grpc >= 1.40.0, < 1.44",
+    "opentelemetry-exporter-otlp-proto-http >= 1.40.0, < 1.44",
     "grpcio>=1.71.0",
+    "requests>=2.32.5",
 ]
 
 requires-python = ">=3.10"
@@ -42,3 +39,11 @@ dev = ["mypy"]
 [tool.mypy]
 # optional: ensures mypy treats the package as typed
 strict = true
+
+[tool.pytest.ini_options]
+markers = [
+    "defaults_availability: queries the conda defaults channel over the network; run by the scheduled deps workflow, not on PRs",
+]
+# Keep the network-dependent availability-drift check out of the default suite.
+# Run it with `pytest -m defaults_availability`.
+addopts = '-m "not defaults_availability"'

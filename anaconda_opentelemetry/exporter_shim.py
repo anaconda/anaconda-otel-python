@@ -2,7 +2,7 @@ import threading, logging
 from enum import Enum
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.trace.export import SpanExporter
-from opentelemetry.sdk._logs.export import LogExporter
+from ._compat import LogRecordExporter
 
 
 class ExporterState(Enum):
@@ -31,9 +31,12 @@ class _OTLPExporterMixin:
 
         with self._lock:
             old_exporter = self._exporter
-            if batch_access is not None:
-                batch_access.force_flush()
-            old_exporter.shutdown()
+
+        if batch_access is not None:
+            batch_access.force_flush()
+        old_exporter.shutdown()
+
+        with self._lock:
             self._exporter = new_exporter
             self._state = ExporterState.READY
 
@@ -54,8 +57,10 @@ class _OTLPExporterMixin:
         return self._swap_exporter(batch_access=batch_access)
 
     def export(self, *args, **kwargs):
+        with self._lock:
+            exporter = self._exporter
         try:
-            return self._exporter.export(*args, **kwargs)
+            return exporter.export(*args, **kwargs)
         except Exception as exception:
             self._logger.error(f"Failed to export: {exception}")
             return False
@@ -84,5 +89,5 @@ class OTLPSpanExporterShim(_OTLPExporterMixin, SpanExporter):
     _signal = 'tracing'
 
 
-class OTLPLogExporterShim(_OTLPExporterMixin, LogExporter):
+class OTLPLogExporterShim(_OTLPExporterMixin, LogRecordExporter):
     _signal = 'logging'

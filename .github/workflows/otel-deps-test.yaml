@@ -1,0 +1,34 @@
+name: OpenTelemetry Dependency Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  availability-drift:
+    name: channel availability drift (conda defaults + PyPI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
+        with:
+          python-version: '3.12'
+          miniforge-version: latest
+          auto-activate-base: true
+
+      - name: Install check dependencies
+        shell: bash -el {0}
+        # pyyaml: the check reads the per-channel matrices out of the PR workflow.
+        run: conda install -y -q pytest pyyaml
+
+      - name: Check channel availability against declared range and CI matrices
+        shell: bash -el {0}
+        run: python -m pytest tests/integration_tests/defaults_availability_test.py -m defaults_availability -v

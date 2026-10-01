@@ -2,6 +2,41 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [v1.3.0]
+
+### Added
+
+- Support for `opentelemetry-* >= 1.40.0, < 1.44`
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Potential race condition with exports on swapping exporters in the OTLPExporterShim
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- Multi otel dep version support + testing [#101](https://github.com/anaconda/anaconda-otel-python/pull/101)
+
+
 ## [v1.2.5]
 
 ### Added

@@ -18,16 +18,17 @@ from contextlib import contextmanager
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk._logs import LoggingHandler
+
+from ._compat import OTEL_PRIVATE_LOGS_AVAILABLE, LoggingHandler
 
 from .config import Configuration as Config
 from .attributes import ResourceAttributes as Attributes
 from .formatting import AttrDict
 
-from .common import _AnacondaCommon, MetricsNotInitialized
+from .common import MetricsNotInitialized
 from .logging import _AnacondaLogger
 from .metrics import _AnacondaMetrics
-from .tracing import _AnacondaTrace, ASpan, _ASpan
+from .tracing import _AnacondaTrace, _ASpan
 
 
 _SUPPRESSED_LOGGER_ROOTS = ('opentelemetry',)
@@ -105,10 +106,7 @@ def initialize_telemetry(config: Config,
     __CONFIG = config
     __SIGNALS = signal_types
 
-    # Check ResourceAttributes object
-    if attributes is None:
-        raise ValueError(f"The attributes argument is required but was None")
-    elif type(attributes.parameters) != dict:
+    if type(attributes.parameters) != dict:
         raise ValueError(f"The parameters attribute in ResourceAttributes must be a dictionary")
 
     if not config._get_verbose_export_errors():
@@ -123,8 +121,18 @@ def initialize_telemetry(config: Config,
     # Initialize logging here...
     signal_type_count = 0
     if 'logging' in signal_types:
-        _AnacondaLogger._instance = _AnacondaLogger(*init_params)
-        signal_type_count += 1
+        # The OTel logs SDK lives behind a private namespace; _compat degrades to
+        # no-ops if it ever disappears. Skip the signal rather than wire up
+        # inert objects the caller would have to debug.
+        if OTEL_PRIVATE_LOGS_AVAILABLE:
+            _AnacondaLogger._instance = _AnacondaLogger(*init_params)
+            signal_type_count += 1
+        else:
+            logging.getLogger(__package__).warning(
+                "Anaconda OpenTelemetry: the 'logging' signal was requested but the "
+                "installed opentelemetry-sdk does not provide the required logs API. "
+                "Skipping log telemetry."
+            )
 
     # Initialize the telemetry system here
     if 'metrics' in signal_types:

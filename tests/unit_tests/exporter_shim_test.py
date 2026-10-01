@@ -277,10 +277,10 @@ class TestOTLPLogExporterShim:
         assert shim._signal == 'logging'
         
     def test_inherits_from_log_exporter(self):
-        from opentelemetry.sdk._logs.export import LogExporter
-        
+        from anaconda_opentelemetry._compat import LogRecordExporter
+
         shim = OTLPLogExporterShim(MockExporter)
-        assert isinstance(shim, LogExporter)
+        assert isinstance(shim, LogRecordExporter)
         
     def test_export_with_logs(self):
         shim = OTLPLogExporterShim(MockExporter)

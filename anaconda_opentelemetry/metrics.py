@@ -7,12 +7,14 @@
 Anaconda Telemetry - Metrics signal class.
 """
 
-import logging, re
+import re
 from typing import Dict, Any
 
 from opentelemetry import metrics
-from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter, _Gauge
+from opentelemetry.sdk.metrics import MeterProvider, Counter, UpDownCounter, Histogram, ObservableCounter, ObservableUpDownCounter
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality
+
+from ._compat import GaugeInstrument
 
 from .common import _AnacondaCommon, MetricsNotInitialized
 from .config import Configuration as Config
@@ -31,7 +33,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         Histogram: AggregationTemporality.CUMULATIVE,
         UpDownCounter: AggregationTemporality.DELTA,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
-        _Gauge: AggregationTemporality.CUMULATIVE,  # A gauge is a last-value metric; DELTA is meaningless for it.
+        GaugeInstrument: AggregationTemporality.CUMULATIVE,  # A gauge is a last-value metric; DELTA is meaningless for it.
     }
 
     _cumulative_temporality: dict[type,AggregationTemporality] = {
@@ -40,7 +42,7 @@ class _AnacondaMetrics(_AnacondaCommon):
         Histogram: AggregationTemporality.CUMULATIVE,
         UpDownCounter: AggregationTemporality.CUMULATIVE,
         ObservableUpDownCounter: AggregationTemporality.CUMULATIVE,
-        _Gauge: AggregationTemporality.CUMULATIVE,
+        GaugeInstrument: AggregationTemporality.CUMULATIVE,
     }
 
     _temporalityValue: dict[bool,str] = {

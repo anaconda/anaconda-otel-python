@@ -6,7 +6,7 @@ sys.path.append("./")
 
 import anaconda_opentelemetry.signals
 from anaconda_opentelemetry.attributes import ResourceAttributes as Attributes
-from anaconda_opentelemetry.signals import _AnacondaCommon as AnacondaTelBase
+from anaconda_opentelemetry.common import _AnacondaCommon as AnacondaTelBase
 from anaconda_opentelemetry.signals import _AnacondaLogger as AnacondaLogger
 from anaconda_opentelemetry.signals import _AnacondaTrace as AnacondaTrace
 from anaconda_opentelemetry.signals import _AnacondaMetrics as AnacondaMetrics
