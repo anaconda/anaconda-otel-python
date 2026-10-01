@@ -12,13 +12,26 @@ permissions:
   contents: write
 
 jobs:
+  # Simply mirroring the pull request testing until I change to workflow_call and can share the matrix
   conda-package-tests:
-    name: Conda Package Tests Python ${{ matrix.python-version }}
+    name: conda py${{ matrix.python-version }} / otel ${{ matrix.otel-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        include:
+          - python-version: '3.10'
+            otel-version: '1.43'
+          - python-version: '3.11'
+            otel-version: '1.43'
+          - python-version: '3.12'
+            otel-version: '1.43'
+          - python-version: '3.13'
+            otel-version: '1.43'
+          - python-version: '3.14'
+            otel-version: '1.43'
+          - python-version: '3.14'
+            otel-version: '1.40'
 
     steps:
       - name: Checkout code
@@ -30,10 +43,77 @@ jobs:
         uses: ./.github/actions/conda-package-tests/
         with:
           python-version: ${{ matrix.python-version }}
+          otel-version: ${{ matrix.otel-version }}
+
+  pypi-package-tests:
+    name: pypi py${{ matrix.python-version }} / otel ${{ matrix.otel-version || 'resolved' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Exact patches: pip has no `=1.41` series semantics.
+          - python-version: '3.13'
+            otel-version: '1.41.1'
+          - python-version: '3.13'
+            otel-version: '1.42.1'
+          # Unpinned, at both ends of `requires-python`.
+          - python-version: '3.10'
+            otel-version: ''
+          - python-version: '3.14'
+            otel-version: ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+
+      - name: Build and Test PyPI Package
+        uses: ./.github/actions/pypi-package-tests/
+        with:
+          python-version: ${{ matrix.python-version }}
+          otel-version: ${{ matrix.otel-version }}
+
+  # Lint and type-check on one cell only, not across the matrix.
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
+        with:
+          python-version: '3.14'
+          miniforge-version: latest
+          auto-activate-base: true
+
+      - name: Install package at highest version
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          conda install --override-channels -c defaults -y -q \
+            'opentelemetry-api=1.43' 'opentelemetry-sdk=1.43' \
+            'opentelemetry-exporter-otlp-proto-grpc=1.43' \
+            'opentelemetry-exporter-otlp-proto-http=1.43' \
+            pyyaml requests mypy pytest
+          python -m pip install . --no-deps
+
+      - name: Type check the OTel compatibility layer
+        shell: bash -el {0}
+        run: mypy --follow-imports=silent anaconda_opentelemetry/_compat.py
+
+      # Catches drift between the OTel ranges in pyproject.toml and conda-recipe/meta.yaml
+      - name: Check PyPI/conda dependency declarations are in sync
+        shell: bash -el {0}
+        run: python -m pytest tests/integration_tests/dependency_sync_test.py -q
 
   release:
     name: Create Release
-    needs: [conda-package-tests]
+    needs: [conda-package-tests, pypi-package-tests, static-checks]
     runs-on: ubuntu-latest
 
     steps:
