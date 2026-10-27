@@ -132,23 +132,12 @@ class _AnacondaTrace(_AnacondaCommon):
             headers: Dict[str, str] = {}
             if auth_token is not None:
                 headers['authorization'] = f'Bearer {auth_token}'
-            if config._get_request_protocol_tracing() in ['grpc', 'grpcs']:  # gRPC
-                insecure = not config._get_TLS_tracing()
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter as OTLPSpanExportergRPC
-                exporter = OTLPSpanExporterShim(
-                    OTLPSpanExportergRPC,
-                    endpoint=self.tracing_endpoint,
-                    insecure=insecure,
-                    credentials=config._get_ca_cert_tracing() if not insecure else None,
-                    headers=headers
-                )
-            else:  # HTTP
-                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
-                http_kwargs = self._build_http_exporter_kwargs('tracing', self.tracing_endpoint, headers)
-                exporter = OTLPSpanExporterShim(
-                    OTLPSpanExporterHTTP,
-                    **http_kwargs
-                )
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
+            http_kwargs = self._build_http_exporter_kwargs('tracing', self.tracing_endpoint, headers)
+            exporter = OTLPSpanExporterShim(
+                OTLPSpanExporterHTTP,
+                **http_kwargs
+            )
 
         self.exporter = exporter
         self._processor = BatchSpanProcessor(self.exporter, schedule_delay_millis=self.telemetry_export_interval_millis)

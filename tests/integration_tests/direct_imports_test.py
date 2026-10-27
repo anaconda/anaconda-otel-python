@@ -17,10 +17,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _REPO_ROOT / "pyproject.toml"
 
 _DIRECT_IMPORTS = {
-    "grpcio",
     "opentelemetry-api",
     "opentelemetry-sdk",
-    "opentelemetry-exporter-otlp-proto-grpc",
     "opentelemetry-exporter-otlp-proto-http",
     "requests",
 }

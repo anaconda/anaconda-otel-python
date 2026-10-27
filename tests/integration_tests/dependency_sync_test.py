@@ -21,12 +21,11 @@ _PYPI_JOB = "pypi-package-tests"
 _OTEL_PACKAGES = frozenset({
     "opentelemetry-api",
     "opentelemetry-sdk",
-    "opentelemetry-exporter-otlp-proto-grpc",
     "opentelemetry-exporter-otlp-proto-http",
 })
 
 # Non-OTel runtime dependencies that must also match across the two files.
-_SHARED_PACKAGES = frozenset({"grpcio", "requests"})
+_SHARED_PACKAGES = frozenset({"requests"})
 
 _SYNCED_PACKAGES = _OTEL_PACKAGES | _SHARED_PACKAGES
 

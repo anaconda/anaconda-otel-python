@@ -2,6 +2,41 @@
 
 We [keep a changelog.](http://keepachangelog.com/)
 
+## [Unreleased]
+
+### Added
+
+- N/A
+
+### Changed
+
+- N/A
+
+### Deprecated
+
+- N/A
+
+### Removed
+
+- Removed gRPC exporters and the `grpcio` / `opentelemetry-exporter-otlp-proto-grpc` dependencies. `grpc://` and `grpcs://` endpoints are no longer accepted.
+
+### Fixed
+
+- N/A
+
+### Security
+
+- N/A
+
+### Tickets Closed
+
+- N/A
+
+### Pull Requests Merged
+
+- N/A
+
+
 ## [v1.3.0]
 
 ### Added

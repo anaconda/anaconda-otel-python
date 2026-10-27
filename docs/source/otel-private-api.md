@@ -32,7 +32,6 @@ pytest tests/integration_tests/direct_imports_test.py tests/integration_tests/de
 for v in 1.40.0 1.43.0; do
   uv pip install "opentelemetry-sdk==$v" "opentelemetry-api==$v" \
     "opentelemetry-exporter-otlp-proto-common==$v" \
-    "opentelemetry-exporter-otlp-proto-grpc==$v" \
     "opentelemetry-exporter-otlp-proto-http==$v"
   OTEL_USE_CONSOLE_EXPORTER=TRUE pytest tests
 done
@@ -48,7 +47,7 @@ done
 | `ReadableLogRecord` / `ReadWriteLogRecord` | `opentelemetry.sdk._logs` | Same. | Present in 1.40 and 1.43. `LogRecord` is **absent** from `opentelemetry.sdk._logs` in both. | **< 1.39.0**: these names do not exist; the type was `LogRecord`. Renamed by [open-telemetry/opentelemetry-python#4676](https://github.com/open-telemetry/opentelemetry-python/pull/4676) in 1.39.0. A floor of 1.37/1.38 would straddle this rename and require dual-path imports. A floor of 1.40.0 sits entirely on the post-rename side — this is the primary justification for 1.40.0. |
 | `LogRecordExporter` (and deprecated alias `LogExporter`) | `opentelemetry.sdk._logs.export` | Same. | Both names present in 1.40 and 1.43; `LogExporter` is a deprecated subclass that emits a `DeprecationWarning` on subclassing. `OTLPLogExporterShim` subclasses `LogRecordExporter`. `export(batch: Sequence[ReadableLogRecord])` identical. | `LogExporter` is scheduled for removal; using `LogRecordExporter` is forward-safe within the range. Below 1.39 only `LogExporter` exists. |
 | `BatchLogRecordProcessor`, `ConsoleLogRecordExporter` (alias `ConsoleLogExporter`) | `opentelemetry.sdk._logs.export` | Same. | Present in both. `BatchLogRecordProcessor.__init__` gained keyword-only `meter_provider=` in 1.43 (additive). `ConsoleLogRecordExporter(out, formatter)` identical; its `out` attribute is mutated by `_test_set_console_mock`. | Rename or removal breaks log batching and the console-exporter test hook. |
-| `OTLPLogExporter` | `opentelemetry.exporter.otlp.proto.grpc._log_exporter`, `opentelemetry.exporter.otlp.proto.http._log_exporter` | Module is underscore-prefixed because the logs exporter tracks the unstable logs signal. Upstream has never published a public path for it. | Present in both. 1.43 adds `retryable_error_codes=` (gRPC) and keyword-only `meter_provider=` (both). All arguments we pass (`endpoint`, `insecure`, `credentials`, `headers`, `timeout`, `certificate_file`, `client_key_file`, `client_certificate_file`) are unchanged. | Rename of `_log_exporter` breaks OTLP log export; imports are lazy (inside `_AnacondaLogger.__init__`) so failure surfaces at initialisation, not import. |
+| `OTLPLogExporter` | `opentelemetry.exporter.otlp.proto.http._log_exporter` | Module is underscore-prefixed because the logs exporter tracks the unstable logs signal. Upstream has never published a public path for it. | Present in both. 1.43 adds keyword-only `meter_provider=`. All arguments we pass (`endpoint`, `headers`, `timeout`, `certificate_file`, `client_key_file`, `client_certificate_file`) are unchanged. | Rename of `_log_exporter` breaks OTLP log export; imports are lazy (inside `_AnacondaLogger.__init__`) so failure surfaces at initialisation, not import. |
 | `_Gauge` | `opentelemetry.sdk.metrics` | Underscore-prefixed because the synchronous gauge instrument is newer than the metrics stability freeze; there is still **no** public `opentelemetry.sdk.metrics.Gauge` or `opentelemetry.metrics.Gauge` in 1.43. | Present in both, aliasing `opentelemetry.sdk.metrics._internal.instrument.Gauge`. Used only as a dict key in the temporality maps. | If renamed to a public `Gauge`, the temporality maps silently lose their gauge entry and gauges fall back to the reader default. `_compat` resolves the public name first and falls back to `_Gauge`, so a future rename is absorbed. |
 
 ### Not declared as dependencies
@@ -56,8 +55,7 @@ done
 The declared set is deliberately equal to the **imported** set. Verified by a
 hardcoded list in `tests/integration_tests/direct_imports_test.py`. What we declare:
 `opentelemetry-api`, `opentelemetry-sdk`,
-`opentelemetry-exporter-otlp-proto-grpc`, `opentelemetry-exporter-otlp-proto-http`,
-plus `grpcio` and `requests`.
+`opentelemetry-exporter-otlp-proto-http`, plus `requests`.
 
 Three OTel packages get installed but are **not** declared, for two different
 reasons:
@@ -75,7 +73,7 @@ reasons:
   exporters we do declare:
 
   ```
-  exporter-otlp-proto-{grpc,http}  ==>  exporter-otlp-proto-common == <exact>
+  exporter-otlp-proto-http        ==>  exporter-otlp-proto-common == <exact>
                                         opentelemetry-proto        == <exact>
   exporter-otlp-proto-common       ==>  opentelemetry-proto        == <exact>
   ```
@@ -93,14 +91,6 @@ uninstallable no matter what our own metadata says.
 
 ### Depended on directly, and easy to miss
 
-- `grpcio` — `config.py` does `import re, os, grpc, warnings, functools` at module
-  level and calls `grpc.ssl_channel_credentials()`. The shared import line means a
-  search for `import grpc` does **not** match it, which makes `grpcio` look like a
-  transitive of `opentelemetry-exporter-otlp-proto-grpc` when it is not.
-  `tests/integration_tests/direct_imports_test.py` exists to catch exactly this. The
-  `>=1.71.0` floor is kept: the exporter's own floor is `>=1.63.2` (`>=1.66.2` on
-  py3.13, `>=1.75.1` on py3.14), but the lowest grpcio at or above that on
-  `defaults` is 1.71.0 anyway, so this floor costs nothing there.
 - `requests` — imported lazily in `config.py` only when a proxy is configured.
   Declared with `>=2.32.5`; satisfied in practice by
   `opentelemetry-exporter-otlp-proto-http`, which requires it.

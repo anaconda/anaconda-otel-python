@@ -363,7 +363,7 @@ class TestAnacondaLogger:
     @patch('opentelemetry.exporter.otlp.proto.http._log_exporter.OTLPLogExporter')
     def test_setup_logging_http(self,  mock_exporter_http: MagicMock):
         """
-        - Checks that the OTLPLogExporter from grpc library was called once
+        - Checks that the OTLPLogExporter from http library was called once
         """
         config = Config(default_endpoint="http://localhost:4317")
         config.set_shutdown_on_exit(False)
@@ -373,17 +373,6 @@ class TestAnacondaLogger:
 
         mock_exporter_http.assert_called_once()
 
-    @patch('opentelemetry.exporter.otlp.proto.grpc._log_exporter.OTLPLogExporter')
-    def test_setup_logging_grpc(self,  mock_exporter_grpc: MagicMock):
-        """
-        - Checks that the OTLPLogExporter from grpc library was called once
-        """
-        config = Config(default_endpoint="grpc://localhost:4317")
-        config.set_shutdown_on_exit(False)
-        attr = Attributes(service_name='test-name', service_version='0.0.0')
-        _ = AnacondaLogger(config, attr)
-
-        mock_exporter_grpc.assert_called_once()
 
     def test_get_log_level(self):
         """
@@ -526,24 +515,6 @@ class TestAnacondaTrace:
         # Assert tracer is a valid Tracer object
         assert isinstance(tracer, Tracer)
 
-    @patch('opentelemetry.exporter.otlp.proto.grpc.trace_exporter.OTLPSpanExporter')
-    def test_setup_tracing_grpc(
-        self,
-        mock_exporter_grpc: MagicMock,
-        AnacondaTracer: AnacondaTrace
-    ):
-        """
-        - Checks that the tracer object returned by the method is of type Tracer (otel sdk object)
-        - Checks that the OTLPSpanExporter from grpc library was called once
-        """
-        AnacondaTracer._request_protocol = 'grpc'
-        config = Config(default_endpoint="grpc://localhost")
-        config.set_shutdown_on_exit(False)
-        tracer = AnacondaTracer._setup_tracing(config)
-        mock_exporter_grpc.assert_called_once()
-
-        # Assert tracer is a valid Tracer object
-        assert isinstance(tracer, Tracer)
 
     def test_ASpan_add_event_valid_name(
         self,
@@ -803,19 +774,6 @@ class TestAnacondaMetrics:
         # ensure returned object is of type Meter
         assert isinstance(metrics, Meter)
 
-    @patch('opentelemetry.exporter.otlp.proto.grpc.metric_exporter.OTLPMetricExporter')
-    def test_setup_metrics_grpc(self, mock_exporter_grpc: MagicMock, AnacondaMetric: AnacondaMetrics):
-        """
-        - Checks that metrics object returned by the method is of type Meter (otel sdk object)
-        - Checks that grpc library is called for exporter
-        """
-        config = Config(default_endpoint="grpc://localhost")
-        config.set_shutdown_on_exit(False)
-        metrics = AnacondaMetric._setup_metrics(config)
-        mock_exporter_grpc.assert_called_once()
-
-        # ensure returned object is of type Meter
-        assert isinstance(metrics, Meter)
 
     def test_catch_space_in_metric_name(self, AnacondaMetric: AnacondaMetrics):
         """
@@ -1419,15 +1377,6 @@ class TestProxyInSignalSetup:
         with patch('opentelemetry.metrics.set_meter_provider'):
             metrics = AnacondaMetrics(config, attr)
         assert 'session' not in metrics.exporter._init_kwargs
-
-    @patch('opentelemetry.exporter.otlp.proto.grpc._log_exporter.OTLPLogExporter')
-    def test_grpc_not_affected_by_proxy(self, mock_exporter):
-        config = Config(default_endpoint="grpc://localhost:4317")
-        config.set_proxy_url("http://proxy:8080")
-        config.set_shutdown_on_exit(False)
-        attr = Attributes(service_name='test-name', service_version='0.0.0')
-        logger = AnacondaLogger(config, attr)
-        assert 'session' not in logger.exporter._init_kwargs
 
 
 class MockHistogram(Histogram):

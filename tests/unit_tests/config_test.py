@@ -9,17 +9,16 @@ from anaconda_opentelemetry.config import Configuration as Config
 
 import pytest, os, json, tempfile, re
 from unittest.mock import patch, MagicMock, Mock
-from grpc import ChannelCredentials
 
 class TestConfiguration:
     def test_passed_in_default_endpoint(self): # Test default endpoint
         without={}
-        has={Config.DEFAULT_ENDPOINT_NAME: 'grpc://localhost:4318'}
+        has={Config.DEFAULT_ENDPOINT_NAME: 'http://localhost:4318'}
 
         config1 = Config(default_endpoint='https://localhost:4317', default_auth_token="SomeAuthToken", default_private_ca_cert_file='/tmp/cert', config_dict=has)
         assert 'https://localhost:4317' == config1._get_default_endpoint()
         config2 = Config(config_dict=has)
-        assert 'grpc://localhost:4318' == config2._get_default_endpoint()
+        assert 'http://localhost:4318' == config2._get_default_endpoint()
         with pytest.raises(ValueError):
             Config(config_dict=without)
 
@@ -159,21 +158,8 @@ class TestConfiguration:
         finally:
             os.unlink(temp_path)
 
-        # new config for gRPC tls_private_ca_cert
-        config = Config(default_endpoint='grpcs://mydomain.com:14317')
-        # Create temp file with fake cert content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False) as f:
-            f.write("-----BEGIN CERTIFICATE-----\nFAKE\n-----END CERTIFICATE-----")
-            f.flush()
-            temp_path = f.name
-            config.set_tls_private_ca_cert(temp_path)
-        try:
-            assert isinstance(config._get_ca_cert_default(), ChannelCredentials)
-        finally:
-            os.unlink(temp_path)
-
         config.set_tls_private_ca_cert(None)
-        assert None != config._get_ca_cert_default()  # This is the creds object not the cert_file!
+        assert None is config._get_ca_cert_default()
 
         # For metrics_export_interval_ms
         assert 60_000 == config._get_metrics_export_interval_ms()  # default
@@ -276,12 +262,8 @@ class TestConfiguration:
         cfg = Config(default_endpoint="https://localhost")
         assert True == cfg._get_TLS_default().tls
         assert 'https' == cfg._get_request_protocol_default().protocol
-        cfg = Config(default_endpoint="grpc://localhost")
-        assert False == cfg._get_TLS_default().tls
-        assert 'grpc' == cfg._get_request_protocol_default().protocol
-        cfg = Config(default_endpoint="grpcs://localhost")
-        assert True == cfg._get_TLS_default().tls
-        assert 'grpcs' == cfg._get_request_protocol_default().protocol
+        with pytest.raises(ValueError):
+            Config(default_endpoint="grpc://localhost")
 
     def test_only_env_var_default_endpoint(self):
         os.environ["ATEL_DEFAULT_ENDPOINT"] = "https://localhost:8080"
@@ -296,12 +278,12 @@ class TestConfiguration:
     def test_different_signal_protocols(self):
         cfg = Config(default_endpoint="http://localhost:8000")
         cfg.set_metrics_endpoint("https://test.com")
-        cfg.set_logging_endpoint("grpc://localhost:8000")
-        cfg.set_tracing_endpoint("grpcs://test.com:5000")
+        cfg.set_logging_endpoint("http://localhost:8000")
+        cfg.set_tracing_endpoint("https://test.com:5000")
 
         assert cfg._get_request_protocol_metrics() == "https"
-        assert cfg._get_request_protocol_logging() == "grpc"
-        assert cfg._get_request_protocol_tracing() == "grpcs"
+        assert cfg._get_request_protocol_logging() == "http"
+        assert cfg._get_request_protocol_tracing() == "https"
         assert cfg._get_request_protocol_default().protocol == "http"
 
     def test_different_signal_tokens(self):
@@ -344,15 +326,8 @@ class TestConfiguration:
         assert cfg._get_ca_cert_tracing() == ca_file2
         assert cfg._get_ca_cert_metrics() == ca_file3
 
-        # switch one to grpc
-        cfg.set_logging_endpoint("grpc://localhosttest")
-        cfg.set_tls_private_ca_cert_logging(ca_file1)
-        assert cfg._get_ca_cert_logging() != ca_file1
-        assert isinstance(cfg._get_ca_cert_logging(), ChannelCredentials)
-
-        # test default changed to none
         cfg.set_tls_private_ca_cert(None)
-        assert isinstance(cfg._get_ca_cert_logging(), ChannelCredentials)
+        assert cfg._get_ca_cert_logging() == ca_file1
         assert cfg._get_ca_cert_tracing() == ca_file2
         assert cfg._get_ca_cert_metrics() == ca_file3
 
@@ -360,13 +335,8 @@ class TestConfiguration:
         for file_path in temp_files:
             os.unlink(file_path)
 
-    def test_prepare_ca_cert_file_for_grpc_public_cert(self):
-        cfg = Config(default_endpoint="grpcs://localhost")
-        creds = cfg._prepare_ca_cert('grpcs', None) is None
-        assert creds is not None
-
     def test_cumulative_metrics(self):
-        cfg = Config(default_endpoint="grpcs://localhost")
+        cfg = Config(default_endpoint="https://localhost")
         cfg.set_use_cumulative_metrics(True)
         assert cfg._get_use_cumulative_metrics() == True
 
@@ -381,8 +351,8 @@ class TestConfiguration:
         new_endpoint = cfg._change_signal_endpoint("tracing", "https://tracehost:9090")
         assert new_endpoint == "https://tracehost:9090/v1/traces"
 
-        new_endpoint = cfg._change_signal_endpoint("logging", "grpc://loghost:4317", auth_token="logtoken")
-        assert new_endpoint == "grpc://loghost:4317"
+        new_endpoint = cfg._change_signal_endpoint("logging", "http://loghost:4317", auth_token="logtoken")
+        assert new_endpoint == "http://loghost:4317/v1/logs"
         assert cfg._get_auth_token_logging() == "logtoken"
 
     def test_change_signal_endpoint_preserves_path(self):

@@ -82,27 +82,15 @@ class _AnacondaMetrics(_AnacondaCommon):
             headers: Dict[str, str] = {}
             if auth_token is not None:
                 headers['authorization'] = f'Bearer {auth_token}'
-            if config._get_request_protocol_metrics() in ['grpc', 'grpcs']:  # gRPC
-                from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter as OTLPMetricExportergRPC
-                insecure = not config._get_TLS_metrics()
-                exporter = OTLPMetricExporterShim(
-                    OTLPMetricExportergRPC,
-                    endpoint=self.metrics_endpoint,
-                    insecure=insecure,
-                    credentials=config._get_ca_cert_metrics() if not insecure else None,
-                    headers=headers,
-                    preferred_temporality=self._get_temporality()
-                )
-            else:  # HTTP
-                from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
-                http_kwargs = self._build_http_exporter_kwargs(
-                    'metrics', self.metrics_endpoint, headers,
-                    preferred_temporality=self._get_temporality()
-                )
-                exporter = OTLPMetricExporterShim(
-                    OTLPMetricExporterHTTP,
-                    **http_kwargs
-                )
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter as OTLPMetricExporterHTTP
+            http_kwargs = self._build_http_exporter_kwargs(
+                'metrics', self.metrics_endpoint, headers,
+                preferred_temporality=self._get_temporality()
+            )
+            exporter = OTLPMetricExporterShim(
+                OTLPMetricExporterHTTP,
+                **http_kwargs
+            )
 
         self.exporter = exporter
         self.metric_reader = PeriodicExportingMetricReader(self.exporter, export_interval_millis=self.telemetry_export_interval_millis)

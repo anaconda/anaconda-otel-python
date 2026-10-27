@@ -38,7 +38,6 @@ runs:
         PINS=()
         if [[ -n "${{ inputs.otel-version }}" ]]; then
           for p in opentelemetry-api opentelemetry-sdk \
-                   opentelemetry-exporter-otlp-proto-grpc \
                    opentelemetry-exporter-otlp-proto-http; do
             PINS+=("$p==${{ inputs.otel-version }}")
           done
@@ -71,9 +70,7 @@ runs:
         for name in (
             "opentelemetry-api",
             "opentelemetry-sdk",
-            "opentelemetry-exporter-otlp-proto-grpc",
             "opentelemetry-exporter-otlp-proto-http",
-            "grpcio",
             "requests",
         ):
             req = declared.get(name)
