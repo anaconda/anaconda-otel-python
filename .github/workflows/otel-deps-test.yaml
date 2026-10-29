@@ -20,7 +20,7 @@ jobs:
       - name: Setup Conda
         uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
-          python-version: '3.12'
+          python-version: '3.15'
           miniforge-version: latest
           auto-activate-base: true
 
