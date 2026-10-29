@@ -22,13 +22,9 @@ class TestVerboseExportErrors:
         _suppress_otel_export_errors()
 
         otel_loggers = [
-            'opentelemetry.exporter.otlp.proto.grpc.exporter',
             'opentelemetry.exporter.otlp.proto.http.exporter',
-            'opentelemetry.exporter.otlp.proto.grpc.metric_exporter',
             'opentelemetry.exporter.otlp.proto.http.metric_exporter',
-            'opentelemetry.exporter.otlp.proto.grpc.trace_exporter',
             'opentelemetry.exporter.otlp.proto.http.trace_exporter',
-            'opentelemetry.exporter.otlp.proto.grpc._log_exporter',
             'opentelemetry.exporter.otlp.proto.http._log_exporter',
         ]
 

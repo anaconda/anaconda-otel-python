@@ -349,7 +349,7 @@ class TestInitializeTelemetry:
             assert False == internet
             assert False == access
 
-    def test_grpc_otlp_exporters(self):
+    def test_otlp_exporters(self):
         """
         - Checks that the *Exporters are created
         """

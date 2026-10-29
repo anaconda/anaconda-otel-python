@@ -16,9 +16,7 @@ license = { text = "Apache 2.0" }  # SPDX identifier
 dependencies = [
     "opentelemetry-api >= 1.40.0, < 1.44",
     "opentelemetry-sdk >= 1.40.0, < 1.44",
-    "opentelemetry-exporter-otlp-proto-grpc >= 1.40.0, < 1.44",
     "opentelemetry-exporter-otlp-proto-http >= 1.40.0, < 1.44",
-    "grpcio>=1.71.0",
     "requests>=2.32.5",
 ]
 

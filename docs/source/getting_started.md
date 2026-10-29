@@ -51,11 +51,9 @@ For each configuration there is a corresponding environment variable. The enviro
 [Example](onboarding_examples.md#creating-configuration)
 
 ### Configuration Default Endpoint
-A default endpoint must be passed either to the constructor via the `default_endpoint` kwarg or the `config_dict` kwarg. It is the only value in the configuration that must be specified. The usage of TLS is derived from the scheme specified in the endpoint, as well as the OpenTelemetry export protocol (HTTP or gRPC). Using an unallowed scheme will raise an error. The allowed schemes are:
+A default endpoint must be passed either to the constructor via the `default_endpoint` kwarg or the `config_dict` kwarg. It is the only value in the configuration that must be specified. The usage of TLS is derived from the scheme specified in the endpoint, as well as the OpenTelemetry export protocol. Using an unallowed scheme will raise an error. The allowed schemes are:
 - https (HTTP protocol, TLS enabled)
 - http (HTTP protocol, TLS disabled)
-- grpcs (gRPC protocol, TLS enabled)
-- grpc (gRPC protocol, TLS disabled)
 
 ### Metric, Log, and Tracing Configuration
 If your use case requires different schemes/TLS settings, auth tokens, or CA certs for different signal types: you can use the `set_*_endpoint()` method to set TLS, auth token, and endpoint values (* is one of metrics, logging, or tracing). These methods will raise an error if the endpoint is not a proper URL.

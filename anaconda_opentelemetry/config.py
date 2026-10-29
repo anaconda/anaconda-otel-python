@@ -10,7 +10,7 @@ This module provides the configuration setting from a file or a dictionary (or b
 """
 
 from typing import Dict, Any, List
-import re, os, grpc, warnings, functools
+import re, os, warnings, functools
 
 """
 Configuration class to supply settings for Anaconda Telemetry.
@@ -573,7 +573,7 @@ class Configuration:
     def set_proxy_url(self, proxy_url: str):
         """
         Sets the proxy URL to use for HTTP OTLP exporters. This applies to all HTTP-based
-        signal exporters (logging, tracing, metrics). gRPC exporters are not affected.
+        signal exporters (logging, tracing, metrics).
         If passed in a dict in the constructor, use predefined name PROXY_URL_NAME.
         The environment variable is 'ATEL_PROXY_URL'.
 
@@ -696,7 +696,7 @@ class Configuration:
                 raise ValueError(f"Invalid endpoint format: {endpoint}")
             pattern = re.compile(
                 r"^"
-                r"(https?://|grpcs?://)"                       # capture group 1: optional protocol
+                r"(https?://)"                                  # capture group 1: optional protocol
                 r"("                                           # capture group 2: host
                     r"(?!0\.)"                                 # Disallow IPs starting with 0.
                     r"(?:\d{1,3}\.){3}\d{1,3}"                 # IPv4 format (non-capturing group)
@@ -741,8 +741,6 @@ class Configuration:
         return get_endpoint()
 
     def _set_otel_signal_endpoint(self, endpoint: str, signal: str) -> str:
-        if endpoint.lower().startswith("grpc"):
-            return endpoint
         endpoint_str = f"v1/{signal}"
         if not endpoint.endswith(endpoint_str):
             endpoint_str = "/" + endpoint_str if endpoint[-1] != "/" else endpoint_str
@@ -765,35 +763,17 @@ class Configuration:
         endpoint = self._config.get(self.METRICS_ENDPOINT_NAME, self._get_default_endpoint())
         return self._set_otel_signal_endpoint(endpoint, "metrics")
 
-    def _prepare_ca_cert(self, protocol: str, cert_file: str) -> str:
-        if protocol in ['http', 'https']:
-            return cert_file  # just return cert file for HTTP exporter ca_cert
-        else:
-            if cert_file:
-                with open(cert_file, 'rb') as f:
-                    ca_cert_bytes = f.read()  # gRPC exporter requires a bytes string
-                creds = grpc.ssl_channel_credentials(root_certificates=ca_cert_bytes)
-                return creds
-            else:
-                # Use system trust store (for public CAs)
-                creds = grpc.ssl_channel_credentials()
-                return creds
-
     def _get_ca_cert_default(self) -> str:
-        cert_file = self._config.get(self.DEFAULT_CA_CERT_NAME, None)
-        return self._prepare_ca_cert(self._get_request_protocol_default().protocol, cert_file)
+        return self._config.get(self.DEFAULT_CA_CERT_NAME, None)
 
     def _get_ca_cert_logging(self) -> str:
-        cert_file = self._config.get(self.LOGGING_CA_CERT_NAME, self._get_ca_cert_default())
-        return self._prepare_ca_cert(self._get_request_protocol_logging(), cert_file)
+        return self._config.get(self.LOGGING_CA_CERT_NAME, self._get_ca_cert_default())
 
     def _get_ca_cert_tracing(self) -> str:
-        cert_file = self._config.get(self.TRACING_CA_CERT_NAME, self._get_ca_cert_default())
-        return self._prepare_ca_cert(self._get_request_protocol_tracing(), cert_file)
+        return self._config.get(self.TRACING_CA_CERT_NAME, self._get_ca_cert_default())
 
     def _get_ca_cert_metrics(self) -> str:
-        cert_file = self._config.get(self.METRICS_CA_CERT_NAME, self._get_ca_cert_default())
-        return self._prepare_ca_cert(self._get_request_protocol_metrics(), cert_file)
+        return self._config.get(self.METRICS_CA_CERT_NAME, self._get_ca_cert_default())
 
     def _get_console_exporter(self) -> bool:
         return self._config.get(self.USE_CONSOLE_EXPORTER_NAME, False)

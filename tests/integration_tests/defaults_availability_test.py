@@ -42,7 +42,6 @@ _OTEL_PACKAGES = (
     "opentelemetry-api",
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp-proto-common",
-    "opentelemetry-exporter-otlp-proto-grpc",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-proto",
 )
@@ -133,7 +132,7 @@ def defaults_intersection() -> list[tuple[int, ...]]:
     """Versions available on `defaults` for *every* one of the OTel packages.
 
     The intersection, not the union: `defaults` carries 1.39.1 of the API but no
-    1.39.x SDK or gRPC exporter, so 1.39 is not installable and must not count.
+    1.39.x SDK or exporter, so 1.39 is not installable and must not count.
     """
     if shutil.which("conda") is None:
         pytest.skip("conda executable not available")

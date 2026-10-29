@@ -86,23 +86,12 @@ class _AnacondaLogger(_AnacondaCommon):
             headers: Dict[str, str] = {}
             if auth_token is not None:
                 headers['authorization'] = f'Bearer {auth_token}'
-            if config._get_request_protocol_logging() in ['grpc', 'grpcs']:  # gRPC
-                from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter as OTLPLogExportergRPC
-                insecure = not config._get_TLS_logging()
-                exporter = OTLPLogExporterShim(
-                    OTLPLogExportergRPC,
-                    endpoint=self.logger_endpoint,
-                    insecure=insecure,
-                    credentials=config._get_ca_cert_logging() if not insecure else None,
-                    headers=headers
-                )
-            else:  # HTTP
-                from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
-                http_kwargs = self._build_http_exporter_kwargs('logging', self.logger_endpoint, headers)
-                exporter = OTLPLogExporterShim(
-                    OTLPLogExporterHTTP,
-                    **http_kwargs
-                )
+            from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter as OTLPLogExporterHTTP
+            http_kwargs = self._build_http_exporter_kwargs('logging', self.logger_endpoint, headers)
+            exporter = OTLPLogExporterShim(
+                OTLPLogExporterHTTP,
+                **http_kwargs
+            )
 
         self.exporter = exporter
         self._processor = BatchLogRecordProcessor(self.exporter)
